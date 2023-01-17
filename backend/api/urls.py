@@ -4,5 +4,5 @@ from . import views as v
 
 urlpatterns = [
     path("auth/", include("api.auth.urls")),
-    re_path(r".*", v.invalid_path),
+    re_path(r".*", v.Invalid_Path.as_view()),
 ]

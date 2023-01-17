@@ -6,5 +6,5 @@ from . import views as v
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("api.urls")),
-    re_path(r".*", v.main),
+    re_path(r".*", v.Main.as_view()),
 ]

@@ -1,5 +1,7 @@
 from django.shortcuts import render
+from django.views import View
 
 
-def main(request):
-    return render(request, "frontend/index.html", {})
+class Main(View):
+    def get(self, request):
+        return render(request, "frontend/index.html", {})
