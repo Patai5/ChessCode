@@ -29,6 +29,13 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
+REST_FRAMEWORK = {
+    "DEFAULT_THROTTLE_RATES": {
+        "login": "1/sec",
+        "register": "1/min",
+    }
+}
+
 # Application definition
 
 INSTALLED_APPS = [

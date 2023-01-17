@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth import login as django_login
 from django.http import JsonResponse
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from . import serializers as s
@@ -9,6 +10,9 @@ User = get_user_model()
 
 
 class Login(APIView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "login"
+
     def post(self, request):
         serializer = s.AuthDetailsSerializer(data=request.data)
         if not serializer.is_valid():
@@ -23,6 +27,9 @@ class Login(APIView):
 
 
 class Register(APIView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "register"
+
     def post(self, request):
         serializer = s.AuthDetailsSerializer(data=request.data)
         if not serializer.is_valid():
