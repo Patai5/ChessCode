@@ -110,6 +110,7 @@ export default function Login(props: Props) {
 					{props.register ? "Sign up" : "Sign in"}
 				</h1>
 				<InputFields
+					register={props.register}
 					fields={loginForm}
 					handleSetField={handleSetField}
 				/>

@@ -13,6 +13,7 @@ const inputFieldsCss = css`
 `;
 
 type Props = {
+	register: boolean;
 	fields: LoginFormType;
 	handleSetField: (type: "username" | "password", value: string) => void;
 };
@@ -20,6 +21,7 @@ export default function InputFields(props: Props) {
 	return (
 		<div css={inputFieldsCss}>
 			<InputField
+				register={props.register}
 				type="username"
 				value={props.fields.username}
 				setValue={(value: string) =>
@@ -27,6 +29,7 @@ export default function InputFields(props: Props) {
 				}
 			/>
 			<InputField
+				register={props.register}
 				type="password"
 				value={props.fields.password}
 				setValue={(value: string) =>

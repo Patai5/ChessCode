@@ -2,6 +2,7 @@
 import { css, jsx } from "@emotion/react";
 import React from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import ResponseText from "./ResponseText/ResponseText";
 
 const fieldContainerCss = css`
 	display: flex;
@@ -28,6 +29,7 @@ const showPasswordCss = css`
 `;
 
 type Props = {
+	register: boolean;
 	type: "username" | "password";
 	value: string;
 	setValue: (value: string) => void;
@@ -41,24 +43,40 @@ export default function InputField(props: Props) {
 		setShowPassword(!showPassword);
 	};
 
+	const shouldShowResponseText = () => {
+		if (!props.register) return false;
+		if (props.value.length == 0) return false;
+		return true;
+	};
+
 	return (
-		<div css={fieldContainerCss}>
-			<input
-				css={inputFieldCss}
-				type={showPassword ? "text" : "password"}
-				placeholder={props.type == "username" ? "Username" : "Password"}
-				value={props.value}
-				onChange={(e) => props.setValue(e.target.value)}
-			/>
-			{props.type == "password" &&
-				(showPassword ? (
-					<FaEyeSlash
-						css={showPasswordCss}
-						onClick={handleShowPassword}
-					/>
-				) : (
-					<FaEye css={showPasswordCss} onClick={handleShowPassword} />
-				))}
+		<div>
+			<div css={fieldContainerCss}>
+				<input
+					css={inputFieldCss}
+					type={showPassword ? "text" : "password"}
+					placeholder={
+						props.type == "username" ? "Username" : "Password"
+					}
+					value={props.value}
+					onChange={(e) => props.setValue(e.target.value)}
+				/>
+				{props.type == "password" &&
+					(showPassword ? (
+						<FaEyeSlash
+							css={showPasswordCss}
+							onClick={handleShowPassword}
+						/>
+					) : (
+						<FaEye
+							css={showPasswordCss}
+							onClick={handleShowPassword}
+						/>
+					))}
+			</div>
+			{shouldShowResponseText() && (
+				<ResponseText type={props.type} value={props.value} />
+			)}
 		</div>
 	);
 }
