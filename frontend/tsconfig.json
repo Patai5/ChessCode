@@ -8,6 +8,7 @@
 		"allowJs": true,
 		"allowSyntheticDefaultImports": true,
 		"moduleResolution": "Node",
-		"types": ["@emotion/react/types/css-prop"]
+		"types": ["@emotion/react/types/css-prop"],
+		"lib": ["es6", "dom"]
 	}
 }

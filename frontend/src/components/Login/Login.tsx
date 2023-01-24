@@ -49,51 +49,100 @@ export default function Login(props: Props) {
 	const [loggingInAnimation, setLoggingInAnimation] = React.useState(false);
 	const navigate = useNavigate();
 
-	const handleSubmit = (e: React.FormEvent) => {
+	/** Checks if the username already registered */
+	const userExists = async (): Promise<boolean | Error> => {
+		try {
+			const res = await axios({
+				method: "get",
+				url: "/api/accounts/user-exists",
+				params: { username: loginForm.username },
+			});
+			return res.data["user-exists"];
+		} catch (err) {
+			return err;
+		}
+	};
+
+	/** Authenticates the user */
+	const authUser = async (register: boolean): Promise<"success" | Error> => {
+		const url = register ? "/api/auth/register" : "/api/auth/login";
+		try {
+			await axios({
+				method: "post",
+				url: url,
+				data: {
+					password: loginForm.password,
+					username: loginForm.username,
+				},
+				headers: { "X-CSRFToken": getCSRF() },
+			});
+			return "success";
+		} catch (err) {
+			return err;
+		}
+	};
+
+	type RequestStatus = "started" | "success" | "failed";
+	/** Handles what should happen after which animation state*/
+	const handleAnimation = (status: RequestStatus) => {
+		switch (status) {
+			case "success":
+				// Redirects the page
+				navigate("/");
+				break;
+			case "failed":
+				// Stops the animation
+				setLoggingInAnimation(false);
+				break;
+		}
+	};
+
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		// Todo: Validate form before sending
+
+		let requestStatus: RequestStatus = "started";
+		let animationFinished = false;
+
+		/** Should be called in requests to the server dealing with the animation */
+		const handleAuthRequestAnimation = (status: RequestStatus) => {
+			// Sets the requestStatus to the right status so that the animation can be handled once it is finished
+			requestStatus = status;
+			// If the animation is already finished then handle the animation here
+			animationFinished && handleAnimation(status);
+		};
 
 		// Sets the logging in animation
-		let status = "started";
-		let animationFinished = false;
 		setTimeout(() => {
-			// Handles the animation logic
-			switch (status) {
-				case "success":
-					// Redirect the page
-					navigate("/");
-					return;
-				case "failed":
-					// Stops the animation
-					setLoggingInAnimation(false);
-					return;
-				case "started":
-					// Request wasn't finished in time, the logic will be handled in the request
-					animationFinished = true;
-					return;
-			}
+			handleAnimation(requestStatus);
+			animationFinished = true;
 		}, 1500);
 		setLoggingInAnimation(true);
 
-		const url = props.register ? "/api/auth/register" : "/api/auth/login";
-		axios({
-			method: "post",
-			url: url,
-			data: {
-				password: loginForm.password,
-				username: loginForm.username,
-			},
-			headers: { "X-CSRFToken": getCSRF() },
-		})
-			.then((res) => {
-				// Sets the status to success so that after the animation finishes a redirect can be made
-				status = "success";
-				// If the animation is allready finished then redirect the page
-				animationFinished && navigate("/");
-			})
-			.catch((err) => {
-				// Sets the status to failed so that the animation can be stopped
-				status = "failed";
-			});
+		// When registering check if the username already exists
+		let usernameExists: boolean | Error = false;
+		if (props.register) {
+			usernameExists = await userExists();
+			if (usernameExists instanceof Error) {
+				// Todo: Handle error
+				handleAuthRequestAnimation("failed");
+			}
+			if (usernameExists) {
+				// Todo: Handle username already exists
+				handleAuthRequestAnimation("failed");
+			}
+		}
+
+		// Auths the user
+		if (!usernameExists) {
+			const authed = await authUser(props.register);
+			if (authed instanceof Error) {
+				// Todo: Handle error
+				handleAuthRequestAnimation("failed");
+			} else {
+				handleAuthRequestAnimation("success");
+			}
+		}
 	};
 
 	const handleSetField = (type: "username" | "password", value: string) => {
