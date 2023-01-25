@@ -14,7 +14,7 @@ class Login(APIView):
     throttle_scope = "login"
 
     def post(self, request):
-        serializer = s.AuthDetailsSerializer(data=request.data)
+        serializer = s.LoginDetailsSerializer(data=request.data)
         if not serializer.is_valid():
             return JsonResponse(serializer.errors, status=400)
 
@@ -31,7 +31,7 @@ class Register(APIView):
     throttle_scope = "register"
 
     def post(self, request):
-        serializer = s.AuthDetailsSerializer(data=request.data)
+        serializer = s.RegisterDetailsSerializer(data=request.data)
         if not serializer.is_valid():
             return JsonResponse(serializer.errors, status=400)
 

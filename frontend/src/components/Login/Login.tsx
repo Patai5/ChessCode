@@ -2,10 +2,11 @@
 import { css, jsx } from "@emotion/react";
 import getCSRF from "../../utils/getCSRF";
 import React from "react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import InputFields from "./InputFields/InputFields";
 import SwitchSigninSignup from "./SwitchSigninSignup/SwitchSigninSignup";
 import LoginButton from "./LoginButton/LoginButton";
+import ErrorMessage from "./ErrorMessage/ErrorMessage";
 import { useNavigate } from "react-router-dom";
 
 const loginBoxCss = css`
@@ -16,6 +17,7 @@ const loginBoxCss = css`
 	border-radius: 1em;
 	display: inline-flex;
 	flex-direction: column;
+	justify-content: center;
 	align-items: center;
 	padding: 4.5em;
 	width: 25em;
@@ -25,11 +27,12 @@ const loginBoxCss = css`
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
-	box-shadow: 0 0.1em 0.5em rgb(0 0 0 / 25%);
+	box-shadow: 0 0.1em 0.5em 0.25em rgb(0 0 0 / 25%);
 `;
 const loginAnimationCss = css`
 	background-position: 0 0;
 `;
+const errorMessageCss = css``;
 const headerCss = css`
 	color: white;
 	padding: 0.875em 0;
@@ -47,10 +50,14 @@ export default function Login(props: Props) {
 		password: "",
 	});
 	const [loggingInAnimation, setLoggingInAnimation] = React.useState(false);
+	const [errorMessage, setErrorMessage] = React.useState("");
 	const navigate = useNavigate();
 
+	// Removes the error message when the user switches between login and register
+	React.useMemo(() => setErrorMessage(""), [props.register]);
+
 	/** Checks if the username already registered */
-	const userExists = async (): Promise<boolean | Error> => {
+	const userExists = async (): Promise<boolean | AxiosError> => {
 		try {
 			const res = await axios({
 				method: "get",
@@ -101,6 +108,28 @@ export default function Login(props: Props) {
 		e.preventDefault();
 		// Todo: Validate form before sending
 
+		let errorHappened = false;
+		/** Shows the error on the screen. When submitting wait until the requests finish and then disable the error message. */
+		const handleError = (error: string | Error) => {
+			errorHappened = true;
+			if (error instanceof Error) {
+				if (error instanceof AxiosError && error.response) {
+					// Get the API error response message
+					let data: string;
+					error.response.data["detail"]
+						? (data = error.response.data["detail"])
+						: (data = error.response.data["error"]);
+					setErrorMessage(`${error.response.statusText}: ${data}`);
+				} else {
+					// Default non-axios error
+					setErrorMessage(`${error.name}: ${error.message}`);
+				}
+			} else {
+				// If the error is a string
+				setErrorMessage(error);
+			}
+		};
+
 		let requestStatus: RequestStatus = "started";
 		let animationFinished = false;
 
@@ -124,24 +153,36 @@ export default function Login(props: Props) {
 		if (props.register) {
 			usernameExists = await userExists();
 			if (usernameExists instanceof Error) {
-				// Todo: Handle error
+				handleError(usernameExists);
 				handleAuthRequestAnimation("failed");
-			}
-			if (usernameExists) {
-				// Todo: Handle username already exists
+			} else if (usernameExists) {
+				handleError("This username is already taken");
 				handleAuthRequestAnimation("failed");
 			}
 		}
-
 		// Auths the user
 		if (!usernameExists) {
 			const authed = await authUser(props.register);
 			if (authed instanceof Error) {
-				// Todo: Handle error
-				handleAuthRequestAnimation("failed");
+				if (
+					authed instanceof AxiosError &&
+					authed.response &&
+					authed.response.status === 401
+				) {
+					// Incorect credentials inputed
+					handleError("Incorrect username or password");
+				} else {
+					handleError(authed);
+					handleAuthRequestAnimation("failed");
+				}
 			} else {
+				// Successfully authed
 				handleAuthRequestAnimation("success");
 			}
+		}
+
+		if (!errorHappened) {
+			setErrorMessage("");
 		}
 	};
 
@@ -154,15 +195,30 @@ export default function Login(props: Props) {
 	};
 	return (
 		<form onSubmit={handleSubmit}>
-			<div css={[loginBoxCss, loggingInAnimation && loginAnimationCss]}>
-				<h1 css={headerCss}>
-					{props.register ? "Sign up" : "Sign in"}
-				</h1>
+			<div
+				css={[
+					loginBoxCss,
+					loggingInAnimation && loginAnimationCss,
+					errorMessage && errorMessageCss,
+				]}
+			>
+				{errorMessage ? (
+					<ErrorMessage
+						message={errorMessage}
+						setErrorMessage={setErrorMessage}
+					/>
+				) : (
+					<h1 css={headerCss}>
+						{props.register ? "Sign up" : "Sign in"}
+					</h1>
+				)}
+
 				<InputFields
 					register={props.register}
 					fields={loginForm}
 					handleSetField={handleSetField}
 				/>
+
 				<SwitchSigninSignup register={props.register} />
 				<LoginButton register={props.register} />
 			</div>
