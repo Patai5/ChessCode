@@ -53,7 +53,7 @@ class GameQueue:
     def remove_user(self, user: User):
         """Remove a user from the queue"""
         assert isinstance(user, User), "User must be a User object"
-        assert user not in self.queue, "User is not in queue"
+        assert user in self.queue, "User is not in queue"
 
         self.queue.remove(user)
 
@@ -93,6 +93,7 @@ class QueuingPlayer:
 class GameQueueManager:
     def __init__(self, game_queues: list[GameQueue]):
         self.game_queues = game_queues
+        self.queuing_players = {}
 
     @property
     def game_queues(self) -> list[GameQueue]:
@@ -113,35 +114,26 @@ class GameQueueManager:
     def queuing_players(self, value: Dict[User, QueuingPlayer]):
         self._queuing_players = value
 
-    def add_user(self, user: User, game_mode: str, time_control: int):
-        """Add a user to a game queue"""
+    def add_user(self, user: User, game_queue: GameQueue):
+        """Adds a user to a game queue"""
         assert isinstance(user, User), "User must be a User object"
-        assert isinstance(game_mode, str), "Game mode must be a string"
-        assert isinstance(time_control, int), "Time control must be an integer"
+        assert isinstance(game_queue, GameQueue), "Game queue must be a GameQueue object"
 
-        game_queue = self.get_game_queue(game_mode, time_control)
-        if game_queue is None:
-            raise ValueError("Game queue does not exist")
         if self.is_player_queuing(user):
             raise ValueError("User is already in a queue")
 
         self.queuing_players[user] = QueuingPlayer(user, game_queue)
         game_queue.add_user(user)
 
-    def remove_user(self, user: User, game_mode: str, time_control: int):
+    def remove_user(self, user: User):
         """Remove a user from a game queue"""
         assert isinstance(user, User), "User must be a User object"
-        assert isinstance(game_mode, str), "Game mode must be a string"
-        assert isinstance(time_control, int), "Time control must be an integer"
 
-        game_queue = self.get_game_queue(game_mode, time_control)
-        if game_queue is None:
-            raise ValueError("Game queue does not exist")
-        if self.is_player_queuing(user):
+        if not self.is_player_queuing(user):
             raise ValueError("User is not in a queue")
 
+        self.queuing_players[user].game_queue.remove_user(user)
         del self.queuing_players[user]
-        game_queue.remove_user(user)
 
     def is_player_queuing(self, user: User) -> bool:
         """Returns True if the user is in any queue, False otherwise"""
@@ -158,7 +150,7 @@ class GameQueueManager:
         assert isinstance(time_control, int), "Time control must be an integer"
 
         for game_queue in self.game_queues:
-            if game_queue.game_mode.name == game_mode and game_queue.time_control.time == time_control:
+            if game_queue.game_mode.name.lower() == game_mode.lower() and game_queue.time_control.time == time_control:
                 return game_queue
 
         # Game queue does not exist
@@ -169,3 +161,6 @@ DEFAULT_GAME_QUEUES = [
     GameQueue(game_mode, time_control) for game_mode in ACTIVE_GAME_MODES for time_control in game_mode.time_controls
 ]
 """Default game queues for all active game modes"""
+
+DEFAULT_GAME_QUEUE_MANAGER = GameQueueManager(DEFAULT_GAME_QUEUES)
+"""Default game queue manager for all active game modes"""

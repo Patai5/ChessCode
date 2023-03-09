@@ -45,7 +45,7 @@ class TimeControl:
     def time(self, value: int):
         """Time is defined in seconds"""
         assert isinstance(value, int), "Time must be an integer"
-        assert value < 0, "Time cannot be negative"
+        assert not value < 0, "Time cannot be negative"
 
         self._time = value
 
