@@ -1,6 +1,7 @@
-from typing import Dict
+from typing import Dict, Tuple
 from .game_modes import TimeControl, GameMode, ACTIVE_GAME_MODES
 from django.contrib.auth import get_user_model
+from .game import ALL_ACTIVE_GAMES_MANAGER
 
 User = get_user_model()
 
@@ -48,7 +49,6 @@ class GameQueue:
         assert user not in self.queue, "User is already in queue"
 
         self.queue.append(user)
-        # TODO: Add logic to match users together
 
     def remove_user(self, user: User):
         """Remove a user from the queue"""
@@ -125,6 +125,10 @@ class GameQueueManager:
         self.queuing_players[user] = QueuingPlayer(user, game_queue)
         game_queue.add_user(user)
 
+        # Start a game if there are at least two players in the queue
+        if len(game_queue.queue) >= 2:
+            self.start_game((game_queue.queue[0], game_queue.queue[1]), game_queue)
+
     def remove_user(self, user: User):
         """Remove a user from a game queue"""
         assert isinstance(user, User), "User must be a User object"
@@ -155,6 +159,19 @@ class GameQueueManager:
 
         # Game queue does not exist
         return None
+
+    def start_game(self, players: Tuple[User, User], game_queue: GameQueue):
+        """Start a game between two players, removing them from the queue"""
+        assert isinstance(players, tuple), "Players must be a tuple"
+        assert len(players) == 2, "Players must be a tuple of exactly two players"
+        assert all(isinstance(item, User) for item in players), "Players must be a tuple of Users"
+        assert isinstance(game_queue, GameQueue), "Game queue must be a GameQueue object"
+
+        if all(player not in game_queue.queue for player in players):
+            raise ValueError("Players are not in the queue")
+
+        [self.remove_user(player) for player in players]
+        ALL_ACTIVE_GAMES_MANAGER.start_game(players, game_queue.game_mode, game_queue.time_control)
 
 
 DEFAULT_GAME_QUEUES = [
