@@ -4,6 +4,7 @@ import React from "react";
 import TimeControlPicker from "./TimeControlPicker/TimeControlPicker";
 import PlayAgainstPicker from "./PlayAgainstPicker/PlayAgainstPicker";
 import Paper from "components/shared/Paper";
+import Queuing, { QueueState } from "./Queuing/Queuing";
 
 const findGameCss = css`
     background: linear-gradient(#05586d, #520476);
@@ -32,7 +33,6 @@ const titleCss = css`
     padding: 0;
     margin: 0;
 `;
-
 const mainPaperCss = css`
     width: 100%;
     display: flex;
@@ -42,13 +42,18 @@ const mainPaperCss = css`
 
 type Props = {};
 export default function FindGame(props: Props) {
+    const [queing, setQueing] = React.useState<false | QueueState>(false);
+
     return (
-        <div css={findGameCss}>
-            <h1 css={titleCss}>Find A Game</h1>
-            <Paper customCss={mainPaperCss}>
-                <PlayAgainstPicker />
-                <TimeControlPicker />
-            </Paper>
-        </div>
+        <>
+            {queing && <Queuing queue={queing} stopQueuing={() => setQueing(false)} />}
+            <div css={findGameCss}>
+                <h1 css={titleCss}>Find A Game</h1>
+                <Paper customCss={mainPaperCss}>
+                    <PlayAgainstPicker />
+                    <TimeControlPicker setQueing={setQueing} />
+                </Paper>
+            </div>
+        </>
     );
 }
