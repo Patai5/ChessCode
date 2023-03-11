@@ -2,6 +2,7 @@
 import { css, jsx } from "@emotion/react";
 import React from "react";
 import { secToTime } from "utils/utils";
+import useKeypress from "utils/useKeypress";
 import TimeElapsed from "./TimeElapsed/TimeElapsed";
 import Searching from "./Searching/Searching";
 import CancelButton from "./CancelButton/CancelButton";
@@ -75,6 +76,8 @@ export default function Queuing(props: Props) {
         setOpen(false);
         await props.stopQueuing(animationLength);
     };
+
+    useKeypress("Escape", () => handleCancel);
 
     return (
         <div css={[queuingCss, open ? openAnimationCss : closedAnimationCss]}>
