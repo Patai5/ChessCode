@@ -39,6 +39,7 @@ REST_FRAMEWORK = {
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -49,6 +50,8 @@ INSTALLED_APPS = [
     "users.apps.UsersConfig",
     "rest_framework",
 ]
+
+ASGI_APPLICATION = "backend.asgi.application"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
