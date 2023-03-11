@@ -40,18 +40,32 @@ const mainPaperCss = css`
     gap: 0.9em;
 `;
 
+export type handleStopQueuingType = (ms: number) => Promise<void>;
+
 type Props = {};
 export default function FindGame(props: Props) {
     const [queing, setQueing] = React.useState<false | QueueState>(false);
 
+    const stopQueuingAPI = async () => {
+        // TODO: call API to stop queuing
+    };
+    const handleStopQueuing: handleStopQueuingType = async (ms) => {
+        stopQueuingAPI();
+
+        // Wait for animations to finish
+        await new Promise((resolve) => setTimeout(resolve, ms));
+
+        setQueing(false);
+    };
+
     return (
         <>
-            {queing && <Queuing queue={queing} stopQueuing={() => setQueing(false)} />}
+            {queing && <Queuing queue={queing} stopQueuing={handleStopQueuing} />}
             <div css={findGameCss}>
                 <h1 css={titleCss}>Find A Game</h1>
                 <Paper customCss={mainPaperCss}>
                     <PlayAgainstPicker />
-                    <TimeControlPicker setQueing={setQueing} />
+                    <TimeControlPicker disabled={!!queing} setQueing={setQueing} />
                 </Paper>
             </div>
         </>

@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css, jsx } from "@emotion/react";
 import React from "react";
-import GradientButtonPicker from "components/shared/GradientButtonPicker";
+import GradientButtonPicker, { Item } from "components/shared/GradientButtonPicker";
 import Paper from "components/shared/Paper";
 import { secToTime } from "utils/utils";
 import { QueueState } from "../Queuing/Queuing";
@@ -26,25 +26,37 @@ const gameModes: GameModes = {
     Rapid: { timeControls: [600, 1200, 1800], backgroundColors: ["#B84200", "#8B0086"] },
 };
 
-type Props = { setQueing: (arg0: QueueState) => void };
+type Props = { setQueing: (arg0: QueueState) => void; disabled?: boolean };
 export default function TimeControlPicker(props: Props) {
-    return (
-        <Paper customCss={timeControlsPaperCss}>
-            {Object.keys(gameModes).map((gameMode: keyof GameModes) => (
-                <GradientButtonPicker
-                    items={[
-                        { name: gameMode, isTitle: true },
-                        ...gameModes[gameMode].timeControls.map((timeControl) => ({
-                            name: secToTime(timeControl),
-                            callback: () => {
-                                props.setQueing({ gameMode, timeControl });
-                            },
-                        })),
-                    ]}
-                    key={gameMode}
-                    backgroundColors={gameModes[gameMode].backgroundColors}
-                />
-            ))}
-        </Paper>
-    );
+    const items: { [key in keyof GameModes]: Item[] } = {
+        Bullet: [],
+        Blitz: [],
+        Rapid: [],
+    };
+    Object.keys(gameModes).map((gameMode: keyof GameModes) => {
+        items[gameMode] = [
+            { name: gameMode, isTitle: true } as Item,
+            ...gameModes[gameMode].timeControls.map(
+                (timeControl) =>
+                    ({
+                        name: secToTime(timeControl),
+                        callback: () => {
+                            props.setQueing({ gameMode, timeControl });
+                        },
+                    } as Item)
+            ),
+        ];
+    });
+    const buttonPickers = [
+        Object.keys(gameModes).map((gameMode: keyof GameModes) => (
+            <GradientButtonPicker
+                items={items[gameMode]}
+                key={gameMode}
+                backgroundColors={gameModes[gameMode].backgroundColors}
+                disabled={props.disabled}
+            />
+        )),
+    ];
+
+    return <Paper customCss={timeControlsPaperCss}>{...buttonPickers}</Paper>;
 }

@@ -29,9 +29,6 @@ const gradientButtonCss = css`
         border-right: 1px solid rgba(0, 0, 0, 0.5);
         border-left: none;
     }
-    :hover {
-        box-shadow: inset 0 0 0.5em 0.5em rgba(0, 0, 0, 0.1);
-    }
 `;
 
 const titleButtonCss = css`
@@ -45,6 +42,10 @@ const titleButtonCss = css`
 const highlightedButtonCss = css`
     filter: saturate(1.2);
     filter: brightness(1.2);
+
+    :hover {
+        box-shadow: inset 0 0 0.5em 0.5em rgba(0, 0, 0, 0.1);
+    }
 `;
 
 const selectedButtonCss = css`
@@ -53,13 +54,17 @@ const selectedButtonCss = css`
     }
 `;
 
-interface Item {
+const disabledCss = css`
+    cursor: default;
+`;
+
+export interface Item {
     name: string;
     callback?: () => void;
     isTitle?: boolean;
 }
 
-type Props = { backgroundColors: [string, string]; items: Item[]; hasTitle?: boolean };
+type Props = { backgroundColors: [string, string]; items: Item[]; hasTitle?: boolean; disabled?: boolean };
 export default function GradientButtonPicker(props: Props) {
     const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
     const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null);
@@ -100,30 +105,33 @@ export default function GradientButtonPicker(props: Props) {
                         (props.items.length - 1 + index - highlightedIndex)}%
                         0%;
                 `;
+                const cssArray = [
+                    gradientButtonCss,
+                    backgroundCss,
+                    props.items.length === 2 && backgroundForTwo,
+                    backgroundPositionCss,
+                    item.isTitle && titleButtonCss,
+                    index === hoveredIndex && highlightedButtonCss,
+                    [highlightedIndex, selectedIndex].every((val) => val === index) && [
+                        highlightedButtonCss,
+                        selectedButtonCss,
+                    ],
+                    props.disabled && disabledCss,
+                ];
 
                 return (
                     <span
-                        css={[
-                            gradientButtonCss,
-                            backgroundCss,
-                            props.items.length === 2 && backgroundForTwo,
-                            backgroundPositionCss,
-                            item.isTitle && titleButtonCss,
-                            index === hoveredIndex && highlightedButtonCss,
-                            [highlightedIndex, selectedIndex].every((val) => val === index) && [
-                                selectedButtonCss,
-                                highlightedButtonCss,
-                            ],
-                        ]}
+                        css={cssArray}
                         key={index}
-                        {...(!item.isTitle && {
-                            onMouseLeave: () => setHoveredIndex(null),
-                            onMouseEnter: () => setHoveredIndex(index),
-                            onClick: () => {
-                                setSelectedIndex(index);
-                                item.callback();
-                            },
-                        })}
+                        {...(!item.isTitle &&
+                            !props.disabled && {
+                                onMouseLeave: () => setHoveredIndex(null),
+                                onMouseEnter: () => setHoveredIndex(index),
+                                onClick: () => {
+                                    setSelectedIndex(index);
+                                    item.callback();
+                                },
+                            })}
                     >
                         {item.name}
                     </span>
