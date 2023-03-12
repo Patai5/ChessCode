@@ -4,6 +4,7 @@ import React from "react";
 import { Route, Routes } from "react-router-dom";
 import Login from "./Login/Login";
 import Home from "./Home/Home";
+import ErrorQueue from "./shared/ErrorQueue/ErrorQueue";
 
 const globalCss = css`
     body {
@@ -18,6 +19,7 @@ type Props = {};
 export default function app(props: Props) {
     return (
         <>
+            <ErrorQueue />
             <Global styles={globalCss} />
             <Routes>
                 <Route path="/login" element={<Login register={false} />} />

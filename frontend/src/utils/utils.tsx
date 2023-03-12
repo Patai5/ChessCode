@@ -27,3 +27,7 @@ export function secToTime(sec: number) {
     }
     return out.trim();
 }
+
+export function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
