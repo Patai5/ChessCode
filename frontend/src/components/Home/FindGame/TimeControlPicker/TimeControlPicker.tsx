@@ -4,7 +4,7 @@ import React from "react";
 import GradientButtonPicker, { Item } from "components/shared/GradientButtonPicker";
 import Paper from "components/shared/Paper";
 import { secToTime } from "utils/utils";
-import { QueueState } from "../Queuing/Queuing";
+import { handleStartQueueingType } from "../FindGame";
 
 const timeControlsPaperCss = css`
     display: flex;
@@ -26,7 +26,7 @@ const gameModes: GameModes = {
     Rapid: { timeControls: [600, 1200, 1800], backgroundColors: ["#B84200", "#8B0086"] },
 };
 
-type Props = { setQueing: (arg0: QueueState) => void; disabled?: boolean };
+type Props = { setQueing: handleStartQueueingType; disabled?: boolean };
 export default function TimeControlPicker(props: Props) {
     const items: { [key in keyof GameModes]: Item[] } = {
         Bullet: [],

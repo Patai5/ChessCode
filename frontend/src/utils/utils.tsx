@@ -28,6 +28,10 @@ export function secToTime(sec: number) {
     return out.trim();
 }
 
+export function getBaseUri() {
+    return window.location.origin;
+}
+
 export function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }

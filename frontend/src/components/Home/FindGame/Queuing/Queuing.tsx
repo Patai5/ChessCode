@@ -6,9 +6,9 @@ import useKeypress from "utils/useKeypress";
 import TimeElapsed from "./TimeElapsed/TimeElapsed";
 import Searching from "./Searching/Searching";
 import CancelButton from "./CancelButton/CancelButton";
-import { handleStopQueuingType } from "../FindGame";
 
-const animationLength = 200;
+export const animationLength = 200;
+
 export interface QueueState {
     gameMode: string;
     timeControl: number;
@@ -34,32 +34,19 @@ const queuingCss = css`
     top: 50%;
     left: 50%;
     translate: -50% -50%;
+
+    transition: transform ${animationLength}ms ease-in-out;
+    transition-property: opacity, transform;
+    opacity: 0;
+    transform: scale(0);
 `;
 const openAnimationCss = css`
-    animation: pop-in ${animationLength}ms ease-in-out forwards;
-    @keyframes pop-in {
-        0% {
-            opacity: 0;
-            transform: scale(0);
-        }
-        100% {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
+    opacity: 1;
+    transform: scale(1);
 `;
 const closedAnimationCss = css`
-    animation: pop-out ${animationLength}ms ease-in-out forwards;
-    @keyframes pop-out {
-        0% {
-            opacity: 1;
-            transform: scale(1);
-        }
-        100% {
-            opacity: 0;
-            transform: scale(0);
-        }
-    }
+    opacity: 0;
+    transform: scale(0);
 `;
 const gameInfoCss = css`
     margin: 0;
@@ -68,19 +55,22 @@ const gameInfoCss = css`
     font-size: 1.4em;
 `;
 
-type Props = { queue: QueueState; stopQueuing: handleStopQueuingType };
+type Props = { queue: QueueState; show: boolean; stopQueuing: () => Promise<void> };
 export default function Queuing(props: Props) {
-    const [open, setOpen] = React.useState(true);
+    const [show, setShow] = React.useState(null);
+
+    React.useEffect(() => {
+        setShow(props.show);
+    }, [props.show]);
 
     const handleCancel = async () => {
-        setOpen(false);
-        await props.stopQueuing(animationLength);
+        await props.stopQueuing();
     };
 
-    useKeypress("Escape", () => handleCancel);
+    useKeypress("Escape", handleCancel);
 
     return (
-        <div css={[queuingCss, open ? openAnimationCss : closedAnimationCss]}>
+        <div css={[queuingCss, show === true && openAnimationCss, show === false && closedAnimationCss]}>
             <Searching />
             <h3 css={gameInfoCss}>
                 {props.queue.gameMode} - {secToTime(props.queue.timeControl)}
