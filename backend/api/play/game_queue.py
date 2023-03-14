@@ -1,7 +1,9 @@
-from typing import Dict, Tuple
-from .game_modes import TimeControl, GameMode, ACTIVE_GAME_MODES
+from typing import Callable, Dict, Tuple
+
 from django.contrib.auth import get_user_model
-from .game import ALL_ACTIVE_GAMES_MANAGER
+
+from .game import ALL_ACTIVE_GAMES_MANAGER, Game
+from .game_modes import ACTIVE_GAME_MODES, GameMode, TimeControl
 
 User = get_user_model()
 
@@ -65,9 +67,10 @@ class GameQueue:
 
 
 class QueuingPlayer:
-    def __init__(self, user: User, game_queue: GameQueue):
+    def __init__(self, user: User, game_queue: GameQueue, game_found_callback: Callable[[Game], None] | None = None):
         self.user = user
         self.game_queue = game_queue
+        self.game_found_callback = game_found_callback
 
     @property
     def user(self) -> User:
@@ -88,6 +91,20 @@ class QueuingPlayer:
         assert isinstance(value, GameQueue), "Game queue must be a GameQueue object"
 
         self._game_queue = value
+
+    @property
+    def game_found_callback(self) -> Callable[[Game], None] | None:
+        """Callback function to be called when a game is found. The game ID will be passed as an argument
+
+        Notifies the users that a game has been found using websockets"""
+
+        return self._game_found_callback
+
+    @game_found_callback.setter
+    def game_found_callback(self, value: Callable[[Game], None] | None):
+        assert value is None or callable(value), "Game found callback must be a callable function or None"
+
+        self._game_found_callback = value
 
 
 class GameQueueManager:
@@ -114,7 +131,7 @@ class GameQueueManager:
     def queuing_players(self, value: Dict[User, QueuingPlayer]):
         self._queuing_players = value
 
-    def add_user(self, user: User, game_queue: GameQueue):
+    def add_user(self, user: User, game_queue: GameQueue, gameFoundCallback: Callable[[Game], None] = None):
         """Adds a user to a game queue"""
         assert isinstance(user, User), "User must be a User object"
         assert isinstance(game_queue, GameQueue), "Game queue must be a GameQueue object"
@@ -122,7 +139,7 @@ class GameQueueManager:
         if self.is_player_queuing(user):
             raise ValueError("User is already in a queue")
 
-        self.queuing_players[user] = QueuingPlayer(user, game_queue)
+        self.queuing_players[user] = QueuingPlayer(user, game_queue, gameFoundCallback)
         game_queue.add_user(user)
 
         # Start a game if there are at least two players in the queue
@@ -170,8 +187,12 @@ class GameQueueManager:
         if all(player not in game_queue.queue for player in players):
             raise ValueError("Players are not in the queue")
 
-        [self.remove_user(player) for player in players]
-        ALL_ACTIVE_GAMES_MANAGER.start_game(players, game_queue.game_mode, game_queue.time_control)
+        game = ALL_ACTIVE_GAMES_MANAGER.start_game(players, game_queue.game_mode, game_queue.time_control)
+        for player in players:
+            callback = self.queuing_players[player].game_found_callback
+            if callback is not None:
+                callback(game)
+            self.remove_user(player)
 
 
 DEFAULT_GAME_QUEUES = [

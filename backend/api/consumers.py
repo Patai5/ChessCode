@@ -1,4 +1,5 @@
 import json
+
 from channels.generic.websocket import WebsocketConsumer
 from rest_framework.serializers import ReturnDict
 
@@ -8,13 +9,20 @@ class InvalidPathConsumer(WebsocketConsumer):
 
     def connect(self):
         self.accept()
-        self.close(code=4004)  # 404 Not Found
+        error(self, message="Invalid path", code=4004)  # 404 Not Found
 
 
-def error(websocket: WebsocketConsumer, message: str | ReturnDict = None, code: int = 4000):
+def error(websocket: WebsocketConsumer, message: str | ReturnDict = None, code: int = None):
     """
-    Closes the connection with the given code.
+    Sends an error message if provided, if an error code is provided, the connection will be closed with that code.
     """
+    assert isinstance(websocket, WebsocketConsumer), "websocket must be an instance of WebsocketConsumer"
+    assert (
+        message is None or isinstance(message, str) or isinstance(message, ReturnDict)
+    ), "message must be a string or ReturnDict"
+    assert code is None or isinstance(code, int), "code must be an integer"
+
     if message is not None:
         websocket.send(text_data=json.dumps({"type": "error", "message": message}))
-    websocket.close(code=code)
+    if code:
+        websocket.close(code=code)
