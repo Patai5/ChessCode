@@ -3,6 +3,7 @@ from typing import Dict, Tuple
 from django.contrib.auth import get_user_model
 
 from ..utils import genUniqueID
+from .chess_board import ChessBoard
 from .game_modes import GameMode, TimeControl
 
 User = get_user_model()
@@ -16,6 +17,8 @@ class Game:
         self.game_mode = game_mode
         self.time_control = time_control
         self.game_id = game_id
+        self.board = ChessBoard()
+        self.move = self.board.move
 
     @property
     def players(self) -> Tuple[User, User]:
@@ -59,6 +62,16 @@ class Game:
         assert value is None or len(value) == 8, "Game ID must be 8 characters long"
 
         self._game_id = value
+
+    @property
+    def board(self) -> ChessBoard:
+        return self._board
+
+    @board.setter
+    def board(self, value: ChessBoard):
+        assert isinstance(value, ChessBoard), "Board must be a ChessBoard object"
+
+        self._board = value
 
 
 class GameManager:
