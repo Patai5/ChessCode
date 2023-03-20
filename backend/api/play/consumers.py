@@ -1,10 +1,14 @@
 import json
+import re
+from typing import Any
 
+import chess
 from channels.generic.websocket import WebsocketConsumer
 
 from ..consumers import error
 from . import serializers as s
-from .game import Game
+from .chess_board import ChessBoard
+from .game import ALL_ACTIVE_GAMES_MANAGER, Game
 from .game_queue import DEFAULT_GAME_QUEUE_MANAGER
 
 
@@ -66,4 +70,84 @@ class QueueConsumer(WebsocketConsumer):
         if DEFAULT_GAME_QUEUE_MANAGER.is_player_queuing(self.user):
             DEFAULT_GAME_QUEUE_MANAGER.remove_user(self.user)
 
+        self.close(code=code)
+
+
+class GameConsumer(WebsocketConsumer):
+    def connect(self):
+        self.user = self.scope["user"]
+        self.accept()
+
+    @authenticated_user
+    def receive(self, text_data):
+        json_data = json.loads(text_data)
+        if "type" not in json_data:
+            return error(self, message="Request type is missing")
+
+        type = json_data["type"]
+        if type == "join":
+            self.join(json_data)
+        elif type == "move":
+            self.move(json_data)
+        elif type == "resign":
+            self.resign()
+        elif type == "offer_draw":
+            self.offer_draw()
+        else:
+            error(self, message="Invalid request type")
+
+    def join(self, json_data: dict):
+        if "game_id" not in json_data:
+            return error(self, message="Game ID is missing")
+
+        game_id = json_data["game_id"]
+        if not isinstance(game_id, str):
+            return error(self, message="Game ID must be a string")
+        if not len(game_id) == 8:
+            return error(self, message="Invalid game ID length, must be 8 characters long")
+        if re.search(r"[^a-zA-Z0-9]", game_id):
+            return error(self, message="Invalid game ID, must only contain alphanumeric characters")
+
+        game = ALL_ACTIVE_GAMES_MANAGER.get_game(game_id)
+        if game is None:
+            return error(self, message="There is no active game with the provided Game ID")
+
+        if not self.user in game.players:
+            return error(self, message="User is not playing in this game")
+
+        self.game = game
+        self.game.add_api_callback(self.user, self.callback_game_state)
+
+    def move(self, json_data: dict):
+        # TODO: Only allow to control your own pieces, also check if it's your turn
+        if "move" not in json_data:
+            return error(self, message="Move is missing")
+
+        move = json_data["move"]
+        if not isinstance(move, str):
+            return error(self, message="Move must be a string")
+
+        moveResult = self.game.move(move)
+        if moveResult is ChessBoard.ILLEGAL_MOVE:
+            return error(self, message="Illegal move")
+        if moveResult is chess.Outcome:
+            self.send(json.dumps({"type": "outcome", "outcome": moveResult.result()}))
+
+    def resign(self):
+        # TODO: Implement resignation of the right color
+        self.game.callback_game_result(chess.Outcome(winner=chess.WHITE, termination=chess.Termination.VARIANT_WIN))
+
+    def offer_draw(self):
+        # TODO: Implement both players accepting the draw
+        self.game.callback_game_result(chess.Outcome(winner=None, termination=chess.Termination.VARIANT_DRAW))
+
+    def callback_game_state(self, type: str, changed: Any):
+        assert type in ["move", "game_result"], "Invalid type"
+
+        if type == "move":
+            self.send(json.dumps({"type": "move", "move": changed}))
+        elif type == "game_result":
+            self.send(json.dumps({"type": "game_result", "game_result": changed}))
+
+    def disconnect(self, code):
         self.close(code=code)

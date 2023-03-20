@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TypeVar
+
 import chess
 
 
@@ -43,4 +45,4 @@ class ChessBoard:
         if outcome:
             return outcome
 
-    ILLEGAL_MOVE = "Illegal move"
+    ILLEGAL_MOVE = TypeVar("ILLEGAL_MOVE")
