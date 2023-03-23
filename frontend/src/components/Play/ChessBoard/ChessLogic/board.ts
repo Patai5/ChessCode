@@ -36,4 +36,8 @@ export class Position {
 
         return new Position(file.charCodeAt(0) - "a".charCodeAt(0), rank.charCodeAt(0) - "1".charCodeAt(0));
     };
+
+    toName = (): string => {
+        return String.fromCharCode(this.file + "a".charCodeAt(0)) + String.fromCharCode(this.rank + "1".charCodeAt(0));
+    };
 }
