@@ -129,7 +129,7 @@ export default function GradientButtonPicker(props: Props) {
                                 onMouseEnter: () => setHoveredIndex(index),
                                 onClick: () => {
                                     setSelectedIndex(index);
-                                    item.callback();
+                                    item.callback!();
                                 },
                             })}
                     >

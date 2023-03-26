@@ -57,7 +57,7 @@ const gameInfoCss = css`
 
 type Props = { queue: QueueState; show: boolean; stopQueuing: () => Promise<void> };
 export default function Queuing(props: Props) {
-    const [show, setShow] = React.useState(null);
+    const [show, setShow] = React.useState<boolean | null>(null);
 
     React.useEffect(() => {
         setShow(props.show);

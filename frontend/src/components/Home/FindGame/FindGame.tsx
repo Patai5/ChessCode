@@ -53,9 +53,11 @@ export default function FindGame(props: Props) {
 
     React.useEffect(() => {
         // Configuring the websocket
+        // TODO: Better error handling, websocket might not be created yet when already calling the api
+        // Also when the socket gets closed we should create a new one
         const ws = new WebSocket(getWSUri() + "/api/play/queue");
 
-        ws.onmessage = (e) => async () => {
+        ws.onmessage = async (e) => {
             const data = JSON.parse(e.data);
             if (isWSMessageError(e)) {
                 // If for whatever reason a user is already in a queue, we won't show an error and instead remove him from the queue
@@ -91,6 +93,7 @@ export default function FindGame(props: Props) {
         Needed for displaying an error message if the websocket is closed, which can happen at any time
      */
     const sendWSMessage = (message: string) => {
+        if (!ws) return; // TODO: Error handling
         if (ws.readyState === ws.CLOSED) {
             handleStopQueuing(false);
             ErrorQueueClass.addError({ errorMessage: "Your connection was unexpectedly closed" });

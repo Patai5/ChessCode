@@ -6,6 +6,7 @@
         "target": "es5",
         "jsx": "react-jsx",
         "allowJs": true,
+        "strictNullChecks": true,
         "allowSyntheticDefaultImports": true,
         "moduleResolution": "Node",
         "types": ["@emotion/react/types/css-prop"],

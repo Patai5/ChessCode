@@ -34,5 +34,5 @@ export default function ErrorQueue(props: Props) {
         if (nextError) setError(nextError);
     };
 
-    return error && <Error error={error} closedCallback={handleErrorClosed} />;
+    return error ? <Error error={error} closedCallback={handleErrorClosed} /> : null;
 }
