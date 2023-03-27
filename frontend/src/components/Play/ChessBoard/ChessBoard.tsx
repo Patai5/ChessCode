@@ -15,10 +15,18 @@ const FileCss = css`
     flex-flow: column-reverse;
 `;
 
+export type selectedPieceType = Piece | null;
+export type setPieceType = (piece: selectedPieceType) => void;
+
 type Props = {};
 export default function ChessBoard(props: Props) {
-    const [selectedPiece, setSelectedPiece] = React.useState<Piece | null>(null);
+    const [selectedPiece, setSelectedPiece] = React.useState<selectedPieceType>(null);
+    const [hoveringOver, setHoveringOver] = React.useState<Position | null>(null);
     const chess = new Chess();
+
+    const handleSelectPiece: setPieceType = (piece: selectedPieceType) => {
+        setSelectedPiece(piece);
+    };
 
     /** Packs all of the chessboard into an array of columns containing the rows with individual squares
     @returns {JSX.Element[]} Array of React elements containing the chessboard */
@@ -34,10 +42,13 @@ export default function ChessBoard(props: Props) {
                 rows.push(
                     <Square
                         piece={chess.board.getPiece(position)}
+                        position={position.copy()}
                         color={(position.file + position.rank) % 2 === 0 ? Color.Black : Color.White}
-                        isSelected={selectedPiece !== null && selectedPiece.position.toName() === position.toName()}
+                        isSelected={selectedPiece ? selectedPiece.position.toName() === position.toName() : false}
                         key={position.rank}
-                        setSelectedPiece={setSelectedPiece}
+                        setSelectedPiece={handleSelectPiece}
+                        hoveringOver={hoveringOver ? hoveringOver.toName() === position.toName() : false}
+                        setHoveringOver={setHoveringOver}
                     />
                 );
                 position.rank++;

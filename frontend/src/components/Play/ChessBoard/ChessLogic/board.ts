@@ -1,4 +1,4 @@
-import { Pieces, Piece } from "./pieces";
+import { Piece } from "./pieces";
 
 export interface Move {
     from: Position;
@@ -20,6 +20,8 @@ export class Board {
     };
 }
 
+export type PositionName = string;
+
 export class Position {
     constructor(file: number, rank: number) {
         this.file = file;
@@ -28,7 +30,7 @@ export class Position {
     file: number;
     rank: number;
 
-    static fromName = (name: string): Position => {
+    static fromName = (name: PositionName): Position => {
         if (name.length !== 2) throw new Error("Invalid position name length");
         const [file, rank] = [name[0], name[1]];
         if (file < "a" || file > "h") throw new Error("Invalid position file");
@@ -37,7 +39,12 @@ export class Position {
         return new Position(file.charCodeAt(0) - "a".charCodeAt(0), rank.charCodeAt(0) - "1".charCodeAt(0));
     };
 
-    toName = (): string => {
-        return String.fromCharCode(this.file + "a".charCodeAt(0)) + String.fromCharCode(this.rank + "1".charCodeAt(0));
+    toName = (): PositionName => {
+        return (String.fromCharCode(this.file + "a".charCodeAt(0)) +
+            String.fromCharCode(this.rank + "1".charCodeAt(0))) as PositionName;
+    };
+
+    copy = (): Position => {
+        return new Position(this.file, this.rank);
     };
 }

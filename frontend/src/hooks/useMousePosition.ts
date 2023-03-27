@@ -1,12 +1,12 @@
 import React from "react";
 
-const useMousePosition = () => {
+const useMousePosition = (disable: boolean = false) => {
     const [position, setPosition] = React.useState({
         clientX: 0,
         clientY: 0,
     });
 
-    const updatePosition = (event: MouseEvent) => {
+    const updatePosition = (event: MouseEvent | React.MouseEvent) => {
         const { clientX, clientY } = event;
 
         setPosition({
@@ -16,6 +16,8 @@ const useMousePosition = () => {
     };
 
     React.useEffect(() => {
+        if (disable) return;
+
         document.addEventListener("mousemove", updatePosition, false);
         document.addEventListener("mouseenter", updatePosition, false);
 
@@ -23,9 +25,9 @@ const useMousePosition = () => {
             document.removeEventListener("mousemove", updatePosition);
             document.removeEventListener("mouseenter", updatePosition);
         };
-    }, []);
+    }, [disable]);
 
-    return position;
+    return { ...position, updatePosition };
 };
 
 export default useMousePosition;
