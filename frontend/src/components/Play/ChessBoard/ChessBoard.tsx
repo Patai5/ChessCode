@@ -1,10 +1,11 @@
 /** @jsxImportSource @emotion/react */
 import { css, jsx } from "@emotion/react";
 import React from "react";
-import { Position } from "./ChessLogic/board";
+import { Position, Move } from "./ChessLogic/board";
 import Chess from "./ChessLogic/chess";
 import { Color, Piece } from "./ChessLogic/pieces";
 import Square from "./Square/Square";
+import { isPositionInMoveArray } from "./ChessLogic/utils";
 
 const ChessBoardCss = css`
     display: flex;
@@ -22,10 +23,20 @@ type Props = {};
 export default function ChessBoard(props: Props) {
     const [selectedPiece, setSelectedPiece] = React.useState<selectedPieceType>(null);
     const [hoveringOver, setHoveringOver] = React.useState<Position | null>(null);
-    const chess = new Chess();
+    const [validMoves, setValidMoves] = React.useState<Move[]>([]);
+    const chess = React.useRef(new Chess()).current;
 
     const handleSelectPiece: setPieceType = (piece: selectedPieceType) => {
         setSelectedPiece(piece);
+
+        if (piece) setValidMoves(piece.getValidMoves(chess.board));
+        else setValidMoves([]);
+    };
+    const handleMovedTo = (moveTo: Position) => {
+        const move = new Move(selectedPiece!.position, moveTo);
+
+        chess.move(move);
+        handleSelectPiece(null);
     };
 
     /** Packs all of the chessboard into an array of columns containing the rows with individual squares
@@ -45,10 +56,12 @@ export default function ChessBoard(props: Props) {
                         position={position.copy()}
                         color={(position.file + position.rank) % 2 === 0 ? Color.Black : Color.White}
                         isSelected={selectedPiece ? selectedPiece.position.toName() === position.toName() : false}
-                        key={position.rank}
+                        isValidMove={isPositionInMoveArray(position, validMoves)}
                         setSelectedPiece={handleSelectPiece}
                         hoveringOver={hoveringOver ? hoveringOver.toName() === position.toName() : false}
                         setHoveringOver={setHoveringOver}
+                        setMovedTo={handleMovedTo}
+                        key={position.rank}
                     />
                 );
                 position.rank++;

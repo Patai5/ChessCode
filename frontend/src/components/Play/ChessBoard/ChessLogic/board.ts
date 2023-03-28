@@ -1,6 +1,10 @@
 import { Piece } from "./pieces";
 
-export interface Move {
+export class Move {
+    constructor(from: Position, to: Position) {
+        this.from = from.copy();
+        this.to = to.copy();
+    }
     from: Position;
     to: Position;
 }
@@ -12,11 +16,29 @@ export class Board {
     board: (Piece | null)[];
 
     setPiece = (piece: Piece) => {
-        this.board[piece.position.rank * 8 + piece.position.file] = piece;
+        this.setPosition(piece.position, piece);
     };
 
     getPiece = (position: Position): Piece | null => {
+        if (position.isInvalid()) return null;
+        return this.getPosition(position);
+    };
+
+    getPosition = (position: Position): Piece | null => {
         return this.board[position.rank * 8 + position.file];
+    };
+
+    setPosition = (position: Position, piece: Piece | null) => {
+        this.board[position.rank * 8 + position.file] = piece;
+    };
+
+    move = (move: Move) => {
+        const pieceFrom = this.getPiece(move.from);
+        if (pieceFrom) {
+            pieceFrom.position = move.to;
+            this.setPiece(pieceFrom);
+        }
+        this.setPosition(move.from, null);
     };
 }
 
@@ -44,7 +66,15 @@ export class Position {
             String.fromCharCode(this.rank + "1".charCodeAt(0))) as PositionName;
     };
 
+    equals = (position: Position): boolean => {
+        return this.file === position.file && this.rank === position.rank;
+    };
+
     copy = (): Position => {
         return new Position(this.file, this.rank);
+    };
+
+    isInvalid = (): boolean => {
+        return this.file < 0 || this.file > 7 || this.rank < 0 || this.rank > 7;
     };
 }

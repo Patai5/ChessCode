@@ -1,4 +1,4 @@
-import { Position, Move } from "./board";
+import { Position, Move, Board } from "./board";
 
 export enum Color {
     White,
@@ -16,6 +16,17 @@ export class Piece {
     value: number;
     position: Position;
     name: string;
+
+    /**
+     * Returns a list of valid moves for this piece, given the current board state.
+     */
+    getValidMoves(board: Board): Move[] {
+        return [];
+    }
+
+    move = (move: Move) => {
+        this.position = move.to;
+    };
 }
 
 class Pawn extends Piece {
@@ -23,7 +34,46 @@ class Pawn extends Piece {
         super(color, position, 1, "Pawn");
     }
 
-    // getValidMoves(board: Board): Move[] {}
+    getValidMoves(board: Board): Move[] {
+        const moves: Move[] = [];
+
+        const moveDirection = this.color === Color.White ? 1 : -1;
+
+        // Straight forward
+        const forwardPosition = this.position.copy();
+        forwardPosition.rank += moveDirection;
+        if (!board.getPiece(forwardPosition)) {
+            moves.push(new Move(this.position, forwardPosition));
+
+            // First move can be two squares forward
+            const isWhiteEligible = this.color === Color.White && this.position.rank === 1;
+            const isBlackEligible = this.color === Color.Black && this.position.rank === 6;
+            if (isWhiteEligible || isBlackEligible) {
+                forwardPosition.rank += moveDirection;
+                if (!board.getPiece(forwardPosition)) {
+                    moves.push(new Move(this.position, forwardPosition));
+                }
+            }
+        }
+
+        // Diagonal capture
+        const leftCapture = this.position.copy();
+        leftCapture.rank += moveDirection;
+        leftCapture.file -= 1;
+
+        const rigthCapture = this.position.copy();
+        rigthCapture.rank += moveDirection;
+        rigthCapture.file += 1;
+
+        for (const position of [leftCapture, rigthCapture]) {
+            const piece = board.getPiece(position);
+            if (piece && piece.color !== this.color) {
+                moves.push(new Move(this.position, position));
+            }
+        }
+
+        return moves;
+    }
 }
 
 class Bishop extends Piece {

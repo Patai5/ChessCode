@@ -1,4 +1,4 @@
-import { Board, Position } from "./board";
+import { Board, Position, Move } from "./board";
 import { Pieces, Color } from "./pieces";
 
 export const genDefaultBoard = (): Board => {
@@ -23,4 +23,13 @@ export const genDefaultBoard = (): Board => {
     }
 
     return board;
+};
+
+export const isPositionInMoveArray = (position: Position, moveArray: Move[]) => {
+    for (const move of moveArray) {
+        if (position.equals(move.to)) {
+            return true;
+        }
+    }
+    return false;
 };

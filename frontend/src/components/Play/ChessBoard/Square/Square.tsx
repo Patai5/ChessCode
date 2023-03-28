@@ -11,6 +11,9 @@ const SquareCss = css`
     width: 3.5em;
     height: 3.5em;
 `;
+const validMoveSquareCss = css`
+    background: pink;
+`;
 
 const PieceCss = css`
     width: 100%;
@@ -41,14 +44,20 @@ type Props = {
     position: Position;
     color: Color;
     isSelected: boolean;
+    isValidMove: boolean;
     setSelectedPiece: setPieceType;
     hoveringOver: boolean;
     setHoveringOver: (position: Position | null) => void;
+    setMovedTo: (position: Position) => void;
 };
 export default function Square(props: Props) {
     const [hoveringState, setHoveringState] = React.useState(false);
     const { clientX, clientY, updatePosition } = useMousePosition(!props.isSelected);
 
+    const handleHoveringStop = () => {
+        setHoveringState(false);
+        props.setSelectedPiece(null);
+    };
     /** Sets the piece as the selected and hovering piece */
     const handleMouseDown = (e: React.MouseEvent) => {
         updatePosition(e);
@@ -56,9 +65,8 @@ export default function Square(props: Props) {
         props.setSelectedPiece(props.piece);
         document.addEventListener("mouseup", handleHoveringStop, { once: true });
     };
-    const handleHoveringStop = () => {
-        setHoveringState(false);
-        props.setSelectedPiece(null);
+    const handleMouseUp = () => {
+        if (props.isValidMove) props.setMovedTo(props.position);
     };
 
     const handleMouseOver = (e: React.MouseEvent) => {
@@ -83,15 +91,14 @@ export default function Square(props: Props) {
                 SquareCss,
                 props.color === Color.White ? WhiteColorCss : BlackColorCss,
                 props.hoveringOver && hoveringOverCss,
+                props.isValidMove && validMoveSquareCss,
             ]}
             onMouseEnter={handleMouseOver}
             onMouseLeave={handleMouseLeave}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
         >
-            <div
-                onMouseDown={handleMouseDown}
-                css={[PieceCss, props.isSelected && selectedPieceCss]}
-                style={hoveringState ? hoveringPieceCss : {}}
-            >
+            <div css={[PieceCss, props.isSelected && selectedPieceCss]} style={hoveringState ? hoveringPieceCss : {}}>
                 {props.piece && props.piece.name}
             </div>
         </div>
