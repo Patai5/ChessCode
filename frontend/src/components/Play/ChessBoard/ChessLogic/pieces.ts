@@ -80,6 +80,36 @@ class Bishop extends Piece {
     constructor(color: Color, position: Position) {
         super(color, position, 3, "Bishop");
     }
+
+    getValidMoves(board: Board): Move[] {
+        const moves: Move[] = [];
+
+        const directions = [
+            [1, 1],
+            [-1, 1],
+            [1, -1],
+            [-1, -1],
+        ];
+        for (const direction of directions) {
+            const position = this.position.copy();
+
+            while (true) {
+                position.rank += direction[0];
+                position.file += direction[1];
+
+                if (position.isInvalid()) break;
+
+                const piece = board.getPiece(position);
+                if (piece && piece.color === this.color) break;
+
+                moves.push(new Move(this.position, position));
+
+                if (piece && piece.color !== this.color) break;
+            }
+        }
+
+        return moves;
+    }
 }
 
 class Knight extends Piece {
