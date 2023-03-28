@@ -1,6 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css, jsx } from "@emotion/react";
 import React from "react";
+import CSS from "csstype";
 import { Piece, Color } from "../ChessLogic/pieces";
 import useMousePosition from "hooks/useMousePosition";
 import { setPieceType } from "../ChessBoard";
@@ -19,6 +20,7 @@ const PieceCss = css`
     display: flex;
     justify-content: center;
     align-items: center;
+    user-select: none;
 `;
 const hoveringOverCss = css`
     background: blue;
@@ -66,14 +68,14 @@ export default function Square(props: Props) {
         props.setHoveringOver(null);
     };
 
-    // TODO: Transform this outside of emotion css, it creates a new css every render and doesn't remove the old ones
-    const hoveringPieceCss = css`
-        position: fixed;
-        pointer-events: none;
-        left: ${clientX};
-        top: ${clientY};
-        transform: translate(-50%, -50%);
-    `;
+    // Can't use emotion's css prop because of performance issues with adding new style to the Head on every mouse move
+    const hoveringPieceCss: CSS.Properties = {
+        position: "fixed",
+        pointerEvents: "none",
+        left: `${clientX}px`,
+        top: `${clientY}px`,
+        transform: "translate(-50%, -50%)",
+    };
 
     return (
         <div
@@ -87,7 +89,8 @@ export default function Square(props: Props) {
         >
             <div
                 onMouseDown={handleMouseDown}
-                css={[PieceCss, props.isSelected && selectedPieceCss, hoveringState && hoveringPieceCss]}
+                css={[PieceCss, props.isSelected && selectedPieceCss]}
+                style={hoveringState ? hoveringPieceCss : {}}
             >
                 {props.piece && props.piece.name}
             </div>
