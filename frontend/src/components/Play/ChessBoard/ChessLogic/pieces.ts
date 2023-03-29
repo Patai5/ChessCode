@@ -116,6 +116,36 @@ class Knight extends Piece {
     constructor(color: Color, position: Position) {
         super(color, position, 3, "Knight");
     }
+
+    getValidMoves(board: Board): Move[] {
+        const moves: Move[] = [];
+
+        const directions = [
+            [-1, 2],
+            [1, 2],
+            [2, 1],
+            [2, -1],
+            [1, -2],
+            [-1, -2],
+            [-2, -1],
+            [-2, 1],
+        ];
+
+        for (const direction of directions) {
+            const position = this.position.copy();
+            position.rank += direction[0];
+            position.file += direction[1];
+
+            if (position.isInvalid()) continue;
+
+            const piece = board.getPiece(position);
+            if (piece && piece.color === this.color) continue;
+
+            moves.push(new Move(this.position, position));
+        }
+
+        return moves;
+    }
 }
 
 class Rook extends Piece {
