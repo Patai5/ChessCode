@@ -76,20 +76,10 @@ class Pawn extends Piece {
     }
 }
 
-class Bishop extends Piece {
-    constructor(color: Color, position: Position) {
-        super(color, position, 3, "Bishop");
-    }
-
-    getValidMoves(board: Board): Move[] {
+class SlidingPiece extends Piece {
+    getSlidingPieceMoves(board: Board, directions: number[][]) {
         const moves: Move[] = [];
 
-        const directions = [
-            [1, 1],
-            [-1, 1],
-            [1, -1],
-            [-1, -1],
-        ];
         for (const direction of directions) {
             const position = this.position.copy();
 
@@ -109,6 +99,23 @@ class Bishop extends Piece {
         }
 
         return moves;
+    }
+}
+
+class Bishop extends SlidingPiece {
+    constructor(color: Color, position: Position) {
+        super(color, position, 3, "Bishop");
+    }
+
+    getValidMoves(board: Board): Move[] {
+        const directions = [
+            [1, 1],
+            [-1, 1],
+            [1, -1],
+            [-1, -1],
+        ];
+
+        return this.getSlidingPieceMoves(board, directions);
     }
 }
 
@@ -148,9 +155,20 @@ class Knight extends Piece {
     }
 }
 
-class Rook extends Piece {
+class Rook extends SlidingPiece {
     constructor(color: Color, position: Position) {
         super(color, position, 5, "Rook");
+    }
+
+    getValidMoves(board: Board): Move[] {
+        const directions = [
+            [1, 0],
+            [-1, 0],
+            [0, 1],
+            [0, -1],
+        ];
+
+        return this.getSlidingPieceMoves(board, directions);
     }
 }
 
