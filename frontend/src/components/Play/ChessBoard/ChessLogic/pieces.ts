@@ -76,13 +76,13 @@ class Pawn extends Piece {
     }
 }
 
-type SlidingDirection = [number, number];
+type MoveDirection = [number, number];
 class SlidingPiece extends Piece {
-    constructor(directions: SlidingDirection[], ...args: ConstructorParameters<typeof Piece>) {
+    constructor(directions: MoveDirection[], ...args: ConstructorParameters<typeof Piece>) {
         super(...args);
         this.directions = directions;
     }
-    directions: SlidingDirection[];
+    directions: MoveDirection[];
 
     getValidMoves(board: Board) {
         const moves: Move[] = [];
@@ -109,38 +109,17 @@ class SlidingPiece extends Piece {
     }
 }
 
-class Bishop extends SlidingPiece {
-    constructor(color: Color, position: Position) {
-        const directions: SlidingDirection[] = [
-            [1, 1],
-            [-1, 1],
-            [1, -1],
-            [-1, -1],
-        ];
-        super(directions, color, position, 3, "Bishop");
+class JumpingPiece extends Piece {
+    constructor(directions: MoveDirection[], ...args: ConstructorParameters<typeof Piece>) {
+        super(...args);
+        this.directions = directions;
     }
-}
+    directions: MoveDirection[];
 
-class Knight extends Piece {
-    constructor(color: Color, position: Position) {
-        super(color, position, 3, "Knight");
-    }
-
-    getValidMoves(board: Board): Move[] {
+    getValidMoves(board: Board) {
         const moves: Move[] = [];
 
-        const directions = [
-            [-1, 2],
-            [1, 2],
-            [2, 1],
-            [2, -1],
-            [1, -2],
-            [-1, -2],
-            [-2, -1],
-            [-2, 1],
-        ];
-
-        for (const direction of directions) {
+        for (const direction of this.directions) {
             const position = this.position.copy();
             position.rank += direction[0];
             position.file += direction[1];
@@ -157,38 +136,58 @@ class Knight extends Piece {
     }
 }
 
+class Bishop extends SlidingPiece {
+    constructor(color: Color, position: Position) {
+        super(Bishop.directions, color, position, 3, "Bishop");
+    }
+    static directions: MoveDirection[] = [
+        [1, 1],
+        [-1, 1],
+        [1, -1],
+        [-1, -1],
+    ];
+}
+
+class Knight extends JumpingPiece {
+    constructor(color: Color, position: Position) {
+        super(Knight.directions, color, position, 3, "Knight");
+    }
+    static directions: MoveDirection[] = [
+        [-1, 2],
+        [1, 2],
+        [2, 1],
+        [2, -1],
+        [1, -2],
+        [-1, -2],
+        [-2, -1],
+        [-2, 1],
+    ];
+}
+
 class Rook extends SlidingPiece {
     constructor(color: Color, position: Position) {
-        const directions: SlidingDirection[] = [
-            [1, 0],
-            [-1, 0],
-            [0, 1],
-            [0, -1],
-        ];
-        super(directions, color, position, 5, "Rook");
+        super(Rook.directions, color, position, 5, "Rook");
     }
+    static directions: MoveDirection[] = [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+    ];
 }
 
 class Queen extends SlidingPiece {
     constructor(color: Color, position: Position) {
-        const directions: SlidingDirection[] = [
-            [1, -1],
-            [1, 0],
-            [1, 1],
-            [0, 1],
-            [-1, 1],
-            [-1, 0],
-            [-1, -1],
-            [0, -1],
-        ];
-        super(directions, color, position, 9, "Queen");
+        super(Queen.directions, color, position, 9, "Queen");
     }
+    static directions: MoveDirection[] = [...Bishop.directions, ...Rook.directions];
 }
 
-class King extends Piece {
+class King extends JumpingPiece {
     constructor(color: Color, position: Position) {
-        super(color, position, 0, "King");
+        super(King.directions, color, position, 0, "King");
     }
+    static directions: MoveDirection[] = [...Queen.directions];
 }
 
 export const Pieces = {
