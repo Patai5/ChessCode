@@ -76,11 +76,18 @@ class Pawn extends Piece {
     }
 }
 
+type SlidingDirection = [number, number];
 class SlidingPiece extends Piece {
-    getSlidingPieceMoves(board: Board, directions: number[][]) {
+    constructor(directions: SlidingDirection[], ...args: ConstructorParameters<typeof Piece>) {
+        super(...args);
+        this.directions = directions;
+    }
+    directions: SlidingDirection[];
+
+    getValidMoves(board: Board) {
         const moves: Move[] = [];
 
-        for (const direction of directions) {
+        for (const direction of this.directions) {
             const position = this.position.copy();
 
             while (true) {
@@ -104,18 +111,13 @@ class SlidingPiece extends Piece {
 
 class Bishop extends SlidingPiece {
     constructor(color: Color, position: Position) {
-        super(color, position, 3, "Bishop");
-    }
-
-    getValidMoves(board: Board): Move[] {
-        const directions = [
+        const directions: SlidingDirection[] = [
             [1, 1],
             [-1, 1],
             [1, -1],
             [-1, -1],
         ];
-
-        return this.getSlidingPieceMoves(board, directions);
+        super(directions, color, position, 3, "Bishop");
     }
 }
 
@@ -157,24 +159,29 @@ class Knight extends Piece {
 
 class Rook extends SlidingPiece {
     constructor(color: Color, position: Position) {
-        super(color, position, 5, "Rook");
-    }
-
-    getValidMoves(board: Board): Move[] {
-        const directions = [
+        const directions: SlidingDirection[] = [
             [1, 0],
             [-1, 0],
             [0, 1],
             [0, -1],
         ];
-
-        return this.getSlidingPieceMoves(board, directions);
+        super(directions, color, position, 5, "Rook");
     }
 }
 
-class Queen extends Piece {
+class Queen extends SlidingPiece {
     constructor(color: Color, position: Position) {
-        super(color, position, 9, "Queen");
+        const directions: SlidingDirection[] = [
+            [1, -1],
+            [1, 0],
+            [1, 1],
+            [0, 1],
+            [-1, 1],
+            [-1, 0],
+            [-1, -1],
+            [0, -1],
+        ];
+        super(directions, color, position, 9, "Queen");
     }
 }
 
