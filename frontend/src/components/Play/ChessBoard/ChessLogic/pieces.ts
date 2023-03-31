@@ -1,4 +1,5 @@
 import { Position, Move, Board } from "./board";
+import { getEnPassantCapturePosition } from "./utils";
 
 export enum Color {
     White,
@@ -61,13 +62,21 @@ class Pawn extends Piece {
         leftCapture.rank += moveDirection;
         leftCapture.file -= 1;
 
-        const rigthCapture = this.position.copy();
-        rigthCapture.rank += moveDirection;
-        rigthCapture.file += 1;
+        const rightCapture = this.position.copy();
+        rightCapture.rank += moveDirection;
+        rightCapture.file += 1;
 
-        for (const position of [leftCapture, rigthCapture]) {
+        for (const position of [leftCapture, rightCapture]) {
             const piece = board.getPiece(position);
             if (piece && piece.color !== this.color) {
+                moves.push(new Move(this.position, position));
+                continue;
+            }
+
+            // En passant
+            if (board.colorToPlay !== this.color) continue;
+            const enPassantPosition = getEnPassantCapturePosition(board);
+            if (enPassantPosition && enPassantPosition.equals(position)) {
                 moves.push(new Move(this.position, position));
             }
         }

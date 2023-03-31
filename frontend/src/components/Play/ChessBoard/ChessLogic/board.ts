@@ -1,4 +1,5 @@
-import { Piece } from "./pieces";
+import { Piece, Pieces, Color } from "./pieces";
+import { getEnPassantCapturePosition } from "./utils";
 
 export class Move {
     constructor(from: Position, to: Position) {
@@ -12,8 +13,12 @@ export class Move {
 export class Board {
     constructor() {
         this.board = new Array(64).fill(null);
+        this.colorToPlay = Color.White;
+        this.moves = [];
     }
     board: (Piece | null)[];
+    colorToPlay: Color;
+    moves: Move[];
 
     setPiece = (piece: Piece) => {
         this.setPosition(piece.position, piece);
@@ -32,13 +37,38 @@ export class Board {
         this.board[position.rank * 8 + position.file] = piece;
     };
 
+    handleEnPassant = (capturingPiece: Piece, move: Move) => {
+        if (!(capturingPiece instanceof Pieces.Pawn)) return;
+
+        const enPassantPosition = getEnPassantCapturePosition(this);
+        if (!enPassantPosition || !enPassantPosition.equals(move.to)) return;
+
+        const capturePosition = move.to.copy();
+        capturePosition.rank += capturingPiece.color === Color.White ? -1 : 1;
+        this.setPosition(capturePosition, null);
+    };
+
     move = (move: Move) => {
         const pieceFrom = this.getPiece(move.from);
-        if (pieceFrom) {
-            pieceFrom.position = move.to;
-            this.setPiece(pieceFrom);
-        }
+        if (!pieceFrom) throw new Error("No piece at from position");
+
+        this.handleEnPassant(pieceFrom, move);
+
+        // Removes the piece from the start position and places it at the end position
+        pieceFrom.position = move.to;
+        this.setPiece(pieceFrom);
         this.setPosition(move.from, null);
+
+        this.moves.push(move);
+        this.switchColorToPlay();
+    };
+
+    getLastMove = (): Move | null => {
+        return this.moves[this.moves.length - 1] || null;
+    };
+
+    switchColorToPlay = () => {
+        this.colorToPlay = this.colorToPlay === Color.White ? Color.Black : Color.White;
     };
 }
 
