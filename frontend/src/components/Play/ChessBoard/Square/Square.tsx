@@ -1,13 +1,14 @@
 /** @jsxImportSource @emotion/react */
 import { css, jsx } from "@emotion/react";
-import React from "react";
 import CSS from "csstype";
-import { Piece, Color } from "../ChessLogic/pieces";
 import useMousePosition from "hooks/useMousePosition";
+import React from "react";
 import { setPieceType } from "../ChessBoard";
 import { Position } from "../ChessLogic/board";
+import { Color, Piece } from "../ChessLogic/pieces";
+import PieceIcon from "../PieceIcon/PieceIcon";
 
-const SquareCss = css`
+const squareCss = css`
     width: 3.5em;
     height: 3.5em;
 `;
@@ -15,16 +16,16 @@ const validMoveSquareCss = css`
     background: pink;
 `;
 
-const PieceCss = css`
+const pieceCss = css`
     width: 100%;
     height: 100%;
-    color: darkgreen;
 
     display: flex;
     justify-content: center;
     align-items: center;
     user-select: none;
 `;
+
 const hoveringOverCss = css`
     background: blue;
 `;
@@ -32,11 +33,11 @@ const selectedPieceCss = css`
     color: yellow;
 `;
 
-const WhiteColorCss = css`
-    background-color: white;
+const whiteColorCss = css`
+    background-color: rgb(240, 217, 181);
 `;
-const BlackColorCss = css`
-    background-color: black;
+const blackColorCss = css`
+    background-color: rgb(181, 136, 99);
 `;
 
 type Props = {
@@ -88,8 +89,8 @@ export default function Square(props: Props) {
     return (
         <div
             css={[
-                SquareCss,
-                props.color === Color.White ? WhiteColorCss : BlackColorCss,
+                squareCss,
+                props.color === Color.White ? whiteColorCss : blackColorCss,
                 props.hoveringOver && hoveringOverCss,
                 props.isValidMove && validMoveSquareCss,
             ]}
@@ -98,8 +99,8 @@ export default function Square(props: Props) {
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
         >
-            <div css={[PieceCss, props.isSelected && selectedPieceCss]} style={hoveringState ? hoveringPieceCss : {}}>
-                {props.piece && props.piece.name}
+            <div css={[pieceCss, props.isSelected && selectedPieceCss]} style={hoveringState ? hoveringPieceCss : {}}>
+                {props.piece && <PieceIcon piece={props.piece} />}
             </div>
         </div>
     );

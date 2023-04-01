@@ -2,21 +2,30 @@ import { Position, Move, Board } from "./board";
 import { getEnPassantCapturePosition } from "./utils";
 
 export enum Color {
-    White,
-    Black,
+    White = "White",
+    Black = "Black",
+}
+
+export enum PiecesTypes {
+    Pawn = "Pawn",
+    Knight = "Knight",
+    Bishop = "Bishop",
+    Rook = "Rook",
+    Queen = "Queen",
+    King = "King",
 }
 
 export class Piece {
-    constructor(color: Color, position: Position, value: number, name: string) {
+    constructor(color: Color, position: Position, value: number, type: PiecesTypes) {
         this.color = color;
         this.position = position;
         this.value = value;
-        this.name = name;
+        this.type = type;
     }
     color: Color;
     value: number;
     position: Position;
-    name: string;
+    type: PiecesTypes;
 
     /**
      * Returns a list of valid moves for this piece, given the current board state.
@@ -32,7 +41,7 @@ export class Piece {
 
 class Pawn extends Piece {
     constructor(color: Color, position: Position) {
-        super(color, position, 1, "Pawn");
+        super(color, position, 1, PiecesTypes.Pawn);
     }
 
     getValidMoves(board: Board): Move[] {
@@ -147,7 +156,7 @@ class JumpingPiece extends Piece {
 
 class Bishop extends SlidingPiece {
     constructor(color: Color, position: Position) {
-        super(Bishop.directions, color, position, 3, "Bishop");
+        super(Bishop.directions, color, position, 3, PiecesTypes.Bishop);
     }
     static directions: MoveDirection[] = [
         [1, 1],
@@ -159,7 +168,7 @@ class Bishop extends SlidingPiece {
 
 class Knight extends JumpingPiece {
     constructor(color: Color, position: Position) {
-        super(Knight.directions, color, position, 3, "Knight");
+        super(Knight.directions, color, position, 3, PiecesTypes.Knight);
     }
     static directions: MoveDirection[] = [
         [-1, 2],
@@ -175,7 +184,7 @@ class Knight extends JumpingPiece {
 
 class Rook extends SlidingPiece {
     constructor(color: Color, position: Position) {
-        super(Rook.directions, color, position, 5, "Rook");
+        super(Rook.directions, color, position, 5, PiecesTypes.Rook);
     }
     static directions: MoveDirection[] = [
         [1, 0],
@@ -187,14 +196,14 @@ class Rook extends SlidingPiece {
 
 class Queen extends SlidingPiece {
     constructor(color: Color, position: Position) {
-        super(Queen.directions, color, position, 9, "Queen");
+        super(Queen.directions, color, position, 9, PiecesTypes.Queen);
     }
     static directions: MoveDirection[] = [...Bishop.directions, ...Rook.directions];
 }
 
 class King extends JumpingPiece {
     constructor(color: Color, position: Position) {
-        super(King.directions, color, position, 0, "King");
+        super(King.directions, color, position, 0, PiecesTypes.King);
     }
     static directions: MoveDirection[] = [...Queen.directions];
 }
