@@ -40,7 +40,7 @@ const blackColorCss = css`
     background-color: rgb(181, 136, 99);
 `;
 
-type Props = {
+export type Props = {
     piece: Piece | null;
     position: Position;
     color: Color;
@@ -51,6 +51,7 @@ type Props = {
     setHoveringOver: (position: Position | null) => void;
     setMovedTo: (position: Position) => void;
 };
+export type AnyProps = Partial<Pick<Props, keyof Props>>;
 export default function Square(props: Props) {
     const [hoveringState, setHoveringState] = React.useState(false);
     const { clientX, clientY, updatePosition } = useMousePosition(!props.isSelected);

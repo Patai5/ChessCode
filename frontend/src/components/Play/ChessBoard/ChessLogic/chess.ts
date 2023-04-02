@@ -1,4 +1,4 @@
-import { Board, Move } from "./board";
+import { Board, Move, MoveInfo } from "./board";
 import { genDefaultBoard } from "./utils";
 
 export default class Chess {
@@ -7,7 +7,7 @@ export default class Chess {
     }
     board: Board;
 
-    move = (move: Move) => {
-        this.board.move(move);
+    move = (move: Move): MoveInfo => {
+        return this.board.move(move);
     };
 }

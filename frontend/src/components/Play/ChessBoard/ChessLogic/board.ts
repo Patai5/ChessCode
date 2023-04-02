@@ -10,6 +10,19 @@ export class Move {
     to: Position;
 }
 
+export class MoveInfo {
+    constructor(move: Move, piece: Piece, capturedPiece: Piece | null = null, isCastle: boolean = false) {
+        this.move = move;
+        this.piece = piece;
+        this.capturedPiece = capturedPiece;
+        this.isCastle = isCastle;
+    }
+    move: Move;
+    piece: Piece;
+    capturedPiece: Piece | null;
+    isCastle: boolean;
+}
+
 export class Board {
     constructor() {
         this.board = new Array(64).fill(null);
@@ -37,22 +50,26 @@ export class Board {
         this.board[position.rank * 8 + position.file] = piece;
     };
 
-    handleEnPassant = (capturingPiece: Piece, move: Move) => {
-        if (!(capturingPiece instanceof Pieces.Pawn)) return;
+    handleEnPassant = (capturingPiece: Piece, move: Move): Piece | null => {
+        if (!(capturingPiece instanceof Pieces.Pawn)) return null;
 
         const enPassantPosition = getEnPassantCapturePosition(this);
-        if (!enPassantPosition || !enPassantPosition.equals(move.to)) return;
+        if (!enPassantPosition || !enPassantPosition.equals(move.to)) return null;
 
         const capturePosition = move.to.copy();
         capturePosition.rank += capturingPiece.color === Color.White ? -1 : 1;
+        const capturePice = this.getPiece(capturePosition);
         this.setPosition(capturePosition, null);
+
+        return capturePice;
     };
 
-    move = (move: Move) => {
+    move = (move: Move): MoveInfo => {
         const pieceFrom = this.getPiece(move.from);
         if (!pieceFrom) throw new Error("No piece at from position");
 
-        this.handleEnPassant(pieceFrom, move);
+        let capturePiece = this.handleEnPassant(pieceFrom, move);
+        if (!capturePiece) capturePiece = this.getPiece(move.to);
 
         // Removes the piece from the start position and places it at the end position
         pieceFrom.position = move.to;
@@ -61,6 +78,8 @@ export class Board {
 
         this.moves.push(move);
         this.switchColorToPlay();
+
+        return new MoveInfo(move, pieceFrom, capturePiece);
     };
 
     getLastMove = (): Move | null => {
