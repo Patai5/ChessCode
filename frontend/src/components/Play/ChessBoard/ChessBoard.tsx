@@ -21,7 +21,7 @@ export type setPieceType = (piece: selectedPieceType) => void;
 type chessboardRowElement = React.ReactElement<squareProps>[];
 type chessboardElement = chessboardRowElement[];
 
-type Props = {};
+type Props = { color: Color };
 export default function ChessBoard(props: Props) {
     let selectedPiece = React.useRef<selectedPieceType>(null).current;
     let hoveringOver = React.useRef<Position | null>(null).current;
@@ -32,14 +32,22 @@ export default function ChessBoard(props: Props) {
         chessboard: chessboardElement,
         position: Position
     ): React.ReactElement<squareProps> => {
-        return chessboard[position.file][position.rank];
+        if (props.color === Color.White) {
+            return chessboard[position.file][position.rank];
+        } else {
+            return chessboard[7 - position.file][7 - position.rank];
+        }
     };
     const setSquareToPosition = (
         chessboard: chessboardElement,
         position: Position,
         square: React.ReactElement<squareProps>
     ) => {
-        chessboard[position.file][position.rank] = square;
+        if (props.color === Color.White) {
+            chessboard[position.file][position.rank] = square;
+        } else {
+            chessboard[7 - position.file][7 - position.rank] = square;
+        }
     };
 
     const updateSquaresProps = (chessboard: chessboardElement, position: Position, propsToUpdate: squareAnyProps) => {
@@ -135,6 +143,7 @@ export default function ChessBoard(props: Props) {
                 />
             );
         }
+        if (props.color === Color.Black) squares.reverse();
         return squares;
     };
     /** Packs all of the chessboard into an array of columns containing the rows with individual squares
@@ -144,6 +153,7 @@ export default function ChessBoard(props: Props) {
         for (let file = 0; file < 8; file++) {
             files.push(makeRow(file));
         }
+        if (props.color === Color.Black) files.reverse();
         return files;
     };
 
