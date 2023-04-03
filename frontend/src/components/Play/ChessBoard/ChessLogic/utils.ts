@@ -33,19 +33,3 @@ export const isPositionInMoveArray = (position: Position, moveArray: Move[]) => 
     }
     return false;
 };
-
-/** Returns a Position object of where the en passant capture should take place.
- *  Returns null when there was no en passant. */
-export const getEnPassantCapturePosition = (board: Board): Position | null => {
-    const lastMove = board.getLastMove();
-    if (!lastMove) return null;
-
-    const lastPiece = board.getPiece(lastMove.to);
-    if (!lastPiece) return null;
-    if (!(lastPiece instanceof Pieces.Pawn)) return null;
-    if (Math.abs(lastMove.from.rank - lastMove.to.rank) !== 2) return null;
-
-    const capturePosition = lastMove.from.copy();
-    capturePosition.rank = lastMove.from.rank + (lastMove.to.rank - lastMove.from.rank) / 2;
-    return capturePosition;
-};

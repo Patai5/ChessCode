@@ -1,5 +1,4 @@
 import { Piece, Pieces, Color } from "./pieces";
-import { getEnPassantCapturePosition } from "./utils";
 
 export class Move {
     constructor(from: Position, to: Position) {
@@ -53,15 +52,14 @@ export class Board {
     handleEnPassant = (capturingPiece: Piece, move: Move): Piece | null => {
         if (!(capturingPiece instanceof Pieces.Pawn)) return null;
 
-        const enPassantPosition = getEnPassantCapturePosition(this);
+        const enPassantPosition = this.getEnPassantCapturePosition();
         if (!enPassantPosition || !enPassantPosition.equals(move.to)) return null;
 
-        const capturePosition = move.to.copy();
-        capturePosition.rank += capturingPiece.color === Color.White ? -1 : 1;
-        const capturePice = this.getPiece(capturePosition);
-        this.setPosition(capturePosition, null);
+        const capturePiece = this.getEnPassantCapturePiece();
+        if (!capturePiece) return null;
+        this.setPosition(capturePiece.position, null);
 
-        return capturePice;
+        return capturePiece;
     };
 
     move = (move: Move): MoveInfo => {
@@ -88,6 +86,45 @@ export class Board {
 
     switchColorToPlay = () => {
         this.colorToPlay = this.colorToPlay === Color.White ? Color.Black : Color.White;
+    };
+
+    getAttackedSquares = (color: Color): Position[] => {
+        const attackedSquares: Map<PositionName, Position | NonLegalPosition> = new Map();
+        this.board.forEach((piece) => {
+            if (!piece || piece.color !== color) return;
+            piece.getAttackedSquares(this).forEach((position) => {
+                attackedSquares.set(position.toName(), position);
+            });
+        });
+        return Array.from(attackedSquares.values());
+    };
+
+    /** Returns a Position object of where the en passant capture should take place.
+     *  Returns null when there was no en passant. */
+    getEnPassantCapturePosition = (): Position | null => {
+        const lastMove = this.getLastMove();
+        if (!lastMove) return null;
+
+        const lastPiece = this.getPiece(lastMove.to);
+        if (!lastPiece) return null;
+        if (!(lastPiece instanceof Pieces.Pawn)) return null;
+        if (Math.abs(lastMove.from.rank - lastMove.to.rank) !== 2) return null;
+
+        const capturePosition = lastMove.from.copy();
+        capturePosition.rank = lastMove.from.rank + (lastMove.to.rank - lastMove.from.rank) / 2;
+        return capturePosition;
+    };
+
+    /** Returns a Piece object of the piece that will be captured in the en passant.
+     *  Returns null when there was no en passant. */
+    getEnPassantCapturePiece = (): Piece | null => {
+        const enPassantPosition = this.getEnPassantCapturePosition();
+        if (!enPassantPosition) return null;
+
+        const moveDirection = this.colorToPlay === Color.White ? -1 : 1;
+        enPassantPosition.rank += moveDirection;
+
+        return this.getPiece(enPassantPosition);
     };
 }
 
@@ -126,4 +163,14 @@ export class Position {
     isInvalid = (): boolean => {
         return this.file < 0 || this.file > 7 || this.rank < 0 || this.rank > 7;
     };
+
+    isInArray = (positions: Position[]): boolean => {
+        return positions.some((position) => this.equals(position));
+    };
+}
+
+export class NonLegalPosition extends Position {
+    constructor(file: number, rank: number) {
+        super(file, rank);
+    }
 }

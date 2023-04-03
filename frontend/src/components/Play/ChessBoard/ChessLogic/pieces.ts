@@ -1,5 +1,4 @@
-import { Position, Move, Board } from "./board";
-import { getEnPassantCapturePosition } from "./utils";
+import { Position, NonLegalPosition, Move, Board } from "./board";
 
 export enum Color {
     White = "White",
@@ -37,11 +36,51 @@ export class Piece {
     move = (move: Move) => {
         this.position = move.to;
     };
+
+    /**
+     * Returns a list of squares attacked by this piece, given the current board state.
+     * - This can also include non-legal positions to move to. However those are still considered attacked.
+     */
+    getAttackedSquares(board: Board): (Position | NonLegalPosition)[] {
+        return [];
+    }
 }
 
 class Pawn extends Piece {
     constructor(color: Color, position: Position) {
         super(color, position, 1, PiecesTypes.Pawn);
+    }
+
+    getAttackedSquares(board: Board): (Position | NonLegalPosition)[] {
+        const attackedSquares: (Position | NonLegalPosition)[] = [];
+
+        const moveDirection = this.color === Color.White ? 1 : -1;
+
+        // Diagonal capture
+        const leftCapture = this.position.copy();
+        leftCapture.rank += moveDirection;
+        leftCapture.file -= 1;
+
+        const rightCapture = this.position.copy();
+        rightCapture.rank += moveDirection;
+        rightCapture.file += 1;
+
+        for (const position of [leftCapture, rightCapture]) {
+            if (position.isInvalid()) continue;
+            const piece = board.getPiece(position);
+            if (piece && piece.color !== this.color) {
+                attackedSquares.push(position);
+                continue;
+            }
+            const enPassantPosition = board.getEnPassantCapturePosition();
+            if (enPassantPosition && enPassantPosition.equals(position)) {
+                attackedSquares.push(position);
+                continue;
+            }
+            attackedSquares.push(new NonLegalPosition(position.file, position.rank));
+        }
+
+        return attackedSquares;
     }
 
     getValidMoves(board: Board): Move[] {
@@ -66,29 +105,12 @@ class Pawn extends Piece {
             }
         }
 
-        // Diagonal capture
-        const leftCapture = this.position.copy();
-        leftCapture.rank += moveDirection;
-        leftCapture.file -= 1;
-
-        const rightCapture = this.position.copy();
-        rightCapture.rank += moveDirection;
-        rightCapture.file += 1;
-
-        for (const position of [leftCapture, rightCapture]) {
-            const piece = board.getPiece(position);
-            if (piece && piece.color !== this.color) {
-                moves.push(new Move(this.position, position));
-                continue;
-            }
-
-            // En passant
-            if (board.colorToPlay !== this.color) continue;
-            const enPassantPosition = getEnPassantCapturePosition(board);
-            if (enPassantPosition && enPassantPosition.equals(position)) {
-                moves.push(new Move(this.position, position));
-            }
-        }
+        const attackedSquares = this.getAttackedSquares(board);
+        attackedSquares
+            .filter((square) => square.constructor === Position)
+            .forEach((square) => {
+                moves.push(new Move(this.position, square));
+            });
 
         return moves;
     }
@@ -102,28 +124,41 @@ class SlidingPiece extends Piece {
     }
     directions: MoveDirection[];
 
-    getValidMoves(board: Board) {
-        const moves: Move[] = [];
+    getAttackedSquares(board: Board): (Position | NonLegalPosition)[] {
+        const attackedSquares: (Position | NonLegalPosition)[] = [];
 
         for (const direction of this.directions) {
-            const position = this.position.copy();
+            const currentPosition = this.position.copy();
 
             while (true) {
-                position.rank += direction[0];
-                position.file += direction[1];
+                currentPosition.rank += direction[0];
+                currentPosition.file += direction[1];
+                const position = currentPosition.copy();
 
                 if (position.isInvalid()) break;
 
                 const piece = board.getPiece(position);
-                if (piece && piece.color === this.color) break;
-
-                moves.push(new Move(this.position, position));
-
-                if (piece && piece.color !== this.color) break;
+                if (!piece) attackedSquares.push(position);
+                else if (piece.color !== this.color) {
+                    attackedSquares.push(position);
+                    // If the piece is an enemy king, continue so that we can x-ray attack the squares behind it
+                    if (piece.type !== PiecesTypes.King) break;
+                }
+                // Friendly piece found on this square, stop attacking
+                else {
+                    attackedSquares.push(new NonLegalPosition(position.file, position.rank));
+                    break;
+                }
             }
         }
 
-        return moves;
+        return attackedSquares;
+    }
+
+    getValidMoves(board: Board) {
+        return this.getAttackedSquares(board)
+            .filter((square) => square.constructor === Position)
+            .map((square) => new Move(this.position, square));
     }
 }
 
@@ -134,23 +169,30 @@ class JumpingPiece extends Piece {
     }
     directions: MoveDirection[];
 
-    getValidMoves(board: Board) {
-        const moves: Move[] = [];
+    getAttackedSquares(board: Board): (Position | NonLegalPosition)[] {
+        const attackedSquares: (Position | NonLegalPosition)[] = [];
 
         for (const direction of this.directions) {
             const position = this.position.copy();
             position.rank += direction[0];
             position.file += direction[1];
-
             if (position.isInvalid()) continue;
 
             const piece = board.getPiece(position);
-            if (piece && piece.color === this.color) continue;
-
-            moves.push(new Move(this.position, position));
+            if (piece && piece.color === this.color) {
+                attackedSquares.push(new NonLegalPosition(position.file, position.rank));
+                continue;
+            }
+            attackedSquares.push(position);
         }
 
-        return moves;
+        return attackedSquares;
+    }
+
+    getValidMoves(board: Board) {
+        return this.getAttackedSquares(board)
+            .filter((square) => square.constructor === Position)
+            .map((square) => new Move(this.position, square));
     }
 }
 
@@ -206,6 +248,13 @@ class King extends JumpingPiece {
         super(King.directions, color, position, 0, PiecesTypes.King);
     }
     static directions: MoveDirection[] = [...Queen.directions];
+
+    getValidMoves(board: Board) {
+        const pseudoLegalMoves = super.getValidMoves(board);
+        const attackedSquares = board.getAttackedSquares(this.color === Color.White ? Color.Black : Color.White);
+        attackedSquares.forEach((square) => console.log(square.toName()));
+        return pseudoLegalMoves.filter((move) => !move.to.isInArray(attackedSquares));
+    }
 }
 
 export const Pieces = {
