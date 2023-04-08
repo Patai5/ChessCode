@@ -22,15 +22,30 @@ export class MoveInfo {
     isCastle: boolean;
 }
 
+type KingType = InstanceType<typeof Pieces.King>;
 export class Board {
-    constructor() {
+    constructor(pieces: Piece[]) {
         this.board = new Array(64).fill(null);
         this.colorToPlay = Color.White;
         this.moves = [];
+
+        let whiteKing: KingType | null = null;
+        let blackKing: KingType | null = null;
+        for (const piece of pieces) {
+            if (piece instanceof Pieces.King)
+                if (piece.color === Color.White) whiteKing = piece;
+                else blackKing = piece;
+
+            this.setPiece(piece);
+        }
+
+        if (!whiteKing || !blackKing) throw Error("Board must have kings of both colors");
+        this.kings = { [Color.White]: whiteKing, [Color.Black]: blackKing };
     }
     board: (Piece | null)[];
     colorToPlay: Color;
-    moves: Move[];
+    moves: MoveInfo[];
+    kings: Record<Color, KingType>;
 
     setPiece = (piece: Piece) => {
         this.setPosition(piece.position, piece);
@@ -74,14 +89,17 @@ export class Board {
         this.setPiece(pieceFrom);
         this.setPosition(move.from, null);
 
-        this.moves.push(move);
+        const moveInfo = new MoveInfo(move, pieceFrom, capturePiece);
+        this.moves.push(moveInfo);
+
         this.switchColorToPlay();
 
-        return new MoveInfo(move, pieceFrom, capturePiece);
+        return moveInfo;
     };
 
     getLastMove = (): Move | null => {
-        return this.moves[this.moves.length - 1] || null;
+        if (this.moves.length === 0) return null;
+        return this.moves[this.moves.length - 1].move;
     };
 
     switchColorToPlay = () => {
@@ -125,6 +143,31 @@ export class Board {
         enPassantPosition.rank += moveDirection;
 
         return this.getPiece(enPassantPosition);
+    };
+
+    undoMove = () => {
+        const lastMove = this.moves.pop();
+        if (!lastMove) return;
+
+        this.setPosition(lastMove.move.to, lastMove.capturedPiece);
+
+        lastMove.piece.position = lastMove.move.from;
+        this.setPiece(lastMove.piece);
+
+        this.switchColorToPlay();
+    };
+
+    testMoveCheck = (move: Move): boolean => {
+        const king = this.kings[this.colorToPlay];
+        this.move(move);
+
+        let isCheck = false;
+        for (const attackedPosition of this.getAttackedSquares(this.colorToPlay)) {
+            if (attackedPosition.equals(king.position)) isCheck = true;
+        }
+
+        this.undoMove();
+        return isCheck;
     };
 }
 

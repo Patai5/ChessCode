@@ -1,9 +1,7 @@
 import { Board, Position, Move } from "./board";
-import { Pieces, Color } from "./pieces";
+import { Piece, Pieces, Color } from "./pieces";
 
 export const genDefaultBoard = (): Board => {
-    const board = new Board();
-
     const defaultPieceOrder = [
         Pieces.Rook,
         Pieces.Knight,
@@ -15,14 +13,15 @@ export const genDefaultBoard = (): Board => {
         Pieces.Rook,
     ];
 
+    const pieces: Piece[] = [];
     for (let i = 0; i < 8; i++) {
-        board.setPiece(new defaultPieceOrder[i](Color.White, new Position(i, 0)));
-        board.setPiece(new Pieces.Pawn(Color.White, new Position(i, 1)));
-        board.setPiece(new Pieces.Pawn(Color.Black, new Position(i, 6)));
-        board.setPiece(new defaultPieceOrder[i](Color.Black, new Position(i, 7)));
+        pieces.push(new defaultPieceOrder[i](Color.White, new Position(i, 0)));
+        pieces.push(new Pieces.Pawn(Color.White, new Position(i, 1)));
+        pieces.push(new Pieces.Pawn(Color.Black, new Position(i, 6)));
+        pieces.push(new defaultPieceOrder[i](Color.Black, new Position(i, 7)));
     }
 
-    return board;
+    return new Board(pieces);
 };
 
 export const isPositionInMoveArray = (position: Position, moveArray: Move[]) => {

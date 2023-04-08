@@ -33,6 +33,13 @@ export class Piece {
         return [];
     }
 
+    /**
+     * Exclude any moves from the `moves` parameter that would result in the player's king getting checked.
+     */
+    filterOutCheckMoves = (board: Board, moves: Move[]): Move[] => {
+        return moves.filter((move) => !board.testMoveCheck(move));
+    };
+
     move = (move: Move) => {
         this.position = move.to;
     };
@@ -112,7 +119,7 @@ class Pawn extends Piece {
                 moves.push(new Move(this.position, square));
             });
 
-        return moves;
+        return this.filterOutCheckMoves(board, moves);
     }
 }
 
@@ -156,9 +163,10 @@ class SlidingPiece extends Piece {
     }
 
     getValidMoves(board: Board) {
-        return this.getAttackedSquares(board)
+        const moves = this.getAttackedSquares(board)
             .filter((square) => square.constructor === Position)
             .map((square) => new Move(this.position, square));
+        return this.filterOutCheckMoves(board, moves);
     }
 }
 
@@ -190,9 +198,10 @@ class JumpingPiece extends Piece {
     }
 
     getValidMoves(board: Board) {
-        return this.getAttackedSquares(board)
+        const moves = this.getAttackedSquares(board)
             .filter((square) => square.constructor === Position)
             .map((square) => new Move(this.position, square));
+        return this.filterOutCheckMoves(board, moves);
     }
 }
 
@@ -248,13 +257,6 @@ class King extends JumpingPiece {
         super(King.directions, color, position, 0, PiecesTypes.King);
     }
     static directions: MoveDirection[] = [...Queen.directions];
-
-    getValidMoves(board: Board) {
-        const pseudoLegalMoves = super.getValidMoves(board);
-        const attackedSquares = board.getAttackedSquares(this.color === Color.White ? Color.Black : Color.White);
-        attackedSquares.forEach((square) => console.log(square.toName()));
-        return pseudoLegalMoves.filter((move) => !move.to.isInArray(attackedSquares));
-    }
 }
 
 export const Pieces = {
