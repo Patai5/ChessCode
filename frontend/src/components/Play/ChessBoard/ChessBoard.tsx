@@ -1,11 +1,11 @@
 /** @jsxImportSource @emotion/react */
 import { css, jsx } from "@emotion/react";
 import React from "react";
-import { Position, Move, MoveInfo } from "./ChessLogic/board";
+import { Position, Move, MoveInfo, CastlingFiles } from "./ChessLogic/board";
 import Chess from "./ChessLogic/chess";
 import { Color, Piece } from "./ChessLogic/pieces";
 import Square, { Props as squareProps, AnyProps as squareAnyProps } from "./Square/Square";
-import { isPositionInMoveArray } from "./ChessLogic/utils";
+import { isPositionInMoves } from "./ChessLogic/utils";
 
 const ChessBoardCss = css`
     display: flex;
@@ -90,6 +90,18 @@ export default function ChessBoard(props: Props) {
         setChessboard(updatedChessboard);
     };
 
+    const handleUpdateCastling = (chessboard: chessboardElement, moveInfo: MoveInfo) => {
+        if (!moveInfo.castleSide) return;
+
+        const rookFromPosition = moveInfo.piece.position.copy();
+        const rookToPosition = moveInfo.piece.position.copy();
+        rookFromPosition.file = CastlingFiles[moveInfo.castleSide].rookFrom;
+        rookToPosition.file = CastlingFiles[moveInfo.castleSide].rookTo;
+
+        updateSquaresProps(chessboard, rookFromPosition, { piece: null });
+        updateSquaresProps(chessboard, rookToPosition, { piece: chess.board.getPiece(rookToPosition) });
+    };
+
     const handleUpdateMove = (moveInfo: MoveInfo) => {
         const updatedChessboard = [...chessboard];
         // Remove the captured piece
@@ -99,6 +111,8 @@ export default function ChessBoard(props: Props) {
         // Update the piece's position
         updateSquaresProps(chessboard, moveInfo.move.from, { piece: null });
         updateSquaresProps(chessboard, moveInfo.move.to, { piece: moveInfo.piece });
+
+        handleUpdateCastling(chessboard, moveInfo);
 
         setChessboard(updatedChessboard);
     };
@@ -134,7 +148,7 @@ export default function ChessBoard(props: Props) {
                     position={position.copy()}
                     color={(position.file + position.rank) % 2 === 0 ? Color.Black : Color.White}
                     isSelected={selectedPiece ? selectedPiece.position.toName() === position.toName() : false}
-                    isValidMove={isPositionInMoveArray(position, validMoves)}
+                    isValidMove={isPositionInMoves(position, validMoves)}
                     setSelectedPiece={handleSelectPiece}
                     hoveringOver={hoveringOver ? hoveringOver.toName() === position.toName() : false}
                     setHoveringOver={handleHoveringOver}

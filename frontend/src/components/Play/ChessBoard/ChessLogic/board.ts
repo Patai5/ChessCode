@@ -1,4 +1,5 @@
 import { Piece, Pieces, Color } from "./pieces";
+import { isPositionInPositions } from "./utils";
 
 export class Move {
     constructor(from: Position, to: Position) {
@@ -10,16 +11,24 @@ export class Move {
 }
 
 export class MoveInfo {
-    constructor(move: Move, piece: Piece, capturedPiece: Piece | null = null, isCastle: boolean = false) {
+    constructor(
+        move: Move,
+        piece: Piece,
+        capturedPiece: Piece | null = null,
+        castleSide: CastleSide | null,
+        castlingRights: CastlingRights
+    ) {
         this.move = move;
         this.piece = piece;
         this.capturedPiece = capturedPiece;
-        this.isCastle = isCastle;
+        this.castleSide = castleSide;
+        this.castlingRights = castlingRights;
     }
     move: Move;
     piece: Piece;
     capturedPiece: Piece | null;
-    isCastle: boolean;
+    castleSide: CastleSide | null = null;
+    castlingRights: CastlingRights;
 }
 
 type KingType = InstanceType<typeof Pieces.King>;
@@ -41,11 +50,13 @@ export class Board {
 
         if (!whiteKing || !blackKing) throw Error("Board must have kings of both colors");
         this.kings = { [Color.White]: whiteKing, [Color.Black]: blackKing };
+        this.castlingRights = new CastlingRights();
     }
     board: (Piece | null)[];
     colorToPlay: Color;
     moves: MoveInfo[];
     kings: Record<Color, KingType>;
+    castlingRights: CastlingRights;
 
     setPiece = (piece: Piece) => {
         this.setPosition(piece.position, piece);
@@ -77,6 +88,43 @@ export class Board {
         return capturePiece;
     };
 
+    updateCastlingRights = (pieceFrom: Piece, move: Move) => {
+        if (pieceFrom instanceof Pieces.King) {
+            this.castlingRights[pieceFrom.color][CastleSide.King] = false;
+            this.castlingRights[pieceFrom.color][CastleSide.Queen] = false;
+            return;
+        }
+        if (!(pieceFrom instanceof Pieces.Rook)) return;
+
+        // Rook must be on the original rank
+        if (pieceFrom.color === Color.White && move.from.rank !== 0) return;
+        if (pieceFrom.color === Color.Black && move.from.rank !== 7) return;
+
+        const updateQueen = move.from.file === CastlingFiles[CastleSide.Queen].rookFrom ? CastleSide.Queen : null;
+        const updateKing = move.from.file === CastlingFiles[CastleSide.King].rookFrom ? CastleSide.King : null;
+        if (!updateQueen && !updateKing) return;
+        this.castlingRights[pieceFrom.color][(updateQueen || updateKing) as CastleSide.Queen | CastleSide.King] = false;
+    };
+
+    handleCastling = (pieceFrom: Piece, move: Move): CastleSide | null => {
+        this.updateCastlingRights(pieceFrom, move);
+
+        if (!(pieceFrom instanceof Pieces.King)) return null;
+        if (Math.abs(move.from.file - move.to.file) !== 2) return null;
+
+        const castleSide = move.from.file < move.to.file ? CastleSide.King : CastleSide.Queen;
+
+        const rookPosition = move.from.copy();
+        rookPosition.file = CastlingFiles[castleSide].rookFrom;
+        const rook = this.getPiece(rookPosition)!;
+
+        this.setPosition(rook.position, null);
+        rook.position.file = CastlingFiles[castleSide].rookTo;
+        this.setPiece(rook);
+
+        return castleSide;
+    };
+
     move = (move: Move): MoveInfo => {
         const pieceFrom = this.getPiece(move.from);
         if (!pieceFrom) throw new Error("No piece at from position");
@@ -84,12 +132,15 @@ export class Board {
         let capturePiece = this.handleEnPassant(pieceFrom, move);
         if (!capturePiece) capturePiece = this.getPiece(move.to);
 
+        const catlingRights = this.castlingRights.copy();
+        const CastleSide = this.handleCastling(pieceFrom, move);
+
         // Removes the piece from the start position and places it at the end position
         pieceFrom.position = move.to;
         this.setPiece(pieceFrom);
         this.setPosition(move.from, null);
 
-        const moveInfo = new MoveInfo(move, pieceFrom, capturePiece);
+        const moveInfo = new MoveInfo(move, pieceFrom, capturePiece, CastleSide, catlingRights);
         this.moves.push(moveInfo);
 
         this.switchColorToPlay();
@@ -145,9 +196,27 @@ export class Board {
         return this.getPiece(enPassantPosition);
     };
 
+    handleUndoCastling = (lastMove: MoveInfo) => {
+        this.castlingRights = lastMove.castlingRights;
+        if (!lastMove.castleSide) return;
+
+        const rookPosition = lastMove.piece.position.copy();
+        const rookPositionTo = lastMove.piece.position.copy();
+        rookPosition.file = CastlingFiles[lastMove.castleSide].rookFrom;
+        rookPositionTo.file = CastlingFiles[lastMove.castleSide].rookTo;
+
+        const rook = this.getPiece(rookPosition)!;
+        this.setPosition(rookPosition, null);
+
+        rook.position = rookPositionTo;
+        this.setPiece(rook);
+    };
+
     undoMove = () => {
         const lastMove = this.moves.pop();
         if (!lastMove) return;
+
+        this.handleUndoCastling(lastMove);
 
         this.setPosition(lastMove.move.to, lastMove.capturedPiece);
 
@@ -161,13 +230,37 @@ export class Board {
         const king = this.kings[this.colorToPlay];
         this.move(move);
 
-        let isCheck = false;
-        for (const attackedPosition of this.getAttackedSquares(this.colorToPlay)) {
-            if (attackedPosition.equals(king.position)) isCheck = true;
-        }
+        let isCheck = isPositionInPositions(king.position, this.getAttackedSquares(this.colorToPlay));
 
         this.undoMove();
         return isCheck;
+    };
+}
+
+export enum CastleSide {
+    King = "King",
+    Queen = "Queen",
+}
+export const CastlingFiles = {
+    [CastleSide.King]: { kingTo: 6, rookFrom: 7, rookTo: 5 },
+    [CastleSide.Queen]: { kingTo: 2, rookFrom: 0, rookTo: 3 },
+};
+class CastlingRights {
+    constructor() {
+        this[Color.White] = { [CastleSide.King]: true, [CastleSide.Queen]: true };
+        this[Color.Black] = { [CastleSide.King]: true, [CastleSide.Queen]: true };
+    }
+    [Color.White]: { [key in CastleSide]: boolean };
+    [Color.Black]: { [key in CastleSide]: boolean };
+
+    copy = (): CastlingRights => {
+        const newCastlingRights = new CastlingRights();
+        for (const color of Object.values(Color)) {
+            for (const side of Object.values(CastleSide)) {
+                newCastlingRights[color][side] = this[color][side];
+            }
+        }
+        return newCastlingRights;
     };
 }
 

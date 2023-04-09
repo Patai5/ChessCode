@@ -24,11 +24,22 @@ export const genDefaultBoard = (): Board => {
     return new Board(pieces);
 };
 
-export const isPositionInMoveArray = (position: Position, moveArray: Move[]) => {
-    for (const move of moveArray) {
-        if (position.equals(move.to)) {
+export const isPositionInMoves = (position: Position, moveArray: Move[]) => {
+    return isPositionInPositions(
+        position,
+        moveArray.map((move) => move.to)
+    );
+};
+
+export const isPositionInPositions = (position: Position, positionArray: Position[]) => {
+    for (const pos of positionArray) {
+        if (position.equals(pos)) {
             return true;
         }
     }
     return false;
+};
+
+export const getOppositeColor = (color: Color) => {
+    return color === Color.White ? Color.Black : Color.White;
 };

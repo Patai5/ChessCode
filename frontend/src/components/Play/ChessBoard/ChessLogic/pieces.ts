@@ -1,4 +1,5 @@
-import { Position, NonLegalPosition, Move, Board } from "./board";
+import { Position, NonLegalPosition, Move, Board, CastleSide } from "./board";
+import { getOppositeColor, isPositionInPositions } from "./utils";
 
 export enum Color {
     White = "White",
@@ -257,6 +258,39 @@ class King extends JumpingPiece {
         super(King.directions, color, position, 0, PiecesTypes.King);
     }
     static directions: MoveDirection[] = [...Queen.directions];
+
+    getValidMoves(board: Board) {
+        const moves = super.getValidMoves(board);
+        const attackedSquares = board.getAttackedSquares(getOppositeColor(this.color));
+        if (isPositionInPositions(this.position, attackedSquares)) return moves;
+
+        // Castling to the king side
+        if (board.castlingRights[this.color][CastleSide.King]) {
+            const position = this.position.copy();
+            let canCastle = true;
+            for (let i = 0; i < 2; i++) {
+                position.file++;
+                if (board.getPiece(position)) canCastle = false;
+                if (isPositionInPositions(position, attackedSquares)) canCastle = false;
+            }
+            if (canCastle) moves.push(new Move(this.position, position));
+        }
+        // Castling to the queen side
+        if (board.castlingRights[this.color][CastleSide.Queen]) {
+            const position = this.position.copy();
+            for (let i = 0; i < 2; i++) {
+                position.file--;
+                if (board.getPiece(position)) return moves;
+                if (isPositionInPositions(position, attackedSquares)) return moves;
+            }
+            position.file--;
+            if (board.getPiece(position)) return moves;
+            position.file++;
+            moves.push(new Move(this.position, position));
+        }
+
+        return moves;
+    }
 }
 
 export const Pieces = {
