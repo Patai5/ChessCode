@@ -5,7 +5,7 @@ import useMousePosition from "hooks/useMousePosition";
 import React from "react";
 import { setPieceType } from "../ChessBoard";
 import { Position } from "../ChessLogic/board";
-import { Color, Piece } from "../ChessLogic/pieces";
+import { Color, Piece, PieceColorType } from "../ChessLogic/pieces";
 import PieceIcon from "../PieceIcon/PieceIcon";
 
 const squareCss = css`
@@ -32,6 +32,9 @@ const hoveringOverCss = css`
 const selectedPieceCss = css`
     color: yellow;
 `;
+const promotionSelectPieceCss = css`
+    background: red;
+`;
 
 const whiteColorCss = css`
     background-color: rgb(240, 217, 181);
@@ -50,6 +53,8 @@ export type Props = {
     hoveringOver: boolean;
     setHoveringOver: (position: Position | null) => void;
     setMovedTo: (position: Position) => void;
+    promotionPiece: PieceColorType | null;
+    setPromotionPiece: (selectedPosition: Position | null) => void;
 };
 export type AnyProps = Partial<Pick<Props, keyof Props>>;
 export default function Square(props: Props) {
@@ -62,6 +67,8 @@ export default function Square(props: Props) {
     };
     /** Sets the piece as the selected and hovering piece */
     const handleMouseDown = (e: React.MouseEvent) => {
+        props.setPromotionPiece(props.position);
+
         updatePosition(e);
         setHoveringState(true);
         props.setSelectedPiece(props.piece);
@@ -94,6 +101,7 @@ export default function Square(props: Props) {
                 props.color === Color.White ? whiteColorCss : blackColorCss,
                 props.hoveringOver && hoveringOverCss,
                 props.isValidMove && validMoveSquareCss,
+                props.promotionPiece && promotionSelectPieceCss,
             ]}
             onMouseEnter={handleMouseOver}
             onMouseLeave={handleMouseLeave}
@@ -101,7 +109,8 @@ export default function Square(props: Props) {
             onMouseUp={handleMouseUp}
         >
             <div css={[pieceCss, props.isSelected && selectedPieceCss]} style={hoveringState ? hoveringPieceCss : {}}>
-                {props.piece && <PieceIcon piece={props.piece} />}
+                {(props.promotionPiece && <PieceIcon pieceColorType={props.promotionPiece} />) ||
+                    (props.piece && <PieceIcon piece={props.piece} />)}
             </div>
         </div>
     );

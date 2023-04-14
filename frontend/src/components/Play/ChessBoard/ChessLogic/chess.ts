@@ -1,4 +1,5 @@
 import { Board, Move, MoveInfo } from "./board";
+import { PromotionPieceType } from "./pieces";
 import { genDefaultBoard } from "./utils";
 
 export default class Chess {
@@ -7,7 +8,7 @@ export default class Chess {
     }
     board: Board;
 
-    move = (move: Move): MoveInfo => {
-        return this.board.move(move);
+    move = (move: Move, promotionPiece: PromotionPieceType | null = null): MoveInfo => {
+        return this.board.move(move, promotionPiece);
     };
 }

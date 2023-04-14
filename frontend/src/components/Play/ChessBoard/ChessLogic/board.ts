@@ -1,4 +1,4 @@
-import { Piece, Pieces, Color } from "./pieces";
+import { Piece, Pieces, Color, PieceType } from "./pieces";
 import { isPositionInPositions } from "./utils";
 
 export class Move {
@@ -16,19 +16,22 @@ export class MoveInfo {
         piece: Piece,
         capturedPiece: Piece | null = null,
         castleSide: CastleSide | null,
-        castlingRights: CastlingRights
+        castlingRights: CastlingRights,
+        promotionPiece: PieceType | null = null
     ) {
         this.move = move;
         this.piece = piece;
         this.capturedPiece = capturedPiece;
         this.castleSide = castleSide;
         this.castlingRights = castlingRights;
+        this.promotionPiece = promotionPiece;
     }
     move: Move;
     piece: Piece;
     capturedPiece: Piece | null;
     castleSide: CastleSide | null = null;
     castlingRights: CastlingRights;
+    promotionPiece: PieceType | null = null;
 }
 
 type KingType = InstanceType<typeof Pieces.King>;
@@ -125,7 +128,12 @@ export class Board {
         return castleSide;
     };
 
-    move = (move: Move): MoveInfo => {
+    handlePawnPromotion = (pieceFrom: Piece, move: Move, promotionPiece: PieceType | null) => {
+        if (!promotionPiece) return;
+        this.setPiece(new promotionPiece(pieceFrom.color, move.to));
+    };
+
+    move = (move: Move, promotionPiece: PieceType | null = null): MoveInfo => {
         const pieceFrom = this.getPiece(move.from);
         if (!pieceFrom) throw new Error("No piece at from position");
 
@@ -140,7 +148,9 @@ export class Board {
         this.setPiece(pieceFrom);
         this.setPosition(move.from, null);
 
-        const moveInfo = new MoveInfo(move, pieceFrom, capturePiece, CastleSide, catlingRights);
+        this.handlePawnPromotion(pieceFrom, move, promotionPiece);
+
+        const moveInfo = new MoveInfo(move, pieceFrom, capturePiece, CastleSide, catlingRights, promotionPiece);
         this.moves.push(moveInfo);
 
         this.switchColorToPlay();

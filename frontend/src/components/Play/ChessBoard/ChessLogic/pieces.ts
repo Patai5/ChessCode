@@ -56,8 +56,9 @@ export class Piece {
 
 class Pawn extends Piece {
     constructor(color: Color, position: Position) {
-        super(color, position, 1, PiecesTypes.Pawn);
+        super(color, position, 1, Pawn.type);
     }
+    static type = PiecesTypes.Pawn;
 
     getAttackedSquares(board: Board): (Position | NonLegalPosition)[] {
         const attackedSquares: (Position | NonLegalPosition)[] = [];
@@ -208,8 +209,9 @@ class JumpingPiece extends Piece {
 
 class Bishop extends SlidingPiece {
     constructor(color: Color, position: Position) {
-        super(Bishop.directions, color, position, 3, PiecesTypes.Bishop);
+        super(Bishop.directions, color, position, 3, Bishop.type);
     }
+    static type = PiecesTypes.Bishop;
     static directions: MoveDirection[] = [
         [1, 1],
         [-1, 1],
@@ -220,8 +222,9 @@ class Bishop extends SlidingPiece {
 
 class Knight extends JumpingPiece {
     constructor(color: Color, position: Position) {
-        super(Knight.directions, color, position, 3, PiecesTypes.Knight);
+        super(Knight.directions, color, position, 3, Knight.type);
     }
+    static type = PiecesTypes.Knight;
     static directions: MoveDirection[] = [
         [-1, 2],
         [1, 2],
@@ -236,8 +239,9 @@ class Knight extends JumpingPiece {
 
 class Rook extends SlidingPiece {
     constructor(color: Color, position: Position) {
-        super(Rook.directions, color, position, 5, PiecesTypes.Rook);
+        super(Rook.directions, color, position, 5, Rook.type);
     }
+    static type = PiecesTypes.Rook;
     static directions: MoveDirection[] = [
         [1, 0],
         [-1, 0],
@@ -248,15 +252,16 @@ class Rook extends SlidingPiece {
 
 class Queen extends SlidingPiece {
     constructor(color: Color, position: Position) {
-        super(Queen.directions, color, position, 9, PiecesTypes.Queen);
+        super(Queen.directions, color, position, 9, Queen.type);
     }
+    static type = PiecesTypes.Queen;
     static directions: MoveDirection[] = [...Bishop.directions, ...Rook.directions];
 }
-
 class King extends JumpingPiece {
     constructor(color: Color, position: Position) {
-        super(King.directions, color, position, 0, PiecesTypes.King);
+        super(King.directions, color, position, 0, King.type);
     }
+    static type = PiecesTypes.King;
     static directions: MoveDirection[] = [...Queen.directions];
 
     getValidMoves(board: Board) {
@@ -301,3 +306,12 @@ export const Pieces = {
     Queen,
     King,
 };
+export type PieceType = typeof Pieces[keyof typeof Pieces];
+
+export const PromotionPieces = [Pieces.Queen, Pieces.Rook, Pieces.Bishop, Pieces.Knight];
+export type PromotionPieceType = typeof PromotionPieces[number];
+
+export interface PieceColorType {
+    piece: PieceType;
+    color: Color;
+}

@@ -1,5 +1,5 @@
 import React from "react";
-import { Color, Piece, PiecesTypes } from "../ChessLogic/pieces";
+import { Color, Piece, PiecesTypes, PieceColorType } from "../ChessLogic/pieces";
 import Bishop from "./Bishop";
 import King from "./King";
 import Knight from "./Knight";
@@ -21,11 +21,18 @@ export type PieceIconProps = {
 };
 
 type Props = {
-    piece: Piece;
+    piece?: Piece;
+    pieceColorType?: PieceColorType;
 };
-export default function PieceIcon(props: Props) {
-    const isWhite = props.piece.color === Color.White;
-    const PieceSVG = pieces[props.piece.type];
-
-    return <PieceSVG isWhite={isWhite} />;
+type AnyProps = Partial<Pick<Props, keyof Props>>;
+export default function PieceIcon(props: AnyProps) {
+    if (props.piece) {
+        const PieceSVG = pieces[props.piece.type];
+        return <PieceSVG isWhite={props.piece.color === Color.White} />;
+    } else if (props.pieceColorType) {
+        const PieceSVG = pieces[props.pieceColorType.piece.type];
+        return <PieceSVG isWhite={props.pieceColorType.color === Color.White} />;
+    } else {
+        throw new Error("PieceIcon: No piece or pieceColorType provided");
+    }
 }

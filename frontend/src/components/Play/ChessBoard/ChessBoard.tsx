@@ -1,11 +1,11 @@
 /** @jsxImportSource @emotion/react */
 import { css, jsx } from "@emotion/react";
 import React from "react";
-import { Position, Move, MoveInfo, CastlingFiles } from "./ChessLogic/board";
+import { CastlingFiles, Move, MoveInfo, Position } from "./ChessLogic/board";
 import Chess from "./ChessLogic/chess";
-import { Color, Piece } from "./ChessLogic/pieces";
-import Square, { Props as squareProps, AnyProps as squareAnyProps } from "./Square/Square";
+import { Color, Piece, Pieces, PromotionPieces, PromotionPieceType } from "./ChessLogic/pieces";
 import { isPositionInMoves } from "./ChessLogic/utils";
+import Square, { AnyProps as squareAnyProps, Props as squareProps } from "./Square/Square";
 
 const ChessBoardCss = css`
     display: flex;
@@ -20,12 +20,18 @@ export type selectedPieceType = Piece | null;
 export type setPieceType = (piece: selectedPieceType) => void;
 type chessboardRowElement = React.ReactElement<squareProps>[];
 type chessboardElement = chessboardRowElement[];
+interface PromotionSquare {
+    position: Position;
+    promotionPiece: PromotionPieceType;
+    move: Move;
+}
 
 type Props = { color: Color };
 export default function ChessBoard(props: Props) {
     let selectedPiece = React.useRef<selectedPieceType>(null).current;
     let hoveringOver = React.useRef<Position | null>(null).current;
     let validMoves = React.useRef<Move[]>([]).current;
+    let showPromotionSquares = React.useRef<PromotionSquare[] | null>(null).current;
     const chess = React.useRef(new Chess()).current;
 
     const getSquareFromPosition = (
@@ -110,17 +116,67 @@ export default function ChessBoard(props: Props) {
         }
         // Update the piece's position
         updateSquaresProps(chessboard, moveInfo.move.from, { piece: null });
-        updateSquaresProps(chessboard, moveInfo.move.to, { piece: moveInfo.piece });
+        if (moveInfo.promotionPiece) {
+            updateSquaresProps(chessboard, moveInfo.move.to, { piece: chess.board.getPiece(moveInfo.move.to) });
+        } else {
+            updateSquaresProps(chessboard, moveInfo.move.to, { piece: moveInfo.piece });
+        }
 
         handleUpdateCastling(chessboard, moveInfo);
 
         setChessboard(updatedChessboard);
     };
 
+    const handleShowPromotion = (piece: Piece, move: Move) => {
+        if (!(piece instanceof Pieces.Pawn)) return false;
+
+        if (piece.color === Color.White && move.to.rank !== 7) return false;
+        if (piece.color === Color.Black && move.to.rank !== 0) return false;
+
+        const updatedChessboard = [...chessboard];
+
+        showPromotionSquares = [];
+        const selectPiecePosition = move.to.copy();
+        for (const promotionPiece of PromotionPieces) {
+            showPromotionSquares.push({ position: selectPiecePosition.copy(), promotionPiece, move });
+            updateSquaresProps(updatedChessboard, selectPiecePosition, {
+                promotionPiece: { piece: promotionPiece, color: piece.color },
+            });
+            piece.color === Color.White ? selectPiecePosition.rank-- : selectPiecePosition.rank++;
+        }
+
+        setChessboard(updatedChessboard);
+        return true;
+    };
+
+    const selectPromotion = (selectedPosition: Position) => {
+        if (showPromotionSquares === null) return;
+
+        const updatedChessboard = [...chessboard];
+        for (const promotionSquare of showPromotionSquares) {
+            updateSquaresProps(chessboard, promotionSquare.position, { promotionPiece: null });
+        }
+        setChessboard(updatedChessboard);
+
+        for (const promotionSquare of showPromotionSquares) {
+            if (promotionSquare.position.equals(selectedPosition)) {
+                showPromotionSquares = null;
+                makeMove(promotionSquare.move, promotionSquare.promotionPiece);
+                return;
+            }
+        }
+        // Position is not a promotion square
+        showPromotionSquares = null;
+    };
+
     const handleMovedTo = (moveTo: Position) => {
         const move = new Move(selectedPiece!.position, moveTo);
-        const moveInfo = chess.move(move);
+        if (!showPromotionSquares) if (handleShowPromotion(selectedPiece!, move)) return;
+        makeMove(move);
+    };
 
+    const makeMove = (move: Move, promotionPiece: PromotionPieceType | null = null) => {
+        const moveInfo = chess.move(move, promotionPiece);
         handleUpdateMove(moveInfo);
         handleSelectPiece(null);
     };
@@ -153,6 +209,8 @@ export default function ChessBoard(props: Props) {
                     hoveringOver={hoveringOver ? hoveringOver.toName() === position.toName() : false}
                     setHoveringOver={handleHoveringOver}
                     setMovedTo={handleMovedTo}
+                    promotionPiece={null}
+                    setPromotionPiece={selectPromotion}
                     key={position.rank}
                 />
             );
