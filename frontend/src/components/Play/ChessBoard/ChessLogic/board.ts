@@ -91,26 +91,33 @@ export class Board {
         return capturePiece;
     };
 
-    updateCastlingRights = (pieceFrom: Piece, move: Move) => {
+    updateCastlingRights = (pieceFrom: Piece, capturedPiece: Piece | null) => {
         if (pieceFrom instanceof Pieces.King) {
             this.castlingRights[pieceFrom.color][CastleSide.King] = false;
             this.castlingRights[pieceFrom.color][CastleSide.Queen] = false;
             return;
         }
-        if (!(pieceFrom instanceof Pieces.Rook)) return;
+        let updateRook: InstanceType<typeof Pieces.Rook> | null = null;
+        if (capturedPiece instanceof Pieces.Rook) updateRook = capturedPiece;
+        else if (pieceFrom instanceof Pieces.Rook) updateRook = pieceFrom;
+        else return;
 
         // Rook must be on the original rank
-        if (pieceFrom.color === Color.White && move.from.rank !== 0) return;
-        if (pieceFrom.color === Color.Black && move.from.rank !== 7) return;
+        if (updateRook.color === Color.White && updateRook.position.rank !== 0) return;
+        if (updateRook.color === Color.Black && updateRook.position.rank !== 7) return;
 
-        const updateQueen = move.from.file === CastlingFiles[CastleSide.Queen].rookFrom ? CastleSide.Queen : null;
-        const updateKing = move.from.file === CastlingFiles[CastleSide.King].rookFrom ? CastleSide.King : null;
+        const updateQueen =
+            updateRook.position.file === CastlingFiles[CastleSide.Queen].rookFrom ? CastleSide.Queen : null;
+        const updateKing =
+            updateRook.position.file === CastlingFiles[CastleSide.King].rookFrom ? CastleSide.King : null;
         if (!updateQueen && !updateKing) return;
-        this.castlingRights[pieceFrom.color][(updateQueen || updateKing) as CastleSide.Queen | CastleSide.King] = false;
+
+        this.castlingRights[updateRook.color][(updateQueen || updateKing) as CastleSide.Queen | CastleSide.King] =
+            false;
     };
 
-    handleCastling = (pieceFrom: Piece, move: Move): CastleSide | null => {
-        this.updateCastlingRights(pieceFrom, move);
+    handleCastling = (pieceFrom: Piece, capturedPiece: Piece | null, move: Move): CastleSide | null => {
+        this.updateCastlingRights(pieceFrom, capturedPiece);
 
         if (!(pieceFrom instanceof Pieces.King)) return null;
         if (Math.abs(move.from.file - move.to.file) !== 2) return null;
@@ -141,7 +148,7 @@ export class Board {
         if (!capturePiece) capturePiece = this.getPiece(move.to);
 
         const catlingRights = this.castlingRights.copy();
-        const CastleSide = this.handleCastling(pieceFrom, move);
+        const CastleSide = this.handleCastling(pieceFrom, capturePiece, move);
 
         // Removes the piece from the start position and places it at the end position
         pieceFrom.position = move.to;
