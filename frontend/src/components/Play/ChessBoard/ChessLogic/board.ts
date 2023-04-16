@@ -1,6 +1,7 @@
-import { Piece, Pieces, Color, PieceType } from "./pieces";
+import { Piece, Pieces, Color, PromotionPiecesShort, PromotionPieceType } from "./pieces";
 import { isPositionInPositions } from "./utils";
 
+export type MoveName = string;
 export class Move {
     constructor(from: Position, to: Position) {
         this.from = from.copy();
@@ -8,6 +9,15 @@ export class Move {
     }
     from: Position;
     to: Position;
+
+    static fromName = (moveName: MoveName): { move: Move; promotionPiece: PromotionPieceType | null } => {
+        const from = Position.fromName(moveName.slice(0, 2));
+        const to = Position.fromName(moveName.slice(2, 4));
+        const promotionPiece = moveName[4]
+            ? PromotionPiecesShort[moveName[4] as keyof typeof PromotionPiecesShort]
+            : null;
+        return { move: new Move(from, to), promotionPiece: promotionPiece };
+    };
 }
 
 export class MoveInfo {
@@ -17,7 +27,7 @@ export class MoveInfo {
         capturedPiece: Piece | null = null,
         castleSide: CastleSide | null,
         castlingRights: CastlingRights,
-        promotionPiece: PieceType | null = null
+        promotionPiece: InstanceType<PromotionPieceType> | null = null
     ) {
         this.move = move;
         this.piece = piece;
@@ -31,7 +41,12 @@ export class MoveInfo {
     capturedPiece: Piece | null;
     castleSide: CastleSide | null = null;
     castlingRights: CastlingRights;
-    promotionPiece: PieceType | null = null;
+    promotionPiece: InstanceType<PromotionPieceType> | null = null;
+
+    toName = (): MoveName => {
+        const promotion = this.promotionPiece ? this.promotionPiece.typeShort : "";
+        return `${this.move.from.toName()}${this.move.to.toName()}${promotion}`;
+    };
 }
 
 type KingType = InstanceType<typeof Pieces.King>;
@@ -135,12 +150,15 @@ export class Board {
         return castleSide;
     };
 
-    handlePawnPromotion = (pieceFrom: Piece, move: Move, promotionPiece: PieceType | null) => {
+    handlePawnPromotion = (pieceFrom: Piece, move: Move, promotionPiece: PromotionPieceType | null) => {
         if (!promotionPiece) return;
-        this.setPiece(new promotionPiece(pieceFrom.color, move.to));
+
+        const promotedPiece = new promotionPiece(pieceFrom.color, move.to);
+        this.setPiece(promotedPiece);
+        return promotedPiece;
     };
 
-    move = (move: Move, promotionPiece: PieceType | null = null): MoveInfo => {
+    move = (move: Move, promotionPiece: PromotionPieceType | null = null): MoveInfo => {
         const pieceFrom = this.getPiece(move.from);
         if (!pieceFrom) throw new Error("No piece at from position");
 
@@ -155,9 +173,9 @@ export class Board {
         this.setPiece(pieceFrom);
         this.setPosition(move.from, null);
 
-        this.handlePawnPromotion(pieceFrom, move, promotionPiece);
+        const promotedPiece = this.handlePawnPromotion(pieceFrom, move, promotionPiece);
 
-        const moveInfo = new MoveInfo(move, pieceFrom, capturePiece, CastleSide, catlingRights, promotionPiece);
+        const moveInfo = new MoveInfo(move, pieceFrom, capturePiece, CastleSide, catlingRights, promotedPiece);
         this.moves.push(moveInfo);
 
         this.switchColorToPlay();

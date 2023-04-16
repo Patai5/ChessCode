@@ -4,12 +4,15 @@ from typing import Any
 
 import chess
 from channels.generic.websocket import WebsocketConsumer
+from django.contrib.auth import get_user_model
 
 from ..consumers import error
 from . import serializers as s
 from .chess_board import ChessBoard
 from .game import ALL_ACTIVE_GAMES_MANAGER, Game
 from .game_queue import DEFAULT_GAME_QUEUE_MANAGER
+
+User = get_user_model()
 
 
 def authenticated_user(func):
@@ -74,6 +77,9 @@ class QueueConsumer(WebsocketConsumer):
 
 
 class GameConsumer(WebsocketConsumer):
+    game: Game
+    user: User
+
     def connect(self):
         self.user = self.scope["user"]
         self.accept()
@@ -115,6 +121,10 @@ class GameConsumer(WebsocketConsumer):
         if not self.user in game.players:
             return error(self, message="User is not playing in this game")
 
+        self.send(
+            text_data=json.dumps({"type": "join", "Players": (game.players[0].username, game.players[1].username)})
+        )
+
         self.game = game
         self.game.add_api_callback(self.user, self.callback_game_state)
 
@@ -127,7 +137,7 @@ class GameConsumer(WebsocketConsumer):
         if not isinstance(move, str):
             return error(self, message="Move must be a string")
 
-        moveResult = self.game.move(move)
+        moveResult = self.game.move(self.user, move)
         if moveResult is ChessBoard.ILLEGAL_MOVE:
             return error(self, message="Illegal move")
         if moveResult is chess.Outcome:

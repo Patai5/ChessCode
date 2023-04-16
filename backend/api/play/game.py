@@ -19,6 +19,7 @@ class Game:
         self.game_mode = game_mode
         self.time_control = time_control
         self.game_id = game_id
+        self.api_callbacks = {}
         self.board = ChessBoard()
 
     @property

@@ -25,7 +25,7 @@ export default function app(props: Props) {
             <Routes>
                 <Route path="/login" element={<Login register={false} />} />
                 <Route path="/signup" element={<Login register={true} />} />
-                <Route path="/play" element={<Play />} />
+                <Route path="/play/:id" element={<Play />} />
                 <Route path="/" element={<Home />} />
             </Routes>
         </>

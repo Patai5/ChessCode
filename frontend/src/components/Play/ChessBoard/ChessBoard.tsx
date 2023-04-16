@@ -26,13 +26,24 @@ interface PromotionSquare {
     move: Move;
 }
 
-type Props = { color: Color };
-export default function ChessBoard(props: Props) {
+export interface RefType {
+    clientMakeMove: (move: Move, promotionPiece: PromotionPieceType | null) => void;
+}
+
+type Props = {
+    color: Color;
+    broadcastMove: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
+};
+function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
     let selectedPiece = React.useRef<selectedPieceType>(null).current;
     let hoveringOver = React.useRef<Position | null>(null).current;
     let validMoves = React.useRef<Move[]>([]).current;
     let showPromotionSquares = React.useRef<PromotionSquare[] | null>(null).current;
     const chess = React.useRef(new Chess()).current;
+
+    React.useImperativeHandle(forwardedRef, () => {
+        return { clientMakeMove };
+    });
 
     const getSquareFromPosition = (
         chessboard: chessboardElement,
@@ -176,9 +187,16 @@ export default function ChessBoard(props: Props) {
     };
 
     const makeMove = (move: Move, promotionPiece: PromotionPieceType | null = null) => {
+        const moveInfo = clientMakeMove(move, promotionPiece);
+        props.broadcastMove(moveInfo, promotionPiece);
+    };
+
+    const clientMakeMove = (move: Move, promotionPiece: PromotionPieceType | null = null) => {
         const moveInfo = chess.move(move, promotionPiece);
         handleUpdateMove(moveInfo);
         handleSelectPiece(null);
+
+        return moveInfo;
     };
 
     const handleHoveringOver = (position: Position | null) => {
@@ -240,3 +258,5 @@ export default function ChessBoard(props: Props) {
         </div>
     );
 }
+
+export default React.forwardRef(ChessBoard);

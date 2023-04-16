@@ -15,17 +15,20 @@ export enum PiecesTypes {
     King = "King",
 }
 
+type PieceTypeShort = "p" | "n" | "b" | "r" | "q" | "k";
 export class Piece {
     constructor(color: Color, position: Position, value: number, type: PiecesTypes) {
         this.color = color;
         this.position = position;
         this.value = value;
         this.type = type;
+        this.typeShort = type[0].toLowerCase() as PieceTypeShort;
     }
     color: Color;
     value: number;
     position: Position;
     type: PiecesTypes;
+    typeShort: PieceTypeShort;
 
     /**
      * Returns a list of valid moves for this piece, given the current board state.
@@ -310,6 +313,7 @@ export type PieceType = typeof Pieces[keyof typeof Pieces];
 
 export const PromotionPieces = [Pieces.Queen, Pieces.Rook, Pieces.Bishop, Pieces.Knight];
 export type PromotionPieceType = typeof PromotionPieces[number];
+export const PromotionPiecesShort = { q: Pieces.Queen, r: Pieces.Rook, b: Pieces.Bishop, n: Pieces.Knight };
 
 export interface PieceColorType {
     piece: PieceType;
