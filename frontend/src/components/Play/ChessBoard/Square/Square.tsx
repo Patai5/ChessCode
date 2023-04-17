@@ -58,11 +58,9 @@ export type Props = {
 };
 export type AnyProps = Partial<Pick<Props, keyof Props>>;
 export default function Square(props: Props) {
-    const [hoveringState, setHoveringState] = React.useState(false);
     const { clientX, clientY, updatePosition } = useMousePosition(!props.isSelected);
 
     const handleHoveringStop = () => {
-        setHoveringState(false);
         props.setSelectedPiece(null);
     };
     /** Sets the piece as the selected and hovering piece */
@@ -70,7 +68,6 @@ export default function Square(props: Props) {
         props.setPromotionPiece(props.position);
 
         updatePosition(e);
-        setHoveringState(true);
         props.setSelectedPiece(props.piece);
         document.addEventListener("mouseup", handleHoveringStop, { once: true });
     };
@@ -108,7 +105,10 @@ export default function Square(props: Props) {
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
         >
-            <div css={[pieceCss, props.isSelected && selectedPieceCss]} style={hoveringState ? hoveringPieceCss : {}}>
+            <div
+                css={[pieceCss, props.isSelected && selectedPieceCss]}
+                style={props.isSelected ? hoveringPieceCss : {}}
+            >
                 {(props.promotionPiece && <PieceIcon pieceColorType={props.promotionPiece} />) ||
                     (props.piece && <PieceIcon piece={props.piece} />)}
             </div>

@@ -98,6 +98,8 @@ function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
     };
 
     const handleSelectPiece: setPieceType = (piece: selectedPieceType) => {
+        if (piece && piece.color !== props.color) return;
+
         const updatedChessboard = [...chessboard];
         handleUpdateSelectedPiece(updatedChessboard, piece);
 

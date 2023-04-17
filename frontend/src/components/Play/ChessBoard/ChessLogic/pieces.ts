@@ -55,6 +55,13 @@ export class Piece {
     getAttackedSquares(board: Board): (Position | NonLegalPosition)[] {
         return [];
     }
+
+    /**
+     * Returns a boolean indicating whether the piece is of the right color to play.
+     */
+    isColorToPlay = (board: Board): boolean => {
+        return board.colorToPlay === this.color;
+    };
 }
 
 class Pawn extends Piece {
@@ -96,6 +103,7 @@ class Pawn extends Piece {
     }
 
     getValidMoves(board: Board): Move[] {
+        if (!this.isColorToPlay(board)) return [];
         const moves: Move[] = [];
 
         const moveDirection = this.color === Color.White ? 1 : -1;
@@ -168,6 +176,7 @@ class SlidingPiece extends Piece {
     }
 
     getValidMoves(board: Board) {
+        if (!this.isColorToPlay(board)) return [];
         const moves = this.getAttackedSquares(board)
             .filter((square) => square.constructor === Position)
             .map((square) => new Move(this.position, square));
@@ -203,6 +212,7 @@ class JumpingPiece extends Piece {
     }
 
     getValidMoves(board: Board) {
+        if (!this.isColorToPlay(board)) return [];
         const moves = this.getAttackedSquares(board)
             .filter((square) => square.constructor === Position)
             .map((square) => new Move(this.position, square));
@@ -268,6 +278,7 @@ class King extends JumpingPiece {
     static directions: MoveDirection[] = [...Queen.directions];
 
     getValidMoves(board: Board) {
+        if (!this.isColorToPlay(board)) return [];
         const moves = super.getValidMoves(board);
         const attackedSquares = board.getAttackedSquares(getOppositeColor(this.color));
         if (isPositionInPositions(this.position, attackedSquares)) return moves;
