@@ -9,6 +9,11 @@ import { Move, MoveInfo, MoveName } from "./ChessBoard/ChessLogic/board";
 import { Color } from "./ChessBoard/ChessLogic/pieces";
 import Connecting from "./Connecting/Connecting";
 
+interface PlayersAPIResponse {
+    white: string;
+    black: string;
+}
+
 const playCss = css`
     display: flex;
     justify-content: center;
@@ -22,10 +27,11 @@ const enum ConnectingState {
     Error,
 }
 
-type Props = { color?: Color };
+type Props = {};
 export default function Play(props: Props) {
-    const ws = React.useRef<WebSocket | null>(null);
     const [connectingState, setConnectingState] = React.useState(ConnectingState.Connecting);
+    const [color, setColor] = React.useState<Color>(Color.White);
+    const ws = React.useRef<WebSocket | null>(null);
     const chessboardRef = React.useRef<RefType>(null);
     const { id } = useParams();
 
@@ -61,7 +67,7 @@ export default function Play(props: Props) {
         const data = JSON.parse(msg.data);
         switch (data.type) {
             case "join":
-                setConnectingState(ConnectingState.Connected);
+                handleJoined(data);
                 break;
             case "move":
                 updateReceivedMove(data.move);
@@ -73,6 +79,18 @@ export default function Play(props: Props) {
             default:
                 ErrorQueueClass.addError({ errorMessage: `Unknown message type received: ${data.type}` });
         }
+    };
+
+    const handleJoined = (data: any) => {
+        const players = data.Players as PlayersAPIResponse;
+        if (!players) return;
+
+        for (const [playerColor, username] of Object.entries(players)) {
+            if (username === sessionStorage.getItem("username")) {
+                setColor(playerColor === "white" ? Color.White : Color.Black);
+            }
+        }
+        setConnectingState(ConnectingState.Connected);
     };
 
     const joinGame = () => {
@@ -108,8 +126,6 @@ export default function Play(props: Props) {
             handleOnMessage(msg);
         };
     }, []);
-
-    const { color = Color.White } = props;
 
     return (
         <div css={playCss}>
