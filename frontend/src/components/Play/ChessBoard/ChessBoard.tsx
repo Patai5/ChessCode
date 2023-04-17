@@ -128,7 +128,7 @@ function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
             updateSquaresProps(chessboard, moveInfo.capturedPiece.position, { piece: null });
         }
         // Update the piece's position
-        updateSquaresProps(chessboard, moveInfo.move.from, { piece: null });
+        updateSquaresProps(chessboard, moveInfo.move.from, { piece: null, isSelected: false });
         if (moveInfo.promotionPiece) {
             updateSquaresProps(chessboard, moveInfo.move.to, { piece: chess.board.getPiece(moveInfo.move.to) });
         } else {
