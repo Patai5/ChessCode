@@ -8,6 +8,7 @@ import chess
 class ChessBoard:
     def __init__(self):
         self.board = chess.Board()
+        self.color_to_move = chess.WHITE
 
     @property
     def board(self) -> chess.Board:
@@ -18,6 +19,9 @@ class ChessBoard:
         assert isinstance(value, chess.Board), "board must be a chess.Board object"
 
         self._board = value
+
+    def switch_color_to_move(self):
+        self.color_to_move = chess.WHITE if self.color_to_move == chess.BLACK else chess.BLACK
 
     def move(self, move: chess.Move | str) -> ChessBoard.ILLEGAL_MOVE | chess.Outcome | None:
         """
@@ -40,6 +44,7 @@ class ChessBoard:
             return ChessBoard.ILLEGAL_MOVE
 
         self.board.push(move)
+        self.switch_color_to_move()
 
         outcome = self.board.outcome()
         if outcome:

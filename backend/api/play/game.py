@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Tuple
+from typing import Any, Callable, Dict, Iterable
 
 import chess
 from django.contrib.auth import get_user_model
@@ -6,16 +6,16 @@ from django.contrib.auth import get_user_model
 from ..utils import genUniqueID
 from .chess_board import ChessBoard
 from .game_modes import GameMode, TimeControl
+from .player_colors import PlayerColors
 
 User = get_user_model()
 
 
 class Game:
-    # TODO: Implement player colors (white/black)
     def __init__(
-        self, players: Tuple[User, User], game_mode: GameMode, time_control: TimeControl, game_id: str | None = None
+        self, playerColors: PlayerColors, game_mode: GameMode, time_control: TimeControl, game_id: str | None = None
     ):
-        self.players = players
+        self.playerColors = playerColors
         self.game_mode = game_mode
         self.time_control = time_control
         self.game_id = game_id
@@ -23,14 +23,16 @@ class Game:
         self.board = ChessBoard()
 
     @property
-    def players(self) -> Tuple[User, User]:
+    def players(self) -> list[User]:
+        return self.playerColors.players
+
+    @property
+    def playerColors(self) -> PlayerColors:
         return self._players
 
-    @players.setter
-    def players(self, value: Tuple[User, User]):
-        assert isinstance(value, tuple), "Players must be a tuple"
-        assert len(value) == 2, "Players must be a tuple of exactly two players"
-        assert all(isinstance(item, User) for item in value), "Players must be a tuple of Users"
+    @playerColors.setter
+    def playerColors(self, value: PlayerColors):
+        assert isinstance(value, PlayerColors), "Players must be a PlayerColors object"
 
         self._players = value
 
@@ -139,6 +141,12 @@ class Game:
             self.callback_game_result(result)
         return result
 
+    def is_players_turn(self, user: User) -> bool:
+        """Checks if it is the user's turn."""
+        assert isinstance(user, User), "User must be a User object"
+
+        return self.board.color_to_move == self.playerColors.get_user_color(user)
+
 
 class GameManager:
     def __init__(self):
@@ -158,15 +166,16 @@ class GameManager:
 
         return self.games.get(game_id)
 
-    def start_game(self, players: Tuple[User, User], game_mode: GameMode, time_control: TimeControl) -> Game:
-        assert isinstance(players, tuple), "Players must be a tuple"
+    def start_game(self, players: Iterable[User], game_mode: GameMode, time_control: TimeControl) -> Game:
+        assert isinstance(players, Iterable), "Players must be a iterable"
         assert len(players) == 2, "Players must be a tuple of exactly two players"
-        assert all(isinstance(item, User) for item in players), "Players must be a tuple of Users"
+        assert all(isinstance(item, User) for item in players), "Players must be a iterable of Users"
         assert isinstance(game_mode, GameMode), "Game mode must be a GameMode object"
         assert isinstance(time_control, TimeControl), "Time control must be a TimeControl object"
 
         game_id = genUniqueID(self.games)
-        game = Game(players, game_mode, time_control, game_id=game_id)
+        playerColors = PlayerColors.assignRandomColors(players)
+        game = Game(playerColors, game_mode, time_control, game_id=game_id)
         self.games[game_id] = game
         return game
 

@@ -114,28 +114,27 @@ class GameConsumer(WebsocketConsumer):
         if re.search(r"[^a-zA-Z0-9]", game_id):
             return error(self, message="Invalid game ID, must only contain alphanumeric characters")
 
-        game = ALL_ACTIVE_GAMES_MANAGER.get_game(game_id)
-        if game is None:
+        self.game = ALL_ACTIVE_GAMES_MANAGER.get_game(game_id)
+        if self.game is None:
             return error(self, message="There is no active game with the provided Game ID")
 
-        if not self.user in game.players:
+        if not self.user in self.game.players:
             return error(self, message="User is not playing in this game")
 
-        self.send(
-            text_data=json.dumps({"type": "join", "Players": (game.players[0].username, game.players[1].username)})
-        )
+        self.send(text_data=json.dumps({"type": "join", "Players": self.game.playerColors.to_json_dict()}))
 
-        self.game = game
         self.game.add_api_callback(self.user, self.callback_game_state)
 
     def move(self, json_data: dict):
-        # TODO: Only allow to control your own pieces, also check if it's your turn
         if "move" not in json_data:
             return error(self, message="Move is missing")
 
         move = json_data["move"]
         if not isinstance(move, str):
             return error(self, message="Move must be a string")
+
+        if not self.game.is_players_turn(self.user):
+            return error(self, message="It is not your turn")
 
         moveResult = self.game.move(self.user, move)
         if moveResult is ChessBoard.ILLEGAL_MOVE:
