@@ -26,7 +26,7 @@ const gameModes: GameModes = {
     Rapid: { timeControls: [600, 1200, 1800], backgroundColors: ["#B84200", "#8B0086"] },
 };
 
-type Props = { setQueing: handleStartQueueingType; disabled?: boolean };
+type Props = { setQueuing: handleStartQueueingType; disabled?: boolean };
 export default function TimeControlPicker(props: Props) {
     const items: { [key in keyof GameModes]: Item[] } = {
         Bullet: [],
@@ -41,7 +41,7 @@ export default function TimeControlPicker(props: Props) {
                     ({
                         name: secToTime(timeControl),
                         callback: () => {
-                            props.setQueing({ gameMode, timeControl });
+                            props.setQueuing({ gameMode, timeControl });
                         },
                     } as Item)
             ),

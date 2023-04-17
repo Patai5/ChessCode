@@ -47,9 +47,31 @@ export type handleStartQueueingType = (queue: QueueState) => Promise<void>;
 
 type Props = {};
 export default function FindGame(props: Props) {
-    const [queing, setQueing] = React.useState<false | QueueState>(false);
+    const [queuing, setQueuing] = React.useState<false | QueueState>(false);
     const [showQueuing, setShowQueuing] = React.useState(false);
     const [ws, setWebSocket] = React.useState<WebSocket | null>(null);
+
+    const handleOnMessage = async (e: MessageEvent) => {
+        const data = JSON.parse(e.data);
+        switch (data.type) {
+            case "game_found":
+                if (!data.game_id) return;
+                window.location.href = `/play/${data.game_id}`;
+                break;
+            case "error":
+                // If for whatever reason a user is already in a queue, we won't show an error and instead remove him from the queue
+                if (data.message === "User is already in queue") {
+                    await stopQueuingAPI();
+                    if (!queuing) return;
+                    await startQueuingAPI(queuing);
+                    return;
+                }
+                ErrorQueueClass.addError({ errorMessage: data.message });
+                return handleStopQueuing(false);
+            default:
+                ErrorQueueClass.addError({ errorMessage: `Unknown message type received: ${data.type}` });
+        }
+    };
 
     React.useEffect(() => {
         // Configuring the websocket
@@ -57,20 +79,8 @@ export default function FindGame(props: Props) {
         // Also when the socket gets closed we should create a new one
         const ws = new WebSocket(getWSUri() + "/api/play/queue");
 
-        ws.onmessage = async (e) => {
-            const data = JSON.parse(e.data);
-            if (isWSMessageError(e)) {
-                // If for whatever reason a user is already in a queue, we won't show an error and instead remove him from the queue
-                if (data.message === "User is already in queue") {
-                    await stopQueuingAPI();
-                    if (!queing) return;
-                    await startQueuingAPI(queing);
-                    return;
-                }
-                ErrorQueueClass.addError({ errorMessage: data.message });
-                return handleStopQueuing(false);
-            }
-            // TODO: Start the game
+        ws.onmessage = (e) => {
+            handleOnMessage(e);
         };
 
         ws.onclose = (e) => {
@@ -107,7 +117,7 @@ export default function FindGame(props: Props) {
     };
     const handleStartQueueing: handleStartQueueingType = async (queue) => {
         startQueuingAPI(queue);
-        setQueing(queue);
+        setQueuing(queue);
         setShowQueuing(true);
     };
 
@@ -119,17 +129,17 @@ export default function FindGame(props: Props) {
         setShowQueuing(false);
 
         await sleep(animationLength);
-        setQueing(false);
+        setQueuing(false);
     };
 
     return (
         <>
-            {queing && <Queuing queue={queing} show={showQueuing} stopQueuing={() => handleStopQueuing(true)} />}
+            {queuing && <Queuing queue={queuing} show={showQueuing} stopQueuing={() => handleStopQueuing(true)} />}
             <div css={findGameCss}>
                 <h1 css={titleCss}>Find A Game</h1>
                 <Paper customCss={mainPaperCss}>
                     <PlayAgainstPicker />
-                    <TimeControlPicker disabled={!!queing} setQueing={handleStartQueueing} />
+                    <TimeControlPicker disabled={!!queuing} setQueuing={handleStartQueueing} />
                 </Paper>
             </div>
         </>
