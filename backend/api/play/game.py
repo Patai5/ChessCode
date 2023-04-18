@@ -120,6 +120,10 @@ class Game:
             if userKey != user:
                 callback("move", move)
 
+    def get_moves_list(self) -> list[str]:
+        """Returns a list of all moves made in the game in UCI notation."""
+        return [move.uci() for move in self.board.moves]
+
     def move(self, user: User, move: chess.Move | str) -> ChessBoard.ILLEGAL_MOVE | chess.Outcome | None:
         """
         Moves a piece on the board.

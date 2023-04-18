@@ -9,9 +9,9 @@ import { Move, MoveInfo, MoveName } from "./ChessBoard/ChessLogic/board";
 import { Color } from "./ChessBoard/ChessLogic/pieces";
 import Connecting from "./Connecting/Connecting";
 
-interface PlayersAPIResponse {
-    white: string;
-    black: string;
+interface JoinAPIResponse {
+    players: { white: string; black: string };
+    moves: MoveName[];
 }
 
 const playCss = css`
@@ -82,14 +82,18 @@ export default function Play(props: Props) {
     };
 
     const handleJoined = (data: any) => {
-        const players = data.Players as PlayersAPIResponse;
-        if (!players) return;
+        const response = data as JoinAPIResponse;
+        if (response.players === undefined || !response.moves === undefined) return;
 
-        for (const [playerColor, username] of Object.entries(players)) {
+        for (const [playerColor, username] of Object.entries(response.players)) {
             if (username === localStorage.getItem("username")) {
                 setColor(playerColor === "white" ? Color.White : Color.Black);
             }
         }
+        for (const move of response.moves) {
+            updateReceivedMove(move);
+        }
+
         setConnectingState(ConnectingState.Connected);
     };
 
@@ -107,7 +111,6 @@ export default function Play(props: Props) {
         ws.current.send(msg);
     };
 
-    React.useEffect(() => {}, [ws.current]);
     React.useEffect(() => {
         if (!validateId()) return;
         const createWs = new WebSocket(getWSUri() + "/api/play/" + id);

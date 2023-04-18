@@ -14,6 +14,10 @@ class ChessBoard:
     def board(self) -> chess.Board:
         return self._board
 
+    @property
+    def moves(self) -> list[chess.Move]:
+        return self.board.move_stack
+
     @board.setter
     def board(self, value: chess.Board):
         assert isinstance(value, chess.Board), "board must be a chess.Board object"

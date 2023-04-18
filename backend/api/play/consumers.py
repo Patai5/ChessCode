@@ -121,7 +121,11 @@ class GameConsumer(WebsocketConsumer):
         if not self.user in self.game.players:
             return error(self, message="User is not playing in this game")
 
-        self.send(text_data=json.dumps({"type": "join", "Players": self.game.playerColors.to_json_dict()}))
+        self.send(
+            text_data=json.dumps(
+                {"type": "join", "players": self.game.playerColors.to_json_dict(), "moves": self.game.get_moves_list()}
+            )
+        )
 
         self.game.add_api_callback(self.user, self.callback_game_state)
 
