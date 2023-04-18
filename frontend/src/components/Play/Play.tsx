@@ -86,7 +86,7 @@ export default function Play(props: Props) {
         if (!players) return;
 
         for (const [playerColor, username] of Object.entries(players)) {
-            if (username === sessionStorage.getItem("username")) {
+            if (username === localStorage.getItem("username")) {
                 setColor(playerColor === "white" ? Color.White : Color.Black);
             }
         }

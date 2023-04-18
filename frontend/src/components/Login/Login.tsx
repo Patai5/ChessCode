@@ -197,7 +197,7 @@ export default function Login(props: Props) {
                 }
             } else {
                 // Successfully authed
-                sessionStorage.setItem("username", loginForm.username);
+                localStorage.setItem("username", loginForm.username);
                 handleAuthRequestAnimation("success");
             }
         }
