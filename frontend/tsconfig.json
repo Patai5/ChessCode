@@ -9,7 +9,7 @@
         "strictNullChecks": true,
         "allowSyntheticDefaultImports": true,
         "moduleResolution": "Node",
-        "types": ["@emotion/react/types/css-prop"],
+        "types": ["@emotion/react/types/css-prop", "node"],
         "lib": ["es2020", "dom"],
         "baseUrl": "src"
     }

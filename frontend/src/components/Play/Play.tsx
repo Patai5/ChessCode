@@ -4,10 +4,11 @@ import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import React from "react";
 import { useParams } from "react-router-dom";
 import { getWSUri } from "utils/websockets";
-import Chessboard, { RefType } from "./ChessBoard/ChessBoard";
-import { Move, MoveInfo, MoveName } from "./ChessBoard/ChessLogic/board";
-import { Color } from "./ChessBoard/ChessLogic/pieces";
+import { RefType } from "./Chess/ChessBoard/ChessBoard";
+import { Move, MoveInfo, MoveName } from "./Chess/ChessBoard/ChessLogic/board";
+import { Color } from "./Chess/ChessBoard/ChessLogic/pieces";
 import Connecting from "./Connecting/Connecting";
+import Chess from "./Chess/Chess";
 
 interface JoinAPIResponse {
     players: { white: string; black: string };
@@ -130,11 +131,12 @@ export default function Play(props: Props) {
         };
     }, []);
 
+    const timers = { [Color.White]: 300 * 1000, [Color.Black]: 300 * 1000 }; // TODO: Get these values from the API
     return (
         <div css={playCss}>
             {connectingState === ConnectingState.Connecting && <Connecting />}
             {connectingState === ConnectingState.Connected && (
-                <Chessboard color={color} broadcastMove={broadcastMove} ref={chessboardRef} />
+                <Chess color={color} broadcastMove={broadcastMove} timers={timers} ref={chessboardRef} />
             )}
         </div>
     );
