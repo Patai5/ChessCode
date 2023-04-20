@@ -1,6 +1,26 @@
 /** @jsxImportSource @emotion/react */
 import { css, jsx } from "@emotion/react";
 import React from "react";
+import { FaClock } from "react-icons/fa";
+import Paper from "components/shared/Paper";
+
+const TimerPaperCss = css`
+    margin: 0.5em 0 0.5em 0;
+    margin-left: auto;
+`;
+const TimerCss = css`
+    display: flex;
+    gap: 0.75em;
+`;
+const TimerItemCss = css`
+    font-family: "Roboto Mono", monospace;
+    font-weight: bold;
+    color: #fff;
+    font-size: 1.5em;
+`;
+const PausedTimerItemCss = css`
+    color: #ffffff80;
+`;
 
 export type TimeMs = number;
 /**
@@ -51,6 +71,13 @@ export default function Play(props: Props) {
         };
     }, [props.time, props.paused, disable]);
 
-    // TODO: CSS and stuff
-    return <div>{timeToString(time, showTenthsOfSec)}</div>;
+    const itemsCss = [TimerItemCss, disable && PausedTimerItemCss];
+    return (
+        <Paper elevation={1} white={true} customCss={TimerPaperCss}>
+            <div css={TimerCss}>
+                <FaClock css={itemsCss} />
+                <div css={itemsCss}>{timeToString(time, showTenthsOfSec)}</div>
+            </div>
+        </Paper>
+    );
 }

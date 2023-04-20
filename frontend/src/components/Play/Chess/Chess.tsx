@@ -7,6 +7,16 @@ import { getOppositeColor } from "./ChessBoard/ChessLogic/utils";
 import { Color, PromotionPieceType } from "./ChessBoard/ChessLogic/pieces";
 import ChessTimer, { TimeMs } from "./ChessTimer/ChessTimer";
 
+const ChessCss = css`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+`;
+
+const YourTimerCss = css``;
+const OpponentTimerCss = css``;
+
 type Timers = {
     [key in Color]: TimeMs;
 };
@@ -18,11 +28,11 @@ type Props = {
 };
 function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
     return (
-        <>
-            <ChessTimer time={props.timers[getOppositeColor(props.color)]} />
-            <ChessTimer time={props.timers[props.color]} />
+        <div css={ChessCss}>
+            <ChessTimer time={props.timers[getOppositeColor(props.color)]} css={OpponentTimerCss} />
             <ChessBoard color={props.color} broadcastMove={props.broadcastMove} ref={forwardedRef} />
-        </>
+            <ChessTimer time={props.timers[props.color]} css={YourTimerCss} />
+        </div>
     );
 }
 
