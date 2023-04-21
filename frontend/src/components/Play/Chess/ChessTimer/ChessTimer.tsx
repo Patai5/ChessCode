@@ -45,6 +45,7 @@ const timeToString = (time: TimeMs, showTenthsOfSec: boolean = false) => {
 
 type Props = { time: TimeMs; paused?: boolean };
 export default function Play(props: Props) {
+    // BUG: When the tab is inactive, the timer will not update
     const [time, setTime] = React.useState(props.time);
     const [disable, setDisable] = React.useState(false);
     const [showTenthsOfSec, setShowTenthsOfSec] = React.useState(false);
@@ -71,7 +72,7 @@ export default function Play(props: Props) {
         };
     }, [props.time, props.paused, disable]);
 
-    const itemsCss = [TimerItemCss, disable && PausedTimerItemCss];
+    const itemsCss = [TimerItemCss, (disable || props.paused) && PausedTimerItemCss];
     return (
         <Paper elevation={1} white={true} customCss={TimerPaperCss}>
             <div css={TimerCss}>

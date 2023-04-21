@@ -27,11 +27,23 @@ type Props = {
     broadcastMove: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
 };
 function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
+    const [colorToPlay, setColorToPlay] = React.useState<Color>(Color.White);
+    const oppositeColor = getOppositeColor(props.color);
+
     return (
         <div css={ChessCss}>
-            <ChessTimer time={props.timers[getOppositeColor(props.color)]} css={OpponentTimerCss} />
-            <ChessBoard color={props.color} broadcastMove={props.broadcastMove} ref={forwardedRef} />
-            <ChessTimer time={props.timers[props.color]} css={YourTimerCss} />
+            <ChessTimer
+                time={props.timers[oppositeColor]}
+                paused={oppositeColor !== colorToPlay}
+                css={OpponentTimerCss}
+            />
+            <ChessBoard
+                color={props.color}
+                broadcastMove={props.broadcastMove}
+                updateColorToPlay={setColorToPlay}
+                ref={forwardedRef}
+            />
+            <ChessTimer time={props.timers[props.color]} paused={props.color !== colorToPlay} css={YourTimerCss} />
         </div>
     );
 }

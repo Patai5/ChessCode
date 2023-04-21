@@ -33,6 +33,7 @@ export interface RefType {
 type Props = {
     color: Color;
     broadcastMove: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
+    updateColorToPlay: (color: Color) => void;
 };
 function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
     let selectedPiece = React.useRef<selectedPieceType>(null).current;
@@ -197,6 +198,8 @@ function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
         const moveInfo = chess.move(move, promotionPiece);
         handleUpdateMove(moveInfo);
         handleSelectPiece(null);
+
+        props.updateColorToPlay(chess.board.colorToPlay);
 
         return moveInfo;
     };
