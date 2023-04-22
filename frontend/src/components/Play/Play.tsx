@@ -7,11 +7,15 @@ import { getWSUri } from "utils/websockets";
 import { RefType } from "./Chess/ChessBoard/ChessBoard";
 import { Move, MoveInfo, MoveName } from "./Chess/ChessBoard/ChessLogic/board";
 import { Color } from "./Chess/ChessBoard/ChessLogic/pieces";
+import { TimeMs } from "./Chess/ChessTimer/ChessTimer";
+import { Timers } from "./Chess/Chess";
 import Connecting from "./Connecting/Connecting";
 import Chess from "./Chess/Chess";
 
+const ColorName = { white: Color.White, black: Color.Black };
+type Player = { color: keyof typeof ColorName; time: TimeMs };
 interface JoinAPIResponse {
-    players: { white: string; black: string };
+    players: { string: Player };
     moves: MoveName[];
 }
 
@@ -32,6 +36,7 @@ type Props = {};
 export default function Play(props: Props) {
     const [connectingState, setConnectingState] = React.useState(ConnectingState.Connecting);
     const [color, setColor] = React.useState<Color>(Color.White);
+    const timers = React.useRef<Timers>({ white: 0, black: 0 });
     const ws = React.useRef<WebSocket | null>(null);
     const chessboardRef = React.useRef<RefType>(null);
     const { id } = useParams();
@@ -77,24 +82,23 @@ export default function Play(props: Props) {
                 ErrorQueueClass.addError({ errorMessage: data.message });
                 setConnectingState(ConnectingState.Error);
                 break;
+            // TODO: Handle `out_of_time`
             default:
                 ErrorQueueClass.addError({ errorMessage: `Unknown message type received: ${data.type}` });
         }
     };
 
-    const handleJoined = (data: any) => {
-        const response = data as JoinAPIResponse;
-        if (response.players === undefined || !response.moves === undefined) return;
-
-        for (const [playerColor, username] of Object.entries(response.players)) {
+    const handleJoined = (data: JoinAPIResponse) => {
+        for (const [username, player] of Object.entries(data.players)) {
             if (username === localStorage.getItem("username")) {
-                setColor(playerColor === "white" ? Color.White : Color.Black);
+                setColor(ColorName[player.color]);
             }
+            timers.current[player.color] = Math.floor(player.time / 100) * 100; // Convert to 1/10 of a second
         }
-        for (const move of response.moves) {
+
+        for (const move of data.moves) {
             updateReceivedMove(move);
         }
-
         setConnectingState(ConnectingState.Connected);
     };
 
@@ -131,12 +135,11 @@ export default function Play(props: Props) {
         };
     }, []);
 
-    const timers = { [Color.White]: 300 * 1000, [Color.Black]: 300 * 1000 }; // TODO: Get these values from the API
     return (
         <div css={playCss}>
             {connectingState === ConnectingState.Connecting && <Connecting />}
             {connectingState === ConnectingState.Connected && (
-                <Chess color={color} broadcastMove={broadcastMove} timers={timers} ref={chessboardRef} />
+                <Chess color={color} broadcastMove={broadcastMove} timers={timers.current} ref={chessboardRef} />
             )}
         </div>
     );

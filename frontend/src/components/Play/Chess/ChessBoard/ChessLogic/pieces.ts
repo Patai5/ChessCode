@@ -2,8 +2,8 @@ import { Position, NonLegalPosition, Move, Board, CastleSide } from "./board";
 import { getOppositeColor, isPositionInPositions } from "./utils";
 
 export enum Color {
-    White = "White",
-    Black = "Black",
+    White = "white",
+    Black = "black",
 }
 
 export enum PiecesTypes {
@@ -320,10 +320,10 @@ export const Pieces = {
     Queen,
     King,
 };
-export type PieceType = typeof Pieces[keyof typeof Pieces];
+export type PieceType = (typeof Pieces)[keyof typeof Pieces];
 
 export const PromotionPieces = [Pieces.Queen, Pieces.Rook, Pieces.Bishop, Pieces.Knight];
-export type PromotionPieceType = typeof PromotionPieces[number];
+export type PromotionPieceType = (typeof PromotionPieces)[number];
 export const PromotionPiecesShort = { q: Pieces.Queen, r: Pieces.Rook, b: Pieces.Bishop, n: Pieces.Knight };
 
 export interface PieceColorType {

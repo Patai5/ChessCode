@@ -118,16 +118,16 @@ class GameConsumer(WebsocketConsumer):
         if self.game is None:
             return error(self, message="There is no active game with the provided Game ID")
 
-        if not self.user in self.game.players:
+        if not self.user in self.game.players.users:
             return error(self, message="User is not playing in this game")
 
         self.send(
             text_data=json.dumps(
-                {"type": "join", "players": self.game.playerColors.to_json_dict(), "moves": self.game.get_moves_list()}
+                {"type": "join", "players": self.game.players.to_json_dict(), "moves": self.game.get_moves_list()}
             )
         )
 
-        self.game.add_api_callback(self.user, self.callback_game_state)
+        self.game.players.by_user(self.user).add_api_callback(self.callback_game_state)
 
     def move(self, json_data: dict):
         if "move" not in json_data:
@@ -155,12 +155,14 @@ class GameConsumer(WebsocketConsumer):
         self.game.callback_game_result(chess.Outcome(winner=None, termination=chess.Termination.VARIANT_DRAW))
 
     def callback_game_state(self, type: str, changed: Any):
-        assert type in ["move", "game_result"], "Invalid type"
+        assert type in ["move", "game_result", "out_of_time"], "Invalid type"
 
         if type == "move":
             self.send(json.dumps({"type": "move", "move": changed}))
         elif type == "game_result":
             self.send(json.dumps({"type": "game_result", "game_result": changed}))
+        elif type == "out_of_time":
+            self.send(json.dumps({"type": "out_of_time", "player": changed}))
 
     def disconnect(self, code):
         self.close(code=code)

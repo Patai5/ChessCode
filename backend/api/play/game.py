@@ -1,4 +1,5 @@
-from typing import Any, Callable, Dict, Iterable
+import random
+from typing import Dict, Iterable
 
 import chess
 from django.contrib.auth import get_user_model
@@ -6,35 +7,20 @@ from django.contrib.auth import get_user_model
 from ..utils import genUniqueID
 from .chess_board import ChessBoard
 from .game_modes import GameMode, TimeControl
-from .player_colors import PlayerColors
+from .players import Player, Players
 
 User = get_user_model()
 
 
 class Game:
-    def __init__(
-        self, playerColors: PlayerColors, game_mode: GameMode, time_control: TimeControl, game_id: str | None = None
-    ):
-        self.playerColors = playerColors
+    def __init__(self, players: Players, game_mode: GameMode, time_control: TimeControl, game_id: str | None = None):
+        self.players = players
         self.game_mode = game_mode
         self.time_control = time_control
         self.game_id = game_id
-        self.api_callbacks = {}
         self.board = ChessBoard()
 
-    @property
-    def players(self) -> list[User]:
-        return self.playerColors.players
-
-    @property
-    def playerColors(self) -> PlayerColors:
-        return self._players
-
-    @playerColors.setter
-    def playerColors(self, value: PlayerColors):
-        assert isinstance(value, PlayerColors), "Players must be a PlayerColors object"
-
-        self._players = value
+        self.update_player_timers()
 
     @property
     def game_mode(self) -> GameMode:
@@ -77,36 +63,20 @@ class Game:
 
         self._board = value
 
-    @property
-    def api_callbacks(self) -> dict[User, Callable[[str, str], None]]:
-        """A dicture of callback functions to be when the game state changes.
-
-        Notifies the users of the game's state change using websockets"""
-        return self._api_callbacks
-
-    @api_callbacks.setter
-    def api_callbacks(self, value: dict[User, Callable[[str, Any], None]]):
-        assert isinstance(value, dict), "API callbacks must be a dictionary"
-        assert all(isinstance(item, User) for item in value.keys()), "API callbacks must be a dictionary of users"
-        assert all(
-            callable(item) for item in value.values()
-        ), "API callbacks must be a dictionary of callback functions"
-
-        self._api_callbacks = value
-
-    def add_api_callback(self, player: User, callback: Callable[[str, Any], None]):
-        """Adds a callback function to the game's API callbacks."""
-        assert isinstance(player, User), "Player must be a User object"
-        assert callable(callback), "Callback must be a callable function"
-
-        self.api_callbacks[player] = callback
-
+    # TODO: Player's api_callback might not be initialized yet if the user hasn't joined the game yet
     def callback_game_result(self, result: chess.Outcome):
         """Calls the API callbacks with the game result."""
         assert isinstance(result, chess.Outcome), "Result must be a chess.Outcome object"
 
-        for callback in self.api_callbacks.values():
-            callback("game_result", result)
+        for player in self.players.players:
+            player.api_callback("game_result", result)
+
+    def callback_out_of_time(self, user: User):
+        """Calls the API callbacks with the player that ran out of time."""
+        assert isinstance(user, User), "User must be a User object"
+
+        for player in self.players.players:
+            player.api_callback("out_of_time", user.username)
 
     def callback_move(self, user: User, move: chess.Move | str):
         """Calls the API callbacks with the move."""
@@ -116,9 +86,9 @@ class Game:
         if isinstance(move, chess.Move):
             move = move.uci()
 
-        for userKey, callback in self.api_callbacks.items():
-            if userKey != user:
-                callback("move", move)
+        for player in self.players.players:
+            if player.user != user:
+                player.api_callback("move", move)
 
     def get_moves_list(self) -> list[str]:
         """Returns a list of all moves made in the game in UCI notation."""
@@ -139,17 +109,34 @@ class Game:
         assert isinstance(move, chess.Move) or isinstance(move, str), "move must be a chess.Move or str object"
 
         result = self.board.move(move)
+        if result is ChessBoard.ILLEGAL_MOVE:
+            return ChessBoard.ILLEGAL_MOVE
 
+        self.update_player_timers()
         self.callback_move(user, move)
         if isinstance(result, chess.Outcome):
             self.callback_game_result(result)
         return result
 
+    def ran_out_of_time(self, user: User):
+        """Handles the case when a player runs out of time."""
+        assert isinstance(user, User), "User must be a User object"
+
+        self.callback_out_of_time(user)
+
+    def update_player_timers(self):
+        """Updates the player timers."""
+        for player in self.players.players:
+            if player.color == self.board.color_to_move:
+                player.start_timer(self.ran_out_of_time)
+            else:
+                player.stop_timer()
+
     def is_players_turn(self, user: User) -> bool:
         """Checks if it is the user's turn."""
         assert isinstance(user, User), "User must be a User object"
 
-        return self.board.color_to_move == self.playerColors.get_user_color(user)
+        return self.board.color_to_move == self.players.by_user(user).color
 
 
 class GameManager:
@@ -178,8 +165,13 @@ class GameManager:
         assert isinstance(time_control, TimeControl), "Time control must be a TimeControl object"
 
         game_id = genUniqueID(self.games)
-        playerColors = PlayerColors.assignRandomColors(players)
-        game = Game(playerColors, game_mode, time_control, game_id=game_id)
+
+        colors = [chess.WHITE, chess.BLACK]
+        random.shuffle(colors)
+
+        players = Players([Player(user, color, time_control.time) for user, color in zip(players, colors)])
+
+        game = Game(players, game_mode, time_control, game_id=game_id)
         self.games[game_id] = game
         return game
 

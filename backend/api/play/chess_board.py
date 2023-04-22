@@ -55,3 +55,4 @@ class ChessBoard:
             return outcome
 
     ILLEGAL_MOVE = TypeVar("ILLEGAL_MOVE")
+    OUT_OF_TIME = TypeVar("OUT_OF_TIME")

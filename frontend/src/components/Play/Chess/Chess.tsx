@@ -17,7 +17,7 @@ const ChessCss = css`
 const YourTimerCss = css``;
 const OpponentTimerCss = css``;
 
-type Timers = {
+export type Timers = {
     [key in Color]: TimeMs;
 };
 

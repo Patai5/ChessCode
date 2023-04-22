@@ -47,7 +47,7 @@ type Props = { time: TimeMs; paused?: boolean };
 export default function Play(props: Props) {
     // BUG: When the tab is inactive, the timer will not update
     const [time, setTime] = React.useState(props.time);
-    const [disable, setDisable] = React.useState(false);
+    const [disable, setDisable] = React.useState(props.time === 0);
     const [showTenthsOfSec, setShowTenthsOfSec] = React.useState(false);
 
     const SHOW_TENTHS_OF_SEC_TIME = 10000;

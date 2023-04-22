@@ -1,5 +1,8 @@
 from __future__ import annotations
+
 from typing import List
+
+TimeS = int
 
 
 class GameMode:
@@ -33,18 +36,18 @@ class GameMode:
 
 
 class TimeControl:
-    def __init__(self, time: int):
+    def __init__(self, time: TimeS):
         self.time = time
 
     @property
-    def time(self) -> int:
+    def time(self) -> TimeS:
         """Time is defined in seconds"""
         return self._time
 
     @time.setter
-    def time(self, value: int):
+    def time(self, value: TimeS):
         """Time is defined in seconds"""
-        assert isinstance(value, int), "Time must be an integer"
+        assert isinstance(value, TimeS), "Time must be an integer"
         assert not value < 0, "Time cannot be negative"
 
         self._time = value
