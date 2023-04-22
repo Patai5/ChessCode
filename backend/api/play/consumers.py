@@ -160,7 +160,7 @@ class GameConsumer(WebsocketConsumer):
         if type == "move":
             self.send(json.dumps({"type": "move", "move": changed, "players": self.game.players.to_json_dict()}))
         elif type == "game_result":
-            self.send(json.dumps({"type": "game_result", "game_result": changed}))
+            self.send(json.dumps({"type": "game_result", "termination": changed[0], "winner": changed[1]}))
         elif type == "out_of_time":
             self.send(json.dumps({"type": "out_of_time", "player": changed}))
 

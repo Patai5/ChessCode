@@ -5,16 +5,13 @@ from typing import Callable, Iterable
 import chess
 from django.contrib.auth import get_user_model
 
+from .chess_board import CHESS_COLOR_NAMES
+
 User = get_user_model()
 
 TimeS = float
 TimeMs = int
 APICallbackType = Callable[[str, any], None]
-
-CHESS_COLOR_NAMES = {
-    chess.WHITE: "white",
-    chess.BLACK: "black",
-}
 
 
 class Player:

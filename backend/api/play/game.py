@@ -5,7 +5,7 @@ import chess
 from django.contrib.auth import get_user_model
 
 from ..utils import genUniqueID
-from .chess_board import ChessBoard
+from .chess_board import CHESS_COLOR_NAMES, ChessBoard
 from .game_modes import GameMode, TimeControl
 from .players import Player, Players
 
@@ -19,6 +19,7 @@ class Game:
         self.time_control = time_control
         self.game_id = game_id
         self.board = ChessBoard()
+        self.finished = False
 
         self.update_player_timers()
 
@@ -69,7 +70,7 @@ class Game:
         assert isinstance(result, chess.Outcome), "Result must be a chess.Outcome object"
 
         for player in self.players.players:
-            player.api_callback("game_result", result)
+            player.api_callback("game_result", [result.termination.name, CHESS_COLOR_NAMES.get(result.winner)])
 
     def callback_out_of_time(self, user: User):
         """Calls the API callbacks with the player that ran out of time."""
@@ -109,12 +110,13 @@ class Game:
         assert isinstance(move, chess.Move) or isinstance(move, str), "move must be a chess.Move or str object"
 
         result = self.board.move(move)
-        if result is ChessBoard.ILLEGAL_MOVE:
+        if result is ChessBoard.ILLEGAL_MOVE or self.finished:
             return ChessBoard.ILLEGAL_MOVE
 
         self.update_player_timers()
         self.callback_move(user, move)
         if isinstance(result, chess.Outcome):
+            self.finished = True
             self.callback_game_result(result)
         return result
 
@@ -122,6 +124,7 @@ class Game:
         """Handles the case when a player runs out of time."""
         assert isinstance(user, User), "User must be a User object"
 
+        self.finished = True
         self.callback_out_of_time(user)
 
     def update_player_timers(self):

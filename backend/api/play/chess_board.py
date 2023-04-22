@@ -4,6 +4,11 @@ from typing import TypeVar
 
 import chess
 
+CHESS_COLOR_NAMES = {
+    chess.WHITE: "white",
+    chess.BLACK: "black",
+}
+
 
 class ChessBoard:
     def __init__(self):
