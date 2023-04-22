@@ -158,7 +158,7 @@ class GameConsumer(WebsocketConsumer):
         assert type in ["move", "game_result", "out_of_time"], "Invalid type"
 
         if type == "move":
-            self.send(json.dumps({"type": "move", "move": changed}))
+            self.send(json.dumps({"type": "move", "move": changed, "players": self.game.players.to_json_dict()}))
         elif type == "game_result":
             self.send(json.dumps({"type": "game_result", "game_result": changed}))
         elif type == "out_of_time":

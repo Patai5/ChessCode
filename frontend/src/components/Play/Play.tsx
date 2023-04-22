@@ -14,9 +14,15 @@ import Chess from "./Chess/Chess";
 
 const ColorName = { white: Color.White, black: Color.Black };
 type Player = { color: keyof typeof ColorName; time: TimeMs };
+type Players = { [username: string]: Player };
 interface JoinAPIResponse {
-    players: { string: Player };
+    players: Players;
     moves: MoveName[];
+}
+
+interface MoveAPIResponse {
+    move: MoveName;
+    players: Players;
 }
 
 const playCss = css`
@@ -58,13 +64,6 @@ export default function Play(props: Props) {
         return true;
     };
 
-    const updateReceivedMove = (moveName: MoveName) => {
-        if (!chessboardRef.current) return;
-
-        const { move, promotionPiece } = Move.fromName(moveName);
-        chessboardRef.current.clientMakeMove(move, promotionPiece);
-    };
-
     const broadcastMove = (move: MoveInfo) => {
         sendMessage(JSON.stringify({ type: "move", move: move.toName() }));
     };
@@ -76,7 +75,7 @@ export default function Play(props: Props) {
                 handleJoined(data);
                 break;
             case "move":
-                updateReceivedMove(data.move);
+                handleMove(data);
                 break;
             case "error":
                 ErrorQueueClass.addError({ errorMessage: data.message });
@@ -88,16 +87,33 @@ export default function Play(props: Props) {
         }
     };
 
-    const handleJoined = (data: JoinAPIResponse) => {
-        for (const [username, player] of Object.entries(data.players)) {
-            if (username === localStorage.getItem("username")) {
-                setColor(ColorName[player.color]);
-            }
+    const updateTimers = (players: Players) => {
+        for (const player of Object.values(players)) {
             timers.current[player.color] = Math.floor(player.time / 100) * 100; // Convert to 1/10 of a second
         }
+    };
+
+    const updateMove = (moveName: MoveName) => {
+        if (!chessboardRef.current) return;
+        const { move, promotionPiece } = Move.fromName(moveName);
+        chessboardRef.current.clientMakeMove(move, promotionPiece);
+    };
+
+    const handleMove = (data: MoveAPIResponse) => {
+        updateTimers(data.players);
+        updateMove(data.move);
+    };
+
+    const handleJoined = (data: JoinAPIResponse) => {
+        const clientUsername = localStorage.getItem("username");
+        if (!clientUsername) return setError("Username is not set");
+
+        const color = data.players[clientUsername].color;
+        setColor(ColorName[color]);
+        updateTimers(data.players);
 
         for (const move of data.moves) {
-            updateReceivedMove(move);
+            updateMove(move);
         }
         setConnectingState(ConnectingState.Connected);
     };

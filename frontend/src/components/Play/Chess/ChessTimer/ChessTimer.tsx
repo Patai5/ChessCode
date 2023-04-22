@@ -51,26 +51,28 @@ export default function Play(props: Props) {
     const [showTenthsOfSec, setShowTenthsOfSec] = React.useState(false);
 
     const SHOW_TENTHS_OF_SEC_TIME = 10000;
-    const updateTime = () => {
-        setTime((time) => {
-            if (time <= SHOW_TENTHS_OF_SEC_TIME) setShowTenthsOfSec(true);
-            if (time <= 0) {
-                setDisable(true);
-                return time;
-            }
-            return time - 100;
-        });
+    const updateTime = (time: TimeMs) => {
+        if (time <= SHOW_TENTHS_OF_SEC_TIME) setShowTenthsOfSec(true);
+        if (time <= 0) {
+            setDisable(true);
+            return time;
+        }
+        return time - 100;
     };
 
     React.useEffect(() => {
-        if (props.paused || disable) return;
+        updateTime(props.time);
+        setTime(props.time);
+    }, [props.time]);
 
-        const interval = setInterval(updateTime, 100);
+    React.useEffect(() => {
+        if (props.paused || disable) return;
+        const interval = setInterval(() => setTime((time) => updateTime(time)), 100);
 
         return () => {
             clearInterval(interval);
         };
-    }, [props.time, props.paused, disable]);
+    }, [props.paused, disable]);
 
     const itemsCss = [TimerItemCss, (disable || props.paused) && PausedTimerItemCss];
     return (
