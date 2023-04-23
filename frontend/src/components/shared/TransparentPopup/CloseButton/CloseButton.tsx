@@ -3,7 +3,7 @@ import { css, jsx } from "@emotion/react";
 import React from "react";
 import Button from "components/shared/Button";
 
-type Props = { stopQueuing: () => Promise<void> };
+type Props = { label: string; closePopup: () => void };
 export default function CancelButton(props: Props) {
-    return <Button label={"Cancel"} fontSize="1.6em" onClick={props.stopQueuing} />;
+    return <Button label={props.label} fontSize="1.6em" onClick={props.closePopup} />;
 }

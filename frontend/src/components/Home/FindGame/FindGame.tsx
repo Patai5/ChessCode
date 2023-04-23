@@ -4,9 +4,8 @@ import React from "react";
 import TimeControlPicker from "./TimeControlPicker/TimeControlPicker";
 import PlayAgainstPicker from "./PlayAgainstPicker/PlayAgainstPicker";
 import Paper from "components/shared/Paper";
-import Queuing, { QueueState, animationLength } from "./Queuing/Queuing";
-import { sleep } from "utils/utils";
-import { getWSUri, isWSMessageError, WSErrorCodes } from "utils/websockets";
+import Queuing, { QueueState } from "./Queuing/Queuing";
+import { getWSUri, WSErrorCodes } from "utils/websockets";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 
 const findGameCss = css`
@@ -47,7 +46,7 @@ export type handleStartQueueingType = (queue: QueueState) => Promise<void>;
 
 type Props = {};
 export default function FindGame(props: Props) {
-    const [queuing, setQueuing] = React.useState<false | QueueState>(false);
+    const [queuing, setQueuing] = React.useState<QueueState | null>(null);
     const [showQueuing, setShowQueuing] = React.useState(false);
     const [ws, setWebSocket] = React.useState<WebSocket | null>(null);
 
@@ -67,7 +66,7 @@ export default function FindGame(props: Props) {
                     return;
                 }
                 ErrorQueueClass.addError({ errorMessage: data.message });
-                return handleStopQueuing(false);
+                return handleStopQueuing();
             default:
                 ErrorQueueClass.addError({ errorMessage: `Unknown message type received: ${data.type}` });
         }
@@ -87,12 +86,12 @@ export default function FindGame(props: Props) {
             if (e.code in WSErrorCodes)
                 ErrorQueueClass.addError({ errorMessage: WSErrorCodes[e.code as keyof typeof WSErrorCodes] });
             else ErrorQueueClass.addError({ errorMessage: "Your connection was unexpectedly closed" });
-            handleStopQueuing(false);
+            handleStopQueuing();
         };
 
         ws.onerror = (e) => {
             ErrorQueueClass.addError({ errorMessage: "Error connecting to server" });
-            handleStopQueuing(false);
+            handleStopQueuing();
         };
 
         setWebSocket(ws);
@@ -121,20 +120,24 @@ export default function FindGame(props: Props) {
         setShowQueuing(true);
     };
 
-    const stopQueuingAPI = async () => {
+    const stopQueuingAPI = () => {
         sendWSMessage(JSON.stringify({ type: "stop_queuing" }));
     };
-    const handleStopQueuing = async (callCancelApi: boolean) => {
-        if (callCancelApi) stopQueuingAPI();
+    const handleStopQueuing = (callStopQueueingAPI: boolean = true) => {
+        callStopQueueingAPI && stopQueuingAPI();
         setShowQueuing(false);
-
-        await sleep(animationLength);
-        setQueuing(false);
+    };
+    const handleStoppedQueuing = () => {
+        setQueuing(null);
     };
 
     return (
         <>
-            {queuing && <Queuing queue={queuing} show={showQueuing} stopQueuing={() => handleStopQueuing(true)} />}
+            <Queuing
+                queue={queuing ? queuing : undefined}
+                show={showQueuing}
+                cancelHandlers={{ onClosingCallback: handleStopQueuing, onClosedCallback: handleStoppedQueuing }}
+            />
             <div css={findGameCss}>
                 <h1 css={titleCss}>Find A Game</h1>
                 <Paper customCss={mainPaperCss}>
