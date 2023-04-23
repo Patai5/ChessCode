@@ -52,7 +52,7 @@ export interface CancelHandlers {
     onClosedCallback: () => void;
 }
 
-type Props = { content: PopupContent; show: boolean; cancelHandlers: CancelHandlers };
+type Props = { content: PopupContent; show: boolean; cancelHandlers?: CancelHandlers };
 export default function TransparentPopup(props: Props) {
     const [show, setShow] = React.useState<boolean | null>(props.show);
     const firstRender = React.useRef(true);
@@ -66,12 +66,11 @@ export default function TransparentPopup(props: Props) {
     }, [props.show]);
 
     const handleClose = React.useCallback(async () => {
-        console.log("handleClose");
         if (show === false) return;
-        props.cancelHandlers.onClosingCallback();
+        if (props.cancelHandlers) props.cancelHandlers.onClosingCallback();
         setShow(false);
         await sleep(animationLength);
-        props.cancelHandlers.onClosedCallback();
+        if (props.cancelHandlers) props.cancelHandlers.onClosedCallback();
     }, [show]);
 
     useKeypress("Escape", handleClose);
@@ -79,13 +78,7 @@ export default function TransparentPopup(props: Props) {
     return (
         <div css={[PopupCss, show === true ? OpenAnimationCss : ClosedAnimationCss]}>
             <Content content={props.content} />
-            <CloseButton
-                label={props.content.closeButtonText}
-                closePopup={() => {
-                    console.log(show);
-                    handleClose();
-                }}
-            />
+            <CloseButton label={props.content.closeButtonText} closePopup={handleClose} />
         </div>
     );
 }

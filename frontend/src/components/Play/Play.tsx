@@ -11,6 +11,7 @@ import { TimeMs } from "./Chess/ChessTimer/ChessTimer";
 import { Timers } from "./Chess/Chess";
 import Connecting from "./Connecting/Connecting";
 import Chess from "./Chess/Chess";
+import { GameResult } from "./Chess/ResultsDisplay/ResultsDisplay";
 
 const ColorName = { white: Color.White, black: Color.Black };
 type Player = { color: keyof typeof ColorName; time: TimeMs };
@@ -24,6 +25,8 @@ interface MoveAPIResponse {
     move: MoveName;
     players: Players;
 }
+
+interface GameResultAPIResponse extends GameResult {}
 
 const playCss = css`
     display: flex;
@@ -42,6 +45,7 @@ type Props = {};
 export default function Play(props: Props) {
     const [connectingState, setConnectingState] = React.useState(ConnectingState.Connecting);
     const [color, setColor] = React.useState<Color>(Color.White);
+    const [gameResult, setGameResult] = React.useState<GameResult | null>(null);
     const timers = React.useRef<Timers>({ white: 0, black: 0 });
     const ws = React.useRef<WebSocket | null>(null);
     const chessboardRef = React.useRef<RefType>(null);
@@ -77,11 +81,13 @@ export default function Play(props: Props) {
             case "move":
                 handleMove(data);
                 break;
+            case "game_result":
+                handleGameResult(data);
+                break;
             case "error":
                 ErrorQueueClass.addError({ errorMessage: data.message });
                 setConnectingState(ConnectingState.Error);
                 break;
-            // TODO: Handle `out_of_time`
             default:
                 ErrorQueueClass.addError({ errorMessage: `Unknown message type received: ${data.type}` });
         }
@@ -102,6 +108,13 @@ export default function Play(props: Props) {
     const handleMove = (data: MoveAPIResponse) => {
         updateTimers(data.players);
         updateMove(data.move);
+    };
+
+    const handleGameResult = (data: GameResultAPIResponse) => {
+        setGameResult({
+            winner: data.winner,
+            termination: data.termination,
+        });
     };
 
     const handleJoined = (data: JoinAPIResponse) => {
@@ -155,7 +168,13 @@ export default function Play(props: Props) {
         <div css={playCss}>
             {connectingState === ConnectingState.Connecting && <Connecting />}
             {connectingState === ConnectingState.Connected && (
-                <Chess color={color} broadcastMove={broadcastMove} timers={timers.current} ref={chessboardRef} />
+                <Chess
+                    color={color}
+                    broadcastMove={broadcastMove}
+                    timers={timers.current}
+                    gameResult={gameResult}
+                    ref={chessboardRef}
+                />
             )}
         </div>
     );
