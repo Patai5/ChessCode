@@ -32,6 +32,7 @@ export interface RefType {
 
 type Props = {
     color: Color;
+    isEnabled: boolean;
     broadcastMove: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
     updateColorToPlay: (color: Color) => void;
 };
@@ -40,11 +41,16 @@ function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
     let hoveringOver = React.useRef<Position | null>(null).current;
     let validMoves = React.useRef<Move[]>([]).current;
     let showPromotionSquares = React.useRef<PromotionSquare[] | null>(null).current;
+    const isEnabled = React.useRef(props.isEnabled);
     const chess = React.useRef(new Chess()).current;
 
     React.useImperativeHandle(forwardedRef, () => {
         return { clientMakeMove };
     });
+
+    React.useEffect(() => {
+        isEnabled.current = props.isEnabled;
+    }, [props.isEnabled]);
 
     const getSquareFromPosition = (
         chessboard: chessboardElement,
@@ -99,6 +105,7 @@ function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
     };
 
     const handleSelectPiece: setPieceType = (piece: selectedPieceType) => {
+        if (!isEnabled.current) return;
         if (piece && piece.color !== props.color) return;
 
         const updatedChessboard = [...chessboard];

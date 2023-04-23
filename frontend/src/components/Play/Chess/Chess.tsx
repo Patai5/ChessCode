@@ -29,7 +29,6 @@ function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
     const [colorToPlay, setColorToPlay] = React.useState<Color>(Color.White);
     const oppositeColor = getOppositeColor(props.color);
 
-    // TODO: Disable piece movement when game is over
     return (
         <>
             <ResultsDisplay result={props.gameResult ? props.gameResult : undefined} show={!!props.gameResult} />
@@ -40,6 +39,7 @@ function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
                 />
                 <ChessBoard
                     color={props.color}
+                    isEnabled={!props.gameResult}
                     broadcastMove={props.broadcastMove}
                     updateColorToPlay={setColorToPlay}
                     ref={forwardedRef}
