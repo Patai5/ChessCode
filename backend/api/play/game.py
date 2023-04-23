@@ -5,7 +5,7 @@ import chess
 from django.contrib.auth import get_user_model
 
 from ..utils import genUniqueID
-from .chess_board import CHESS_COLOR_NAMES, ChessBoard
+from .chess_board import CHESS_COLOR_NAMES, ChessBoard, CustomTermination
 from .game_modes import GameMode, TimeControl
 from .players import Player, Players
 
@@ -69,15 +69,9 @@ class Game:
         """Calls the API callbacks with the game result."""
         assert isinstance(result, chess.Outcome), "Result must be a chess.Outcome object"
 
+        winningColor = CHESS_COLOR_NAMES[result.winner] if result.winner != None else "draw"
         for player in self.players.players:
-            player.api_callback("game_result", [result.termination.name, CHESS_COLOR_NAMES.get(result.winner)])
-
-    def callback_out_of_time(self, user: User):
-        """Calls the API callbacks with the player that ran out of time."""
-        assert isinstance(user, User), "User must be a User object"
-
-        for player in self.players.players:
-            player.api_callback("out_of_time", user.username)
+            player.api_callback("game_result", [result.termination.name.lower(), winningColor])
 
     def callback_move(self, user: User, move: chess.Move | str):
         """Calls the API callbacks with the move."""
@@ -125,7 +119,8 @@ class Game:
         assert isinstance(user, User), "User must be a User object"
 
         self.finished = True
-        self.callback_out_of_time(user)
+        gameOutcome = chess.Outcome(CustomTermination.TIMEOUT, not self.board.color_to_move)
+        self.callback_game_result(gameOutcome)
 
     def update_player_timers(self):
         """Updates the player timers."""

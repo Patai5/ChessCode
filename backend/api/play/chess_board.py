@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import enum
 from typing import TypeVar
 
 import chess
@@ -55,9 +56,12 @@ class ChessBoard:
         self.board.push(move)
         self.switch_color_to_move()
 
-        outcome = self.board.outcome()
-        if outcome:
-            return outcome
+        return self.board.outcome(claim_draw=True)
 
     ILLEGAL_MOVE = TypeVar("ILLEGAL_MOVE")
-    OUT_OF_TIME = TypeVar("OUT_OF_TIME")
+
+
+class CustomTermination(enum.Enum):
+    TIMEOUT = enum.auto()
+    RESIGNATION = enum.auto()
+    AGREEMENT = enum.auto()
