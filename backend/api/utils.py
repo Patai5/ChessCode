@@ -14,3 +14,19 @@ def genUniqueID(collisionMap: dict = {}) -> str:
         uid = str(uuid.uuid4())[:8]
         if uid not in collisionMap:
             return uid
+
+
+def string_to_int_range(value: str | None, default: int, min: int = None, max: int = None):
+    """
+    Converts a string to an integer and checks if it is within the specified range
+    """
+    if not isinstance(value, int):
+        if value and value.isdigit():
+            value = int(value)
+        else:
+            value = default
+    if min and value < min:
+        value = min
+    elif max and value > max:
+        value = max
+    return value

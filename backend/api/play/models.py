@@ -1,5 +1,8 @@
+import chess
 from django.contrib.auth import get_user_model
 from django.db import models
+
+from .chess_board import CustomTermination
 
 User = get_user_model()
 
@@ -13,6 +16,24 @@ class GameTerminations(models.IntegerChoices):
     TIMEOUT = 5, "TIMEOUT"
     RESIGNATION = 6, "RESIGNATION"
     AGREEMENT = 7, "AGREEMENT"
+
+
+TERMINATIONS = {
+    GameTerminations.CHECKMATE: chess.Termination.CHECKMATE,
+    GameTerminations.STALEMATE: chess.Termination.STALEMATE,
+    GameTerminations.INSUFFICIENT_MATERIAL: chess.Termination.INSUFFICIENT_MATERIAL,
+    GameTerminations.FIFTY_MOVES: chess.Termination.FIFTY_MOVES,
+    GameTerminations.THREEFOLD_REPETITION: chess.Termination.THREEFOLD_REPETITION,
+    GameTerminations.TIMEOUT: CustomTermination.TIMEOUT,
+    GameTerminations.RESIGNATION: CustomTermination.RESIGNATION,
+    GameTerminations.AGREEMENT: CustomTermination.AGREEMENT,
+}
+
+COLORS = {
+    True: "white",
+    False: "black",
+    None: "draw",
+}
 
 
 class Game(models.Model):
