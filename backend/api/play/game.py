@@ -153,8 +153,11 @@ class Game:
     def finish(self, result: chess.Outcome):
         """Finishes the game and saves it to the database."""
         self.finished = True
-        self.save_to_db(result)
+        for player in self.players.players:
+            player.stop_timer()
+
         self.callback_game_result(result)
+        self.save_to_db(result)
 
 
 class GameManager:
