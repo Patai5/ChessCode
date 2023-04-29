@@ -159,6 +159,8 @@ class Game:
         self.callback_game_result(result)
         self.save_to_db(result)
 
+        ALL_ACTIVE_GAMES_MANAGER.remove_game(self.game_id)
+
 
 class GameManager:
     def __init__(self):
@@ -177,6 +179,13 @@ class GameManager:
         assert len(game_id) == 8, "Game ID must be 8 characters long"
 
         return self.games.get(game_id)
+
+    def remove_game(self, game_id: str):
+        assert isinstance(game_id, str), "Game ID must be a string"
+        assert len(game_id) == 8, "Game ID must be 8 characters long"
+
+        if self.get_game(game_id) is not None:
+            del self.games[game_id]
 
     def start_game(self, players: Iterable[User], game_mode: GameMode, time_control: TimeControl) -> Game:
         assert isinstance(players, Iterable), "Players must be a iterable"

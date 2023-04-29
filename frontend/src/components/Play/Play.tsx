@@ -153,8 +153,9 @@ export default function Play(props: Props) {
             ws.current = createWs;
             joinGame();
         };
-        createWs.onclose = () => {
-            setError("Connection closed");
+        createWs.onclose = (ev) => {
+            if (ev.code === 1000) return; // Normal closure
+            setError("Connection closed - CODE: " + ev.code);
         };
         createWs.onerror = (err) => {
             setError("Connection error");
