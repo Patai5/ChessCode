@@ -17,6 +17,11 @@ class GameTerminations(models.IntegerChoices):
     RESIGNATION = 6, "RESIGNATION"
     AGREEMENT = 7, "AGREEMENT"
 
+    @staticmethod
+    def from_chess_termination(termination: chess.Termination):
+        # Swap the keys and values of TERMINATIONS and get the value of the key
+        return {v: k for k, v in TERMINATIONS.items()}[(termination)]
+
 
 TERMINATIONS = {
     GameTerminations.CHECKMATE: chess.Termination.CHECKMATE,

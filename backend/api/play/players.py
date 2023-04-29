@@ -85,6 +85,12 @@ class Players:
     def users(self) -> Iterable[User]:
         return self.userPlayers.keys()
 
+    def by_color(self, color: chess.Color):
+        """Gets the Player object for the given color"""
+        for player in self.players:
+            if player.color == color:
+                return player
+
     def by_user(self, user: User):
         """Gets the Player object for the given user"""
         return self.userPlayers.get(user)

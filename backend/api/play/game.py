@@ -7,6 +7,8 @@ from django.contrib.auth import get_user_model
 from ..utils import genUniqueID
 from .chess_board import CHESS_COLOR_NAMES, ChessBoard, CustomTermination
 from .game_modes import GameMode, TimeControl
+from .models import Game as GameModel
+from .models import GameTerminations, Move
 from .players import Player, Players
 
 User = get_user_model()
@@ -110,17 +112,15 @@ class Game:
         self.update_player_timers()
         self.callback_move(user, move)
         if isinstance(result, chess.Outcome):
-            self.finished = True
-            self.callback_game_result(result)
+            self.finish(result)
         return result
 
     def ran_out_of_time(self, user: User):
         """Handles the case when a player runs out of time."""
         assert isinstance(user, User), "User must be a User object"
 
-        self.finished = True
         gameOutcome = chess.Outcome(CustomTermination.TIMEOUT, not self.board.color_to_move)
-        self.callback_game_result(gameOutcome)
+        self.finish(gameOutcome)
 
     def update_player_timers(self):
         """Updates the player timers."""
@@ -135,6 +135,25 @@ class Game:
         assert isinstance(user, User), "User must be a User object"
 
         return self.board.color_to_move == self.players.by_user(user).color
+
+    def save_to_db(self, result: chess.Outcome):
+        """Saves the game to the database."""
+        game = GameModel(
+            player_white=self.players.by_color(chess.WHITE).user,
+            player_black=self.players.by_color(chess.BLACK).user,
+            termination=GameTerminations.from_chess_termination(result.termination),
+            winner_color=result.winner,
+        )
+        game.save()
+        Move.objects.bulk_create(
+            [Move(game=game, order=order, move=move) for order, move in enumerate(self.get_moves_list())]
+        )
+
+    def finish(self, result: chess.Outcome):
+        """Finishes the game and saves it to the database."""
+        self.finished = True
+        self.save_to_db(result)
+        self.callback_game_result(result)
 
 
 class GameManager:
