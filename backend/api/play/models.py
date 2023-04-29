@@ -47,6 +47,7 @@ class Game(models.Model):
     player_black = models.ForeignKey(User, related_name="player_black", on_delete=models.SET_NULL, null=True)
     termination = models.IntegerField(choices=GameTerminations.choices)
     winner_color = models.BooleanField(null=True)
+    time_control = models.PositiveBigIntegerField()
     date = models.DateTimeField(auto_now_add=True)
 
     class Meta:

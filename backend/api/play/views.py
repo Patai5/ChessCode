@@ -15,6 +15,7 @@ def game_to_dict(game: Game):
         "termination": TERMINATIONS.get(game.termination).name,
         "winner_color": COLORS.get(game.winner_color),
         "moves": [move.move for move in Move.objects.filter(game=game.game_id).order_by("order")],
+        "time_control": game.time_control,
         "date": game.date,
     }
 

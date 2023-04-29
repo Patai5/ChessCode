@@ -143,6 +143,7 @@ class Game:
             player_black=self.players.by_color(chess.BLACK).user,
             termination=GameTerminations.from_chess_termination(result.termination),
             winner_color=result.winner,
+            time_control=self.time_control.time,
         )
         game.save()
         Move.objects.bulk_create(
