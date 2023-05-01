@@ -4,13 +4,11 @@ import React from "react";
 import { FaClock } from "react-icons/fa";
 import Paper from "components/shared/Paper";
 
-const TimerPaperCss = css`
-    margin: 0.5em 0 0.5em 0;
-    margin-left: auto;
-`;
 const TimerCss = css`
     display: flex;
     gap: 0.75em;
+    align-items: center;
+    height: 100%;
 `;
 const TimerItemCss = css`
     font-family: "Roboto Mono", monospace;
@@ -76,7 +74,7 @@ export default function Play(props: Props) {
 
     const itemsCss = [TimerItemCss, (disable || props.paused) && PausedTimerItemCss];
     return (
-        <Paper elevation={1} white={true} customCss={TimerPaperCss}>
+        <Paper elevation={1} white={true}>
             <div css={TimerCss}>
                 <FaClock css={itemsCss} />
                 <div css={itemsCss}>{timeToString(time, showTenthsOfSec)}</div>

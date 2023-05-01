@@ -7,7 +7,7 @@ import { getWSUri } from "utils/websockets";
 import { RefType } from "./Chess/ChessBoard/ChessBoard";
 import { Move, MoveInfo, MoveName } from "./Chess/ChessBoard/ChessLogic/board";
 import { Color } from "./Chess/ChessBoard/ChessLogic/pieces";
-import { TimeMs } from "./Chess/ChessTimer/ChessTimer";
+import { TimeMs } from "./Chess/ActionBar/ChessTimer/ChessTimer";
 import { Timers } from "./Chess/Chess";
 import Connecting from "./Connecting/Connecting";
 import Chess from "./Chess/Chess";
