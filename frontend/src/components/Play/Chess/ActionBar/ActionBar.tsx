@@ -2,7 +2,7 @@
 import { css, jsx } from "@emotion/react";
 import React from "react";
 import ChessTimer, { TimeMs } from "./ChessTimer/ChessTimer";
-import QuickActions from "./QuickActions/QuickActions";
+import QuickActions, { Actions } from "./QuickActions/QuickActions";
 
 const ActionBarCss = css`
     margin: 0.5em 0 0.5em 0;
@@ -14,11 +14,11 @@ const ActionBarCss = css`
     align-items: center;
 `;
 
-type Props = { isMain: boolean; time: TimeMs; timerPaused: boolean };
+type Props = { time: TimeMs; timerPaused: boolean; actions?: Actions };
 export default function ActionBar(props: Props) {
     return (
         <div css={ActionBarCss}>
-            {props.isMain && <QuickActions />}
+            {props.actions && <QuickActions actions={props.actions} />}
             <ChessTimer time={props.time} paused={props.timerPaused} />
         </div>
     );

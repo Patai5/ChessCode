@@ -5,11 +5,6 @@ from typing import TypeVar
 
 import chess
 
-CHESS_COLOR_NAMES = {
-    chess.WHITE: "white",
-    chess.BLACK: "black",
-}
-
 
 class ChessBoard:
     def __init__(self):
@@ -59,6 +54,17 @@ class ChessBoard:
         return self.board.outcome(claim_draw=True)
 
     ILLEGAL_MOVE = TypeVar("ILLEGAL_MOVE")
+
+
+CHESS_COLOR_NAMES = {
+    chess.WHITE: "white",
+    chess.BLACK: "black",
+}
+
+
+def get_opposite_color(color: chess.Color) -> chess.Color:
+    """Return the opposite of the given color."""
+    return chess.WHITE if color == chess.BLACK else chess.BLACK
 
 
 class CustomTermination(enum.Enum):

@@ -10,13 +10,13 @@ const QuickActionsCss = css`
     height: 2.25em;
 `;
 
-type Props = {};
+export type Actions = { resign: () => void; offerDraw: () => void };
+type Props = { actions: Actions };
 export default function ActionBar(props: Props) {
-    // TODO: Implement on click handlers
     return (
         <div css={QuickActionsCss}>
-            <IconButton icon={"½"} fontSize={1.5} tooltip="Propose a draw" onClick={() => {}} />
-            <IconButton icon={FaRegFlag} tooltip="Resign" onClick={() => {}} />
+            <IconButton icon={"½"} fontSize={1.5} tooltip="Propose a draw" onClick={props.actions.offerDraw} />
+            <IconButton icon={FaRegFlag} tooltip="Resign" onClick={props.actions.resign} />
         </div>
     );
 }

@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 
 from ..consumers import error
 from . import serializers as s
-from .chess_board import ChessBoard
+from .chess_board import ChessBoard, CustomTermination, get_opposite_color
 from .game import ALL_ACTIVE_GAMES_MANAGER, Game
 from .game_queue import DEFAULT_GAME_QUEUE_MANAGER
 
@@ -147,8 +147,9 @@ class GameConsumer(WebsocketConsumer):
             self.send(json.dumps({"type": "outcome", "outcome": moveResult.result()}))
 
     def resign(self):
-        # TODO: Implement resignation of the right color
-        self.game.callback_game_result(chess.Outcome(winner=chess.WHITE, termination=chess.Termination.VARIANT_WIN))
+        user_color = self.game.players.by_user(self.user).color
+        winning_color = get_opposite_color(user_color)
+        self.game.finish(chess.Outcome(winner=winning_color, termination=CustomTermination.RESIGNATION))
 
     def offer_draw(self):
         # TODO: Implement both players accepting the draw

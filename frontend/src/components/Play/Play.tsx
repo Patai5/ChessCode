@@ -93,6 +93,14 @@ export default function Play(props: Props) {
         }
     };
 
+    const handleResign = () => {
+        sendMessage(JSON.stringify({ type: "resign" }));
+    };
+
+    const handleOfferDraw = () => {
+        // TODO: Draw offer
+    };
+
     const updateTimers = (players: Players) => {
         for (const player of Object.values(players)) {
             timers.current[player.color] = Math.floor(player.time / 100) * 100; // Convert to 1/10 of a second
@@ -174,6 +182,7 @@ export default function Play(props: Props) {
                     broadcastMove={broadcastMove}
                     timers={timers.current}
                     gameResult={gameResult}
+                    actions={{ resign: handleResign, offerDraw: handleOfferDraw }}
                     ref={chessboardRef}
                 />
             )}

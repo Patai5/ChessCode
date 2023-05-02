@@ -6,6 +6,7 @@ import { MoveInfo } from "./ChessBoard/ChessLogic/board";
 import { Color, PromotionPieceType } from "./ChessBoard/ChessLogic/pieces";
 import { getOppositeColor } from "./ChessBoard/ChessLogic/utils";
 import { TimeMs } from "./ActionBar/ChessTimer/ChessTimer";
+import { Actions } from "./ActionBar/QuickActions/QuickActions";
 import ResultsDisplay, { GameResult } from "./ResultsDisplay/ResultsDisplay";
 import ActionBar from "./ActionBar/ActionBar";
 
@@ -25,6 +26,7 @@ type Props = {
     timers: Timers;
     gameResult: GameResult | null;
     broadcastMove: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
+    actions: Actions;
 };
 function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
     const [colorToPlay, setColorToPlay] = React.useState<Color>(Color.White);
@@ -35,7 +37,6 @@ function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
             <ResultsDisplay result={props.gameResult ? props.gameResult : undefined} show={!!props.gameResult} />
             <div css={ChessCss}>
                 <ActionBar
-                    isMain={false}
                     time={props.timers[oppositeColor]}
                     timerPaused={oppositeColor !== colorToPlay || !!props.gameResult}
                 />
@@ -47,9 +48,9 @@ function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
                     ref={forwardedRef}
                 />
                 <ActionBar
-                    isMain={true}
                     time={props.timers[props.color]}
                     timerPaused={props.color !== colorToPlay || !!props.gameResult}
+                    actions={props.actions}
                 />
             </div>
         </>
