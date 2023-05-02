@@ -27,6 +27,7 @@ class Player:
         self.time = time
         self.api_callback = api_callback
 
+        self.offers_draw = False
         self.timer = None
         self.timer_start = None
 
@@ -84,6 +85,15 @@ class Players:
     @property
     def users(self) -> Iterable[User]:
         return self.userPlayers.keys()
+
+    @property
+    def is_draw_agreement(self) -> bool:
+        return all(player.offers_draw for player in self.players)
+
+    def remove_draw_offers(self):
+        """Removes all draw offers from the players"""
+        for player in self.players:
+            player.offers_draw = False
 
     def by_color(self, color: chess.Color):
         """Gets the Player object for the given color"""

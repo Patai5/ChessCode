@@ -5,7 +5,12 @@ import chess
 from django.contrib.auth import get_user_model
 
 from ..utils import genUniqueID
-from .chess_board import CHESS_COLOR_NAMES, ChessBoard, CustomTermination
+from .chess_board import (
+    CHESS_COLOR_NAMES,
+    ChessBoard,
+    CustomTermination,
+    get_opposite_color,
+)
 from .game_modes import GameMode, TimeControl
 from .models import Game as GameModel
 from .models import GameTerminations, Move
@@ -110,6 +115,8 @@ class Game:
             return ChessBoard.ILLEGAL_MOVE
 
         self.update_player_timers()
+        self.players.remove_draw_offers()
+
         self.callback_move(user, move)
         if isinstance(result, chess.Outcome):
             self.finish(result)
@@ -129,6 +136,21 @@ class Game:
                 player.start_timer(self.ran_out_of_time)
             else:
                 player.stop_timer()
+
+    def offer_draw(self, user: User):
+        """Offers a draw to the opponent. If the opponent accepts, the game ends in a draw."""
+        assert isinstance(user, User), "User must be a User object"
+
+        offeringPlayer = self.players.by_user(user)
+        if offeringPlayer.offers_draw:
+            return  # The player has already offered a draw, do nothing
+        offeringPlayer.offers_draw = True
+
+        if self.players.is_draw_agreement:
+            self.finish(chess.Outcome(CustomTermination.AGREEMENT, None))
+        else:
+            opponent = self.players.by_color(get_opposite_color(offeringPlayer.color))
+            opponent.api_callback("offer_draw")
 
     def is_players_turn(self, user: User) -> bool:
         """Checks if it is the user's turn."""

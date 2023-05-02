@@ -84,6 +84,9 @@ export default function Play(props: Props) {
             case "game_result":
                 handleGameResult(data);
                 break;
+            case "offer_draw":
+                handleReceivedDrawOffer();
+                break;
             case "error":
                 ErrorQueueClass.addError({ errorMessage: data.message });
                 setConnectingState(ConnectingState.Error);
@@ -98,7 +101,11 @@ export default function Play(props: Props) {
     };
 
     const handleOfferDraw = () => {
-        // TODO: Draw offer
+        sendMessage(JSON.stringify({ type: "offer_draw" }));
+    };
+
+    const handleReceivedDrawOffer = () => {
+        // TODO: Show draw offer
     };
 
     const updateTimers = (players: Players) => {

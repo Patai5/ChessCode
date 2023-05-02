@@ -152,17 +152,18 @@ class GameConsumer(WebsocketConsumer):
         self.game.finish(chess.Outcome(winner=winning_color, termination=CustomTermination.RESIGNATION))
 
     def offer_draw(self):
-        # TODO: Implement both players accepting the draw
-        self.game.callback_game_result(chess.Outcome(winner=None, termination=chess.Termination.VARIANT_DRAW))
+        self.game.offer_draw(self.user)
 
-    def callback_game_state(self, type: str, changed: Any):
-        assert type in ["move", "game_result", "out_of_time"], "Invalid type"
+    def callback_game_state(self, type: str, changed: Any = None):
+        assert type in ["move", "game_result", "out_of_time", "offer_draw"], "Invalid type"
 
         if type == "move":
             self.send(json.dumps({"type": "move", "move": changed, "players": self.game.players.to_json_dict()}))
         elif type == "game_result":
             self.send(json.dumps({"type": "game_result", "termination": changed[0], "winner": changed[1]}))
             self.disconnect()
+        elif type == "offer_draw":
+            self.send(json.dumps({"type": "offer_draw"}))
 
     def disconnect(self, code: int = None):
         self.close(code=code)
