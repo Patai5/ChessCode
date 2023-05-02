@@ -30,7 +30,7 @@ const ButtonCss = css`
     box-sizing: border-box;
 
     transition: all 0.25s ease-in-out;
-    transition-property: background, box-shadow;
+    transition-property: background, box-shadow, color;
 
     :hover {
         background: rgb(50, 50, 50);
@@ -67,8 +67,17 @@ const PressedButtonCss = css`
         transition-property: opacity, box-shadow;
     }
 `;
+const HighlightedCss = css`
+    color: #fc9701;
+`;
 
-type Props = { icon: IconType | string; tooltip?: string; fontSize?: number; onClick: () => void };
+type Props = {
+    icon: IconType | string;
+    onClick: () => void;
+    tooltip?: string;
+    fontSize?: number;
+    highlighted?: boolean;
+};
 export default function IconButton(props: Props) {
     const [isHovered, setIsHover] = React.useState(false);
     const [isPressed, setIsPressed] = React.useState(false);
@@ -90,7 +99,7 @@ export default function IconButton(props: Props) {
         <div css={ContainerCss}>
             {props.tooltip && <Tooltip text={props.tooltip} show={isHovered} />}
             <span
-                css={[ButtonCss, isPressed && PressedButtonCss]}
+                css={[ButtonCss, isPressed && PressedButtonCss, props.highlighted && HighlightedCss]}
                 onClick={handleOnClick}
                 onMouseEnter={() => setIsHover(true)}
                 onMouseLeave={() => setIsHover(false)}

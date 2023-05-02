@@ -10,12 +10,18 @@ const QuickActionsCss = css`
     height: 2.25em;
 `;
 
-export type Actions = { resign: () => void; offerDraw: () => void };
+export type Actions = { highlightDraw: boolean; resign: () => void; offerDraw: () => void };
 type Props = { actions: Actions };
 export default function ActionBar(props: Props) {
     return (
         <div css={QuickActionsCss}>
-            <IconButton icon={"½"} fontSize={1.5} tooltip="Propose a draw" onClick={props.actions.offerDraw} />
+            <IconButton
+                icon={"½"}
+                fontSize={1.5}
+                tooltip={props.actions.highlightDraw ? "Accept draw" : "Propose a draw"}
+                onClick={props.actions.offerDraw}
+                highlighted={props.actions.highlightDraw}
+            />
             <IconButton icon={FaRegFlag} tooltip="Resign" onClick={props.actions.resign} />
         </div>
     );

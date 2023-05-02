@@ -123,7 +123,12 @@ class GameConsumer(WebsocketConsumer):
 
         self.send(
             text_data=json.dumps(
-                {"type": "join", "players": self.game.players.to_json_dict(), "moves": self.game.get_moves_list()}
+                {
+                    "type": "join",
+                    "players": self.game.players.to_json_dict(),
+                    "moves": self.game.get_moves_list(),
+                    "offer_draw": self.game.players.get_opponent(self.user).offers_draw,
+                }
             )
         )
 

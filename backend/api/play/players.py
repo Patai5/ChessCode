@@ -5,7 +5,7 @@ from typing import Callable, Iterable
 import chess
 from django.contrib.auth import get_user_model
 
-from .chess_board import CHESS_COLOR_NAMES
+from .chess_board import CHESS_COLOR_NAMES, get_opposite_color
 
 User = get_user_model()
 
@@ -94,6 +94,10 @@ class Players:
         """Removes all draw offers from the players"""
         for player in self.players:
             player.offers_draw = False
+
+    def get_opponent(self, user: User):
+        """Gets the Player object for the opponent of the given user"""
+        return self.by_color(get_opposite_color(self.by_user(user).color))
 
     def by_color(self, color: chess.Color):
         """Gets the Player object for the given color"""

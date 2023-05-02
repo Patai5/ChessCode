@@ -149,7 +149,7 @@ class Game:
         if self.players.is_draw_agreement:
             self.finish(chess.Outcome(CustomTermination.AGREEMENT, None))
         else:
-            opponent = self.players.by_color(get_opposite_color(offeringPlayer.color))
+            opponent = self.players.get_opponent(user)
             opponent.api_callback("offer_draw")
 
     def is_players_turn(self, user: User) -> bool:

@@ -19,6 +19,7 @@ type Players = { [username: string]: Player };
 interface JoinAPIResponse {
     players: Players;
     moves: MoveName[];
+    offer_draw: boolean;
 }
 
 interface MoveAPIResponse {
@@ -46,6 +47,7 @@ export default function Play(props: Props) {
     const [connectingState, setConnectingState] = React.useState(ConnectingState.Connecting);
     const [color, setColor] = React.useState<Color>(Color.White);
     const [gameResult, setGameResult] = React.useState<GameResult | null>(null);
+    const [highlightDrawButton, setHighlightDrawButton] = React.useState(false);
     const timers = React.useRef<Timers>({ white: 0, black: 0 });
     const ws = React.useRef<WebSocket | null>(null);
     const chessboardRef = React.useRef<RefType>(null);
@@ -69,6 +71,7 @@ export default function Play(props: Props) {
     };
 
     const broadcastMove = (move: MoveInfo) => {
+        setHighlightDrawButton(false);
         sendMessage(JSON.stringify({ type: "move", move: move.toName() }));
     };
 
@@ -105,7 +108,7 @@ export default function Play(props: Props) {
     };
 
     const handleReceivedDrawOffer = () => {
-        // TODO: Show draw offer
+        setHighlightDrawButton(true);
     };
 
     const updateTimers = (players: Players) => {
@@ -121,11 +124,13 @@ export default function Play(props: Props) {
     };
 
     const handleMove = (data: MoveAPIResponse) => {
+        setHighlightDrawButton(false);
         updateTimers(data.players);
         updateMove(data.move);
     };
 
     const handleGameResult = (data: GameResultAPIResponse) => {
+        setHighlightDrawButton(false);
         setGameResult({
             winner: data.winner,
             termination: data.termination,
@@ -143,6 +148,9 @@ export default function Play(props: Props) {
         for (const move of data.moves) {
             updateMove(move);
         }
+
+        setHighlightDrawButton(data.offer_draw);
+
         setConnectingState(ConnectingState.Connected);
     };
 
@@ -189,7 +197,7 @@ export default function Play(props: Props) {
                     broadcastMove={broadcastMove}
                     timers={timers.current}
                     gameResult={gameResult}
-                    actions={{ resign: handleResign, offerDraw: handleOfferDraw }}
+                    actions={{ highlightDraw: highlightDrawButton, resign: handleResign, offerDraw: handleOfferDraw }}
                     ref={chessboardRef}
                 />
             )}
