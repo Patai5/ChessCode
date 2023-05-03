@@ -129,6 +129,17 @@ function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
         updateSquaresProps(chessboard, rookToPosition, { piece: chess.board.getPiece(rookToPosition) });
     };
 
+    const updateMoveIndicator = (chessboard: chessboardElement, moveInfo: MoveInfo) => {
+        const lastMove = chess.board.moves.slice(-2)[0];
+        for (const position of [lastMove.move.from, lastMove.move.to]) {
+            updateSquaresProps(chessboard, position, { isLastMove: false });
+        }
+
+        for (const position of [moveInfo.move.from, moveInfo.move.to]) {
+            updateSquaresProps(chessboard, position, { isLastMove: true });
+        }
+    };
+
     const handleUpdateMove = (moveInfo: MoveInfo) => {
         const updatedChessboard = [...chessboard];
         // Remove the captured piece
@@ -144,6 +155,7 @@ function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
         }
 
         handleUpdateCastling(chessboard, moveInfo);
+        updateMoveIndicator(chessboard, moveInfo);
 
         setChessboard(updatedChessboard);
     };
@@ -235,6 +247,7 @@ function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
                     color={(position.file + position.rank) % 2 === 0 ? Color.Black : Color.White}
                     isSelected={selectedPiece ? selectedPiece.position.toName() === position.toName() : false}
                     isValidMove={isPositionInMoves(position, validMoves)}
+                    isLastMove={false}
                     setSelectedPiece={handleSelectPiece}
                     hoveringOver={hoveringOver ? hoveringOver.toName() === position.toName() : false}
                     setHoveringOver={handleHoveringOver}

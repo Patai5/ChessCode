@@ -43,12 +43,20 @@ const blackColorCss = css`
     background-color: rgb(181, 136, 99);
 `;
 
+const lastMoveWhiteCss = css`
+    background-color: rgb(255, 193, 101);
+`;
+const lastMoveBlackCss = css`
+    background-color: rgb(207 135 62);
+`;
+
 export type Props = {
     piece: Piece | null;
     position: Position;
     color: Color;
     isSelected: boolean;
     isValidMove: boolean;
+    isLastMove: boolean;
     setSelectedPiece: setPieceType;
     hoveringOver: boolean;
     setHoveringOver: (position: Position | null) => void;
@@ -99,6 +107,7 @@ export default function Square(props: Props) {
                 props.hoveringOver && hoveringOverCss,
                 props.isValidMove && validMoveSquareCss,
                 props.promotionPiece && promotionSelectPieceCss,
+                props.isLastMove && (props.color === Color.White ? lastMoveWhiteCss : lastMoveBlackCss),
             ]}
             onMouseEnter={handleMouseOver}
             onMouseLeave={handleMouseLeave}
