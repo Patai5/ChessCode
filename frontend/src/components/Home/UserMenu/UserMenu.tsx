@@ -1,24 +1,15 @@
 /** @jsxImportSource @emotion/react */
-import { css } from "@emotion/react";
-import Display from "./Display/Display";
-
-const MenuCss = css`
-    float: right;
-    border-radius: 0 0 0 1em;
-    box-shadow: 0 0 0.5em #000000ab;
-
-    background-color: #3636367d;
-    padding: 0.5em;
-    cursor: pointer;
-`;
+import React from "react";
+import LoggedInMenu from "./LoggedInMenu/LoggedInMenu";
+import LoginButton from "./LoginButton/LoginButton";
 
 type Props = {};
 export default function UserMenu(props: Props) {
-    const clientUsername = localStorage.getItem("username");
+    const [clientUsername, setClientUsername] = React.useState<null | string>(null);
 
-    return (
-        <div css={MenuCss}>
-            <Display username={clientUsername} />
-        </div>
-    );
+    React.useEffect(() => {
+        setClientUsername(localStorage.getItem("username"));
+    }, []);
+
+    return <>{clientUsername === null ? <LoginButton /> : <LoggedInMenu username={clientUsername} />}</>;
 }
