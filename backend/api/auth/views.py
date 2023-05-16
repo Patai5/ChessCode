@@ -1,5 +1,4 @@
-from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth import login as django_login
+from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.http import JsonResponse
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
@@ -22,7 +21,7 @@ class Login(APIView):
         if user is None:
             return JsonResponse({"error": "Unauthorized"}, status=401)
 
-        django_login(request, user)
+        login(request, user)
         return JsonResponse({"message": "OK"}, status=200)
 
 
@@ -40,5 +39,11 @@ class Register(APIView):
 
         user = User.objects.create_user(username=serializer.data["username"], password=serializer.data["password"])
 
-        django_login(request, user)
+        login(request, user)
         return JsonResponse({"message": "Created"}, status=201)
+
+
+class Logout(APIView):
+    def post(self, request):
+        logout(request)
+        return JsonResponse({"message": "OK"}, status=200)
