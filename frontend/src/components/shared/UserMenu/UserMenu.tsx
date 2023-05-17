@@ -5,7 +5,9 @@ import Display from "./Display/Display";
 import Dropdown, { TransitionDuration } from "./Dropdown/Dropdown";
 
 const MenuCss = css`
-    float: right;
+    position: Fixed;
+    top: 0;
+    right: 0;
     overflow: hidden;
 
     transition: max-height ${TransitionDuration}s ease-in-out;

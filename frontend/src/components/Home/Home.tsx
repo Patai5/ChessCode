@@ -1,13 +1,13 @@
 /** @jsxImportSource @emotion/react */
+import UserMenu from "components/shared/UserMenu/UserMenu";
 import FindGame from "./FindGame/FindGame";
-import UserMenu from "./UserMenu/UserMenu";
 
 type Props = {};
 export default function Home(props: Props) {
     return (
         <>
-            <FindGame />
             <UserMenu />
+            <FindGame />
         </>
     );
 }

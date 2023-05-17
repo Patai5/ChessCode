@@ -1,6 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
+import UserMenu from "components/shared/UserMenu/UserMenu";
 import React from "react";
 import { useParams } from "react-router-dom";
 import { getWSUri } from "utils/websockets";
@@ -194,18 +195,25 @@ export default function Play(props: Props) {
     }, []);
 
     return (
-        <div css={playCss}>
-            {connectingState === ConnectingState.Connecting && <Connecting />}
-            {connectingState === ConnectingState.Connected && players.current && (
-                <Chess
-                    color={color}
-                    broadcastMove={broadcastMove}
-                    players={players.current}
-                    gameResult={gameResult}
-                    actions={{ highlightDraw: highlightDrawButton, resign: handleResign, offerDraw: handleOfferDraw }}
-                    ref={chessboardRef}
-                />
-            )}
-        </div>
+        <>
+            <UserMenu />
+            <div css={playCss}>
+                {connectingState === ConnectingState.Connecting && <Connecting />}
+                {connectingState === ConnectingState.Connected && players.current && (
+                    <Chess
+                        color={color}
+                        broadcastMove={broadcastMove}
+                        players={players.current}
+                        gameResult={gameResult}
+                        actions={{
+                            highlightDraw: highlightDrawButton,
+                            resign: handleResign,
+                            offerDraw: handleOfferDraw,
+                        }}
+                        ref={chessboardRef}
+                    />
+                )}
+            </div>
+        </>
     );
 }
