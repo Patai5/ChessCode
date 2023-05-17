@@ -1,30 +1,28 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
+import { css } from "@emotion/react";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import React from "react";
 import { useParams } from "react-router-dom";
 import { getWSUri } from "utils/websockets";
+import { PlayerProps as PlayerAPI } from "./Chess/ActionBar/ActionBar";
+import Chess, { PlayersProps } from "./Chess/Chess";
 import { RefType } from "./Chess/ChessBoard/ChessBoard";
 import { Move, MoveInfo, MoveName } from "./Chess/ChessBoard/ChessLogic/board";
 import { Color } from "./Chess/ChessBoard/ChessLogic/pieces";
-import { TimeMs } from "./Chess/ActionBar/ChessTimer/ChessTimer";
-import { Timers } from "./Chess/Chess";
-import Connecting from "./Connecting/Connecting";
-import Chess from "./Chess/Chess";
 import { GameResult } from "./Chess/ResultsDisplay/ResultsDisplay";
+import Connecting from "./Connecting/Connecting";
 
 const ColorName = { white: Color.White, black: Color.Black };
-type Player = { color: keyof typeof ColorName; time: TimeMs };
-type Players = { [username: string]: Player };
+type PlayersAPI = { [color in keyof typeof ColorName]: PlayerAPI };
 interface JoinAPIResponse {
-    players: Players;
+    players: PlayersAPI;
     moves: MoveName[];
     offer_draw: boolean;
 }
 
 interface MoveAPIResponse {
     move: MoveName;
-    players: Players;
+    players: PlayersAPI;
 }
 
 interface GameResultAPIResponse extends GameResult {}
@@ -48,7 +46,7 @@ export default function Play(props: Props) {
     const [color, setColor] = React.useState<Color>(Color.White);
     const [gameResult, setGameResult] = React.useState<GameResult | null>(null);
     const [highlightDrawButton, setHighlightDrawButton] = React.useState(false);
-    const timers = React.useRef<Timers>({ white: 0, black: 0 });
+    const players = React.useRef<PlayersProps | null>(null);
     const ws = React.useRef<WebSocket | null>(null);
     const chessboardRef = React.useRef<RefType>(null);
     const { id } = useParams();
@@ -111,10 +109,14 @@ export default function Play(props: Props) {
         setHighlightDrawButton(true);
     };
 
-    const updateTimers = (players: Players) => {
-        for (const player of Object.values(players)) {
-            timers.current[player.color] = Math.floor(player.time / 100) * 100; // Convert to 1/10 of a second
+    const updatePlayersFromAPI = (playersAPI: PlayersAPI) => {
+        const playersProps = {} as PlayersProps;
+        for (const [color, player] of Object.entries(playersAPI)) {
+            playersProps[ColorName[color as "white" | "black"]] = {
+                ...player,
+            };
         }
+        players.current = playersProps;
     };
 
     const updateMove = (moveName: MoveName) => {
@@ -125,7 +127,7 @@ export default function Play(props: Props) {
 
     const handleMove = (data: MoveAPIResponse) => {
         setHighlightDrawButton(false);
-        updateTimers(data.players);
+        updatePlayersFromAPI(data.players);
         updateMove(data.move);
     };
 
@@ -141,9 +143,12 @@ export default function Play(props: Props) {
         const clientUsername = localStorage.getItem("username");
         if (!clientUsername) return setError("Username is not set");
 
-        const color = data.players[clientUsername].color;
-        setColor(ColorName[color]);
-        updateTimers(data.players);
+        for (const [color, player] of Object.entries(data.players)) {
+            if (player.username === clientUsername) {
+                setColor(ColorName[color as "white" | "black"]);
+            }
+        }
+        updatePlayersFromAPI(data.players);
 
         for (const move of data.moves) {
             updateMove(move);
@@ -191,11 +196,11 @@ export default function Play(props: Props) {
     return (
         <div css={playCss}>
             {connectingState === ConnectingState.Connecting && <Connecting />}
-            {connectingState === ConnectingState.Connected && (
+            {connectingState === ConnectingState.Connected && players.current && (
                 <Chess
                     color={color}
                     broadcastMove={broadcastMove}
-                    timers={timers.current}
+                    players={players.current}
                     gameResult={gameResult}
                     actions={{ highlightDraw: highlightDrawButton, resign: handleResign, offerDraw: handleOfferDraw }}
                     ref={chessboardRef}

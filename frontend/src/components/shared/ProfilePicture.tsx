@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { identicon } from "@dicebear/collection";
 import { createAvatar } from "@dicebear/core";
-import { css } from "@emotion/react";
+import { css, SerializedStyles } from "@emotion/react";
 import React from "react";
 
 const AvatarCss = css`
@@ -11,7 +11,7 @@ const AvatarCss = css`
     height: 2em;
 `;
 
-type Props = { username: string };
+type Props = { username: string; customCss?: SerializedStyles };
 export default function ProfilePicture(props: Props) {
     const avatar = React.useMemo(() => {
         return createAvatar(identicon, {
@@ -24,5 +24,5 @@ export default function ProfilePicture(props: Props) {
         }).toDataUriSync();
     }, []);
 
-    return <img css={AvatarCss} src={avatar} alt="avatar" />;
+    return <img css={[AvatarCss, props.customCss]} src={avatar} alt="avatar" />;
 }

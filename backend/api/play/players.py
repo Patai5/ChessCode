@@ -112,6 +112,6 @@ class Players:
     def to_json_dict(self) -> dict[str, dict[str, str]]:
         """Converts the Players object to a JSON serializable dict"""
         return {
-            user.username: {"color": CHESS_COLOR_NAMES[player.color], "time": player.get_current_time()}
+            CHESS_COLOR_NAMES[player.color]: {"username": user.username, "time": player.get_current_time()}
             for user, player in self.userPlayers.items()
         }

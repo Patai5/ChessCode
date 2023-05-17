@@ -1,14 +1,13 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
+import { css } from "@emotion/react";
 import React from "react";
+import ActionBar, { PlayerProps } from "./ActionBar/ActionBar";
+import { Actions } from "./ActionBar/QuickActions/QuickActions";
 import ChessBoard, { RefType } from "./ChessBoard/ChessBoard";
 import { MoveInfo } from "./ChessBoard/ChessLogic/board";
 import { Color, PromotionPieceType } from "./ChessBoard/ChessLogic/pieces";
 import { getOppositeColor } from "./ChessBoard/ChessLogic/utils";
-import { TimeMs } from "./ActionBar/ChessTimer/ChessTimer";
-import { Actions } from "./ActionBar/QuickActions/QuickActions";
 import ResultsDisplay, { GameResult } from "./ResultsDisplay/ResultsDisplay";
-import ActionBar from "./ActionBar/ActionBar";
 
 const ChessCss = css`
     display: flex;
@@ -17,28 +16,27 @@ const ChessCss = css`
     justify-content: center;
 `;
 
-export type Timers = {
-    [key in Color]: TimeMs;
+export type PlayersProps = {
+    [key in Color]: PlayerProps;
 };
 
 type Props = {
     color: Color;
-    timers: Timers;
+    players: PlayersProps;
     gameResult: GameResult | null;
     broadcastMove: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
     actions: Actions;
 };
 function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
     const [colorToPlay, setColorToPlay] = React.useState<Color>(Color.White);
-    const oppositeColor = getOppositeColor(props.color);
 
     return (
         <>
             <ResultsDisplay result={props.gameResult ? props.gameResult : undefined} show={!!props.gameResult} />
             <div css={ChessCss}>
                 <ActionBar
-                    time={props.timers[oppositeColor]}
-                    timerPaused={oppositeColor !== colorToPlay || !!props.gameResult}
+                    player={props.players[getOppositeColor(props.color)]}
+                    timerPaused={props.color === colorToPlay || !!props.gameResult}
                 />
                 <ChessBoard
                     color={props.color}
@@ -48,9 +46,9 @@ function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
                     ref={forwardedRef}
                 />
                 <ActionBar
-                    time={props.timers[props.color]}
-                    timerPaused={props.color !== colorToPlay || !!props.gameResult}
+                    player={props.players[props.color]}
                     actions={props.actions}
+                    timerPaused={props.color !== colorToPlay || !!props.gameResult}
                 />
             </div>
         </>

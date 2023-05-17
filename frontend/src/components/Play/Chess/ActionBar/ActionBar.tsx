@@ -1,25 +1,30 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
-import React from "react";
+import { css } from "@emotion/react";
 import ChessTimer, { TimeMs } from "./ChessTimer/ChessTimer";
+import Player from "./Player/Player";
+
 import QuickActions, { Actions } from "./QuickActions/QuickActions";
 
 const ActionBarCss = css`
     margin: 0.5em 0 0.5em 0;
-    margin-left: auto;
 
     display: flex;
+    justify-content: flex-end;
+    width: 100%;
     gap: 0.5em;
     flex-direction: horizontal;
     align-items: center;
 `;
 
-type Props = { time: TimeMs; timerPaused: boolean; actions?: Actions };
+export type PlayerProps = { username: string; time: TimeMs };
+
+type Props = { player: PlayerProps; timerPaused: boolean; actions?: Actions };
 export default function ActionBar(props: Props) {
     return (
         <div css={ActionBarCss}>
+            <Player username={props.player.username} />
             {props.actions && <QuickActions actions={props.actions} />}
-            <ChessTimer time={props.time} paused={props.timerPaused} />
+            <ChessTimer time={props.player.time} paused={props.timerPaused} />
         </div>
     );
 }
