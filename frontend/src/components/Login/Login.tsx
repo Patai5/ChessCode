@@ -1,33 +1,40 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
-import getCSRF from "../../utils/getCSRF";
-import React from "react";
+import { css } from "@emotion/react";
 import axios, { AxiosError } from "axios";
-import InputFields from "./InputFields/InputFields";
-import SwitchSigninSignup from "./SwitchSigninSignup/SwitchSigninSignup";
-import LoginButton from "./LoginButton/LoginButton";
-import ErrorMessage from "./ErrorMessage/ErrorMessage";
+import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
+import React from "react";
 import { useNavigate } from "react-router-dom";
+import getCSRF from "../../utils/getCSRF";
+import ErrorMessage from "./ErrorMessage/ErrorMessage";
+import InputFields from "./InputFields/InputFields";
+import LoginButton from "./LoginButton/LoginButton";
+import SwitchSigninSignup from "./SwitchSigninSignup/SwitchSigninSignup";
 
 const loginBoxCss = css`
-	background: linear-gradient(rgb(255, 0, 255, 0.2) 50%, rgb(255, 0, 255, 0.25) 58% ,rgb(255, 0, 255, 0.15) 66%, rgba(0, 0, 0, 0)), #291C39;);
-	background-size: 100% 300%;
-	background-position: 0 100%;
-	transition: background 1.5s ease-out;
-	border-radius: 1em;
-	display: inline-flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	padding: 4.5em;
-	width: 25em;
-	height: 36em;
-	font-size: 0.7em;
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	box-shadow: 0 0.1em 0.5em 0.25em rgb(0 0 0 / 25%);
+    background: linear-gradient(
+            rgb(255, 0, 255, 0.2) 50%,
+            rgb(255, 0, 255, 0.25) 58%,
+            rgb(255, 0, 255, 0.15) 66%,
+            rgba(0, 0, 0, 0)
+        ),
+        #291c39;
+    background-size: 100% 300%;
+    background-position: 0 100%;
+    transition: background 1.5s ease-out;
+    border-radius: 1em;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 4.5em;
+    width: 25em;
+    height: 36em;
+    font-size: 0.7em;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0.1em 0.5em 0.25em rgb(0 0 0 / 25%);
 `;
 const loginAnimationCss = css`
     background-position: 0 0;
@@ -85,26 +92,6 @@ export default function Login(props: Props) {
             return "success";
         } catch (err) {
             return err;
-        }
-    };
-
-    /** Shows the error on the screen. When submitting wait until the requests finish and then disable the error message. */
-    const handleError = (error: string | Error) => {
-        if (error instanceof Error) {
-            if (error instanceof AxiosError && error.response) {
-                // Get the API error response message
-                let data: string;
-                error.response.data["detail"]
-                    ? (data = error.response.data["detail"])
-                    : (data = error.response.data["error"]);
-                setErrorMessage(`${error.response.statusText}: ${data}`);
-            } else {
-                // Default non-axios error
-                setErrorMessage(`${error.name}: ${error.message}`);
-            }
-        } else {
-            // If the error is a string
-            setErrorMessage(error);
         }
     };
 
@@ -202,7 +189,7 @@ export default function Login(props: Props) {
             }
         }
 
-        handleError(error);
+        setErrorMessage(ErrorQueueClass.getErrorMessage(error));
     };
 
     const handleSetField = (type: "username" | "password", value: string) => {

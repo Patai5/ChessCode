@@ -1,8 +1,8 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
+import { css } from "@emotion/react";
 import React from "react";
-import { sleep } from "utils/utils";
 import { BsExclamationTriangle } from "react-icons/bs";
+import { sleep } from "utils/utils";
 
 const animationLength = 200;
 
@@ -73,7 +73,7 @@ export type ErrorType = {
 export const defaultHideAFter = 5000;
 
 type Props = { error: ErrorType; closedCallback: () => void };
-export default function Home(props: Props) {
+export default function ErrorPopup(props: Props) {
     const [open, setOpen] = React.useState<boolean | null>(null);
     const [controller, setController] = React.useState(new AbortController());
     const { autoHideAfter = defaultHideAFter } = props.error;
