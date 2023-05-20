@@ -28,6 +28,14 @@ export function secToTime(sec: number) {
     return out.trim();
 }
 
+export function formatDateString(date: string) {
+    return new Date(date).toLocaleDateString("en-US", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    });
+}
+
 export function getBaseUri() {
     return window.location.origin;
 }

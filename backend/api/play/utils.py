@@ -9,7 +9,7 @@ def game_to_dict(game: Game, include_moves: bool = True):
         "game_id": game.game_id,
         "player_white": game.player_white.username,
         "player_black": game.player_black.username,
-        "termination": TERMINATIONS.get(game.termination).name,
+        "termination": TERMINATIONS.get(game.termination).name.lower(),
         "winner_color": COLORS.get(game.winner_color),
         **(
             {"moves": [move.move for move in Move.objects.filter(game=game.game_id).order_by("order")]}

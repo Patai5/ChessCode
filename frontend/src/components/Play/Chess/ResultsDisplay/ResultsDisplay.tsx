@@ -1,15 +1,13 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
-import React from "react";
 import TransparentPopup, { PopupContent } from "components/shared/TransparentPopup/TransparentPopup";
 import { FaTrophy } from "react-icons/fa";
 
-const GameWinner = {
+export const GameWinner = {
     white: "White has Won!",
     black: "Black has Won!",
     draw: "It's a Draw!",
 };
-const GameTermination = {
+export const GameTermination = {
     checkmate: "by checkmate",
     stalemate: "by stalemate",
     insufficient_material: "by insufficient material",
