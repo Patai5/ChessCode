@@ -54,26 +54,12 @@ def validateNotYourself(func: callable) -> JsonResponse:
     return wrapper
 
 
-class FriendStatus:
-    friends = "friends"
-    notFriends = "not_friends"
-    friendRequestSent = "friend_request_sent"
-    friendRequestReceived = "friend_request_received"
-
-
 class Friend(APIView):
     @userAuthenticated
     @validateUsername
     @validateNotYourself
     def get(self, request: Request, user: User):
-        if friends.getFriendship(request.user, user):
-            return JsonResponse({"status": FriendStatus.friends})
-        elif friend_requests.getFriendRequest(request.user, user):
-            return JsonResponse({"status": FriendStatus.friendRequestSent})
-        elif friend_requests.getFriendRequest(user, request.user):
-            return JsonResponse({"status": FriendStatus.friendRequestReceived})
-        else:
-            return JsonResponse({"status": FriendStatus.notFriends})
+        return JsonResponse({"success": friends.getFriendStatus(request.user, user).value})
 
     @userAuthenticated
     @validateUsername
