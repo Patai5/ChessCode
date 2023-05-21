@@ -21,3 +21,16 @@ class Friendship(models.Model):
             return self.user2
         else:
             return self.user1
+
+
+class FriendRequest(models.Model):
+    friend_request_id = models.AutoField(primary_key=True)
+    fromUser = models.ForeignKey(User, related_name="fromUser", on_delete=models.CASCADE)
+    toUser = models.ForeignKey(User, related_name="toUser", on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("fromUser", "toUser")
+
+    def __str__(self):
+        return f"{self.fromUser.username} -> {self.toUser.username}"
