@@ -12,6 +12,9 @@ def getFriends(user: User) -> list[User]:
     return [friendship.get_friend(user) for friendship in friendships]
 
 
-def areFriends(user1: User, user2: User) -> bool:
-    """Returns True if user1 and user2 are friends, otherwise False"""
-    return Friendship.objects.filter(Q(user1=user1, user2=user2) | Q(user1=user2, user2=user1)).exists()
+def getFriendship(user1: User, user2: User) -> Friendship | None:
+    """Return the friendship between user1 and user2 if it exists, otherwise None"""
+    friendships = Friendship.objects.filter(Q(user1=user1, user2=user2) | Q(user1=user2, user2=user1))
+    if not friendships.exists():
+        return None
+    return friendships.first()

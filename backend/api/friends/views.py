@@ -54,29 +54,42 @@ def validateNotYourself(func: callable) -> JsonResponse:
     return wrapper
 
 
-class FriendStatus(APIView):
+class FriendStatus:
     friends = "friends"
     notFriends = "not_friends"
     friendRequestSent = "friend_request_sent"
     friendRequestReceived = "friend_request_received"
 
+
+class Friend(APIView):
     @userAuthenticated
     @validateUsername
     @validateNotYourself
     def get(self, request: Request, user: User):
-        if friends.areFriends(request.user, user):
-            return JsonResponse({"status": self.friends})
+        if friends.getFriendship(request.user, user):
+            return JsonResponse({"status": FriendStatus.friends})
         elif friend_requests.getFriendRequest(request.user, user):
-            return JsonResponse({"status": self.friendRequestSent})
+            return JsonResponse({"status": FriendStatus.friendRequestSent})
         elif friend_requests.getFriendRequest(user, request.user):
-            return JsonResponse({"status": self.friendRequestReceived})
+            return JsonResponse({"status": FriendStatus.friendRequestReceived})
         else:
-            return JsonResponse({"status": self.notFriends})
+            return JsonResponse({"status": FriendStatus.notFriends})
+
+    @userAuthenticated
+    @validateUsername
+    @validateNotYourself
+    def delete(self, request: Request, user: User):
+        friendship = friends.getFriendship(request.user, user)
+        if not friendship:
+            return JsonResponse({"error": "You are not friends with this user"}, status=400)
+
+        friendship.delete()
+        return JsonResponse({"success": True})
 
 
 def validateNotFriendsWithUser(func: callable) -> JsonResponse:
     def wrapper(self, request: Request, user: User):
-        if friends.areFriends(request.user, user):
+        if friends.getFriendship(request.user, user):
             return JsonResponse({"error": "You are already friends"}, status=400)
 
         return func(self, request, user)
@@ -123,4 +136,24 @@ class FriendRequest(APIView):
             return JsonResponse({"error": "Friend request already sent"}, status=400)
 
         friend_requests.sendFriendRequest(request.user, user)
+        return JsonResponse({"success": True})
+
+    @friendRequestValid
+    def delete(self, request: Request, user: User):
+        friendRequest = friend_requests.getFriendRequest(request.user, user)
+        if not friendRequest:
+            return JsonResponse({"error": "Friend request does not exist"}, status=404)
+
+        friendRequest.delete()
+        return JsonResponse({"success": True})
+
+
+class DeclineFriendRequest:
+    @friendRequestValid
+    def post(self, request: Request, user: User):
+        friendRequest = friend_requests.getFriendRequest(user, request.user)
+        if not friendRequest:
+            return JsonResponse({"error": "Friend request does not exist"}, status=404)
+
+        friendRequest.delete()
         return JsonResponse({"success": True})
