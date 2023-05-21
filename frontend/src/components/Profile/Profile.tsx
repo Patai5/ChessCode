@@ -8,13 +8,15 @@ import { useParams } from "react-router-dom";
 import ProfileHeader, { ProfileDataProps } from "./ProfileHeader/ProfileHeader";
 import { Game } from "./RecentGames/GameRow/GameRow";
 import RecentGames from "./RecentGames/RecentGames";
-import UserInteractions from "./UserInteractions/UserInteractions";
+import UserInteractions, { FriendStatus } from "./UserInteractions/UserInteractions";
 
 interface ProfileAPIResponse {
     date_joined: string;
     games: Game[];
     total_games: number;
     total_friends: number;
+    friend_status?: keyof typeof FriendStatus;
+    friend_requests?: number;
 }
 
 const ProfileCss = css`
@@ -54,14 +56,14 @@ export default function Profile(props: Props) {
     const profileHeaderData: ProfileDataProps | null = profileData && {
         username: username,
         joinedDate: profileData.date_joined,
-        friendsCount: 123,
-        gamesCount: 123,
+        friendsCount: profileData.total_friends,
+        gamesCount: profileData.total_games,
     };
 
     return (
         <Paper customCss={ProfileCss} white={true} elevation={1}>
             <ProfileHeader data={profileHeaderData} />
-            <UserInteractions />
+            <UserInteractions friendStatus={(profileData && profileData.friend_status) || null} username={username} />
             <RecentGames games={profileData && profileData.games} username={username} />
         </Paper>
     );
