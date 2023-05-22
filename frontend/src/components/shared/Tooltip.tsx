@@ -1,10 +1,9 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
-import React from "react";
+import { css } from "@emotion/react";
 
 const TooltipCss = css`
     position: absolute;
-    bottom: 123%;
+    bottom: calc(100% + 0.6em);
     left: 50%;
     translate: -50% 0%;
     inline-size: max-content;
@@ -40,7 +39,7 @@ const TooltipCss = css`
 const HiddenCss = css`
     transition-delay: 0s;
     opacity: 0;
-    bottom: 130%;
+    bottom: calc(100% + 0.85em);
 `;
 
 type Props = { text: string; show: boolean };
