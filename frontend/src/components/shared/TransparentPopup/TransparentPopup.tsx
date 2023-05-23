@@ -1,9 +1,9 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
+import { css } from "@emotion/react";
 import React from "react";
 import useKeypress from "utils/useKeypress";
 import { sleep } from "utils/utils";
-import CloseButton from "./CloseButton/CloseButton";
+import ActionButton, { ButtonProps } from "./ActionButton/ActionButton";
 import Content, { Content as ContentProps } from "./Content/Content";
 
 export const animationLength = 250;
@@ -21,8 +21,7 @@ const PopupCss = css`
     align-items: center;
     padding: 1.4em 3.85em;
     grid-gap: 0.7em;
-    width: 12em;
-    height: 12em;
+    max-width: 16em;
 
     z-index: 1;
     position: absolute;
@@ -45,11 +44,11 @@ const ClosedAnimationCss = css`
 `;
 
 export interface PopupContent extends ContentProps {
-    closeButtonText: string;
+    buttons: ButtonProps[];
 }
 export interface CancelHandlers {
-    onClosingCallback: () => void;
-    onClosedCallback: () => void;
+    onClosingCallback?: () => void;
+    onClosedCallback?: () => void;
 }
 
 type Props = { content: PopupContent; show: boolean; cancelHandlers?: CancelHandlers };
@@ -67,10 +66,15 @@ export default function TransparentPopup(props: Props) {
 
     const handleClose = React.useCallback(async () => {
         if (show === false) return;
-        if (props.cancelHandlers) props.cancelHandlers.onClosingCallback();
+        if (props.cancelHandlers && props.cancelHandlers.onClosingCallback) {
+            props.cancelHandlers.onClosingCallback();
+        }
         setShow(false);
+
         await sleep(animationLength);
-        if (props.cancelHandlers) props.cancelHandlers.onClosedCallback();
+        if (props.cancelHandlers && props.cancelHandlers.onClosedCallback) {
+            props.cancelHandlers.onClosedCallback();
+        }
     }, [show]);
 
     useKeypress("Escape", handleClose);
@@ -78,7 +82,9 @@ export default function TransparentPopup(props: Props) {
     return (
         <div css={[PopupCss, show === true ? OpenAnimationCss : ClosedAnimationCss]}>
             <Content content={props.content} />
-            <CloseButton label={props.content.closeButtonText} closePopup={handleClose} />
+            {props.content.buttons.map((button) => (
+                <ActionButton key={button.label} {...button} onClose={handleClose} />
+            ))}
         </div>
     );
 }

@@ -1,10 +1,8 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
-import React from "react";
-import TransparentPopup, { PopupContent, CancelHandlers } from "components/shared/TransparentPopup/TransparentPopup";
-import { FaSearch } from "react-icons/fa";
-import useWaitingDots from "hooks/useWaitingDots";
+import TransparentPopup, { CancelHandlers, PopupContent } from "components/shared/TransparentPopup/TransparentPopup";
 import useTimeElapsed from "hooks/useTimeElapsed";
+import useWaitingDots from "hooks/useWaitingDots";
+import { FaSearch } from "react-icons/fa";
 import { secToTime } from "utils/utils";
 
 export interface QueueState {
@@ -23,7 +21,7 @@ export default function Queuing(props: Props) {
         iconText: `Searching${waitingDots}`,
         title: `${queue.gameMode} - ${secToTime(queue.timeControl)}`,
         description: `Time elapsed: ${timeElapsed}`,
-        closeButtonText: "Cancel",
+        buttons: [{ label: "Cancel", closeWindow: true }],
     };
 
     return <TransparentPopup content={popupContent} show={props.show} cancelHandlers={props.cancelHandlers} />;

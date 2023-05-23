@@ -28,7 +28,7 @@ export default function ResultsDisplay(props: Props) {
         icon: FaTrophy,
         title: props.result ? GameWinner[props.result.winner] : "",
         description: props.result ? GameTermination[props.result.termination] : "",
-        closeButtonText: "GG!",
+        buttons: [{ label: "GG!", closeWindow: true }],
     };
 
     return <TransparentPopup content={popupContent} show={props.show} />;

@@ -1,6 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
-import React from "react";
+import { css } from "@emotion/react";
 import { IconType } from "react-icons/lib";
 
 const IconDivCss = css`
@@ -21,18 +20,19 @@ const IconTextCss = css`
 `;
 
 const TitleCss = css`
+    text-align: center;
     margin: 0;
     font-family: "Lexend Deca";
     font-weight: 700;
     font-size: 1.4em;
 `;
 const DescriptionCss = css`
+    text-align: center;
     font-family: "Montserrat";
     font-weight: 300;
     font-style: normal;
     margin: 0;
     color: rgba(255, 255, 255, 0.8);
-    white-space: nowrap;
 `;
 
 export interface Content {
