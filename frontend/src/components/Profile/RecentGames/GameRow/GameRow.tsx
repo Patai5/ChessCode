@@ -5,8 +5,18 @@ import { formatDateString, secToTime } from "utils/utils";
 
 const GameRowCss = css`
     background-color: #3d3d3d;
+    cursor: pointer;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+
+    :hover {
+        background-color: #4d4d4d;
+        td {
+            border-right: 1px solid rgba(255, 255, 255, 0);
+        }
+    }
 
     td {
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
         padding: 0.5em;
     }
 `;
@@ -32,8 +42,9 @@ export interface Game {
     date: string;
 }
 
-type Props = { game: Game; username: string };
+type Props = { game: Game; username: string; width: number };
 export default function GameRow(props: Props) {
+    const displayResultLong = props.width > 800;
     const userColor = props.game.player_white === props.username ? "white" : "black";
     const opponentUsername = userColor === "white" ? props.game.player_black : props.game.player_white;
 
@@ -49,8 +60,8 @@ export default function GameRow(props: Props) {
         <tr css={GameRowCss}>
             <td>{opponentUsername}</td>
             <td>
-                <span css={WinnerColorsCss[wonLost]}>{wonLost} </span>
-                {resultText}
+                <span css={WinnerColorsCss[wonLost]}>{wonLost}</span>
+                {displayResultLong && ` ${resultText}`}
             </td>
             <td>{timeControl}</td>
             <td>{dateString}</td>
