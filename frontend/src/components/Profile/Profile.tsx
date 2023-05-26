@@ -51,7 +51,7 @@ export default function Profile(props: Props) {
 
     React.useEffect(() => {
         fetchUserData();
-    }, []);
+    }, [username]);
 
     const profileHeaderData: ProfileDataProps | null = profileData && {
         username: username,

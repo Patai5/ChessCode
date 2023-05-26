@@ -1,6 +1,8 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import { GameTermination, GameWinner } from "components/Play/Chess/ResultsDisplay/ResultsDisplay";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { formatDateString, secToTime } from "utils/utils";
 
 const GameRowCss = css`
@@ -8,16 +10,23 @@ const GameRowCss = css`
     cursor: pointer;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 
+    td {
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 0.5em;
+    }
+`;
+const HoverEnabledCss = css`
     :hover {
         background-color: #4d4d4d;
         td {
             border-right: 1px solid rgba(255, 255, 255, 0);
         }
     }
-
-    td {
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 0.5em;
+`;
+const UsernameCss = css`
+    :hover {
+        text-decoration: underline;
+        background-color: #4d4d4d;
     }
 `;
 const WinnerColorsCss = {
@@ -44,6 +53,13 @@ export interface Game {
 
 type Props = { game: Game; username: string; width: number };
 export default function GameRow(props: Props) {
+    const [userHovered, setUserHovered] = React.useState(false);
+    const navigate = useNavigate();
+
+    const handleUserOnClick = () => {
+        navigate(`/profile/${opponentUsername}`);
+    };
+
     const displayResultLong = props.width > 800;
     const userColor = props.game.player_white === props.username ? "white" : "black";
     const opponentUsername = userColor === "white" ? props.game.player_black : props.game.player_white;
@@ -57,8 +73,15 @@ export default function GameRow(props: Props) {
     const dateString = formatDateString(props.game.date);
 
     return (
-        <tr css={GameRowCss}>
-            <td>{opponentUsername}</td>
+        <tr css={[GameRowCss, !userHovered && HoverEnabledCss]}>
+            <td
+                css={UsernameCss}
+                onClick={handleUserOnClick}
+                onMouseEnter={() => setUserHovered(true)}
+                onMouseLeave={() => setUserHovered(false)}
+            >
+                {opponentUsername}
+            </td>
             <td>
                 <span css={WinnerColorsCss[wonLost]}>{wonLost}</span>
                 {displayResultLong && ` ${resultText}`}

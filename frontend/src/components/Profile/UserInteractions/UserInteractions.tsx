@@ -41,17 +41,21 @@ export const FriendStatus: { [key in Statuses]: Status } = {
 
 type Props = { friendStatus: keyof typeof FriendStatus | null; username: string };
 export default function UserInteractions(props: Props) {
-    if (!props.friendStatus) return null;
-
-    const [friendStatus, setFriendStatus] = React.useState<Status>(FriendStatus[props.friendStatus]);
+    const [friendStatus, setFriendStatus] = React.useState<Status | null>(
+        props.friendStatus && FriendStatus[props.friendStatus]
+    );
     const [confirm, setConfirm] = React.useState(false);
+
+    React.useEffect(() => {
+        setFriendStatus(props.friendStatus && FriendStatus[props.friendStatus]);
+    }, [props.friendStatus]);
 
     const handleFriendsAPI = async () => {
         try {
-            setFriendStatus(FriendStatus[friendStatus.next]);
+            setFriendStatus(FriendStatus[friendStatus!.next]);
             await axios({
-                method: friendStatus.method,
-                url: `/api/friends/` + friendStatus.endpoint,
+                method: friendStatus!.method,
+                url: `/api/friends/` + friendStatus!.endpoint,
                 params: { username: props.username },
                 headers: { "X-CSRFToken": getCSRF() },
             });
@@ -80,8 +84,8 @@ export default function UserInteractions(props: Props) {
                 show={confirm}
                 cancelHandlers={{ onClosedCallback: () => setConfirm(false) }}
             />
-            {props.friendStatus && <Button label={friendStatus.text} onClick={handleFriendsOnClick} />}
-            {props.friendStatus && <Button label="Play" />}
+            {friendStatus && <Button label={friendStatus.text} onClick={handleFriendsOnClick} />}
+            {friendStatus && <Button label="Play" />}
         </div>
     );
 }
