@@ -1,14 +1,14 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
+import { css } from "@emotion/react";
+import Paper from "components/shared/Paper";
 import React from "react";
 import { FaClock } from "react-icons/fa";
-import Paper from "components/shared/Paper";
 
 const TimerCss = css`
     display: flex;
     gap: 0.75em;
     align-items: center;
-    height: 100%;
+    height: 1.75em;
 `;
 const TimerItemCss = css`
     font-family: "Roboto Mono", monospace;
@@ -74,11 +74,9 @@ export default function Play(props: Props) {
 
     const itemsCss = [TimerItemCss, (disable || props.paused) && PausedTimerItemCss];
     return (
-        <Paper elevation={1} white={true}>
-            <div css={TimerCss}>
-                <FaClock css={itemsCss} />
-                <div css={itemsCss}>{timeToString(time, showTenthsOfSec)}</div>
-            </div>
+        <Paper elevation={1} white={true} customCss={TimerCss}>
+            <FaClock css={itemsCss} />
+            <div css={itemsCss}>{timeToString(time, showTenthsOfSec)}</div>
         </Paper>
     );
 }

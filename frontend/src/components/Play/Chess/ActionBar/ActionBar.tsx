@@ -13,7 +13,6 @@ const ActionBarCss = css`
     width: 100%;
     gap: 0.5em;
     flex-direction: horizontal;
-    align-items: center;
 `;
 
 export type PlayerProps = { username: string; time: TimeMs };
@@ -22,7 +21,7 @@ type Props = { player: PlayerProps; timerPaused: boolean; actions?: Actions };
 export default function ActionBar(props: Props) {
     return (
         <div css={ActionBarCss}>
-            <Player username={props.player.username} />
+            <Player username={props.player.username} isOpponent={!props.actions} />
             {props.actions && <QuickActions actions={props.actions} />}
             <ChessTimer time={props.player.time} paused={props.timerPaused} />
         </div>

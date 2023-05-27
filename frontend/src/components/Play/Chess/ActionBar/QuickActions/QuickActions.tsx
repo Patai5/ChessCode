@@ -1,13 +1,13 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
-import React from "react";
-import { FaRegFlag } from "react-icons/fa";
+import { css } from "@emotion/react";
 import IconButton from "components/shared/IconButton";
+import { FaRegFlag } from "react-icons/fa";
 
 const QuickActionsCss = css`
     display: flex;
     gap: 0.5em;
     height: 2.25em;
+    margin: 0.25em 0;
 `;
 
 export type Actions = { highlightDraw: boolean; resign: () => void; offerDraw: () => void };
