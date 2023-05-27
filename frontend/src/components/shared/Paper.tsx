@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx, SerializedStyles } from "@emotion/react";
-import React from "react";
+import { css, SerializedStyles } from "@emotion/react";
 import CSS from "csstype";
+import React from "react";
 
 const paperCss = css`
     border-radius: 0.35em;
@@ -9,7 +9,13 @@ const paperCss = css`
     box-shadow: 0.15em 0.15em 0.4em rgba(0, 0, 0, 0.25);
 `;
 
-type Props = { elevation?: number; white?: boolean; customCss?: SerializedStyles; children: React.ReactNode };
+type Props = {
+    elevation?: number;
+    white?: boolean;
+    customCss?: SerializedStyles;
+    children: React.ReactNode;
+    applyProps?: any;
+};
 export default function Paper(props: Props) {
     const { elevation = 3, white = false } = props;
 
@@ -19,7 +25,7 @@ export default function Paper(props: Props) {
     };
 
     return (
-        <div css={[paperCss, props.customCss]} style={elevationStyle}>
+        <div css={[paperCss, props.customCss]} style={elevationStyle} {...props.applyProps}>
             {props.children}
         </div>
     );
