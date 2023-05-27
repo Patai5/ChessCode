@@ -44,7 +44,9 @@ export default function UserMenu(props: Props) {
             icon: !clientUsername ? FaSignInAlt : undefined,
             image: clientUsername ? <ProfilePicture username={clientUsername} /> : undefined,
             text: clientUsername || "Sign in",
-            onClick: () => {},
+            onClick: () => {
+                if (!clientUsername) signOut();
+            },
         },
         items: [
             { icon: FaUser, text: "Profile", onClick: () => navigate("/profile/" + clientUsername) },
@@ -52,6 +54,10 @@ export default function UserMenu(props: Props) {
         ],
         dropdownCss: DropdownCss,
     };
+
+    if (!clientUsername) {
+        dropdownItems.items.splice(0, dropdownItems.items.length);
+    }
 
     return (
         <div css={MenuCss}>
