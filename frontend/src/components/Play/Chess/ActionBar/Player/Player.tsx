@@ -2,7 +2,10 @@
 import { css } from "@emotion/react";
 import Dropdown, { DropdownItems } from "components/shared/Dropdown/Dropdown";
 import ProfilePicture from "components/shared/ProfilePicture";
+import useFriendsButton from "hooks/useFriendsButton";
 import { FaUser } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { Statuses } from "types/friendStatuses";
 
 const PlayerCss = css`
     margin-right: auto;
@@ -27,8 +30,15 @@ const DropdownCss = css`
     translate: -50% 0;
     box-shadow: 0 0 0.5em 0.2em #000000ab, inset 0 0 0.3em #000000ab;
 `;
-type Props = { username: string; isOpponent: boolean };
+type Props = { username: string; isOpponent: boolean; friendStatus: Statuses | null };
 export default function Player(props: Props) {
+    const { friendStatus, handleFriendsOnClick, confirmPopup } = useFriendsButton(props.friendStatus, props.username);
+    const navigate = useNavigate();
+
+    const navigateToProfile = () => {
+        navigate("/profile/" + props.username);
+    };
+
     const dropdownItems: DropdownItems = {
         main: {
             image: <ProfilePicture username={props.username} customCss={IconCss} />,
@@ -37,10 +47,17 @@ export default function Player(props: Props) {
             textCss: UsernameCss,
             customCss: UsernameContainerCss,
         },
-        items: [{ icon: FaUser, text: "Profile", onClick: () => {} }],
+        items: [{ icon: FaUser, text: "Profile", onClick: navigateToProfile }],
         dropdownCss: DropdownCss,
     };
-    if (props.isOpponent) dropdownItems.items.push({ icon: FaUser, text: "Friend", onClick: () => {} });
+    if (friendStatus) {
+        dropdownItems.items.push({ icon: friendStatus.icon, text: friendStatus.text, onClick: handleFriendsOnClick });
+    }
 
-    return <Dropdown dropdownItems={dropdownItems} customCss={PlayerCss} upwards={!props.isOpponent} />;
+    return (
+        <>
+            {confirmPopup}
+            <Dropdown dropdownItems={dropdownItems} customCss={PlayerCss} upwards={!props.isOpponent} />{" "}
+        </>
+    );
 }
