@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
+import { css } from "@emotion/react";
+import { SerializedStyles } from "@emotion/serialize";
 import CSS from "csstype";
 import useMousePosition from "hooks/useMousePosition";
 import React from "react";
@@ -12,10 +13,6 @@ const squareCss = css`
     width: 3.5em;
     height: 3.5em;
 `;
-const validMoveSquareCss = css`
-    background: pink;
-`;
-
 const pieceCss = css`
     width: 100%;
     height: 100%;
@@ -26,29 +23,52 @@ const pieceCss = css`
     user-select: none;
 `;
 
-const hoveringOverCss = css`
-    background: blue;
-`;
-const selectedPieceCss = css`
-    color: yellow;
-`;
-const promotionSelectPieceCss = css`
-    background: red;
-`;
+interface SquareCss {
+    background: SerializedStyles;
+    hoveringOver: SerializedStyles;
+    validMove: SerializedStyles;
+    promotionSelect: SerializedStyles;
+    lastMove: SerializedStyles;
+}
 
-const whiteColorCss = css`
-    background-color: rgb(240, 217, 181);
-`;
-const blackColorCss = css`
-    background-color: rgb(181, 136, 99);
-`;
-
-const lastMoveWhiteCss = css`
-    background-color: rgb(255, 193, 101);
-`;
-const lastMoveBlackCss = css`
-    background-color: rgb(207 135 62);
-`;
+const lightSquareCss: SquareCss = {
+    background: css`
+        background-color: rgb(240, 217, 181);
+    `,
+    hoveringOver: css`
+        box-shadow: none;
+        background-color: rgb(255, 193, 101);
+    `,
+    validMove: css`
+        background-color: rgb(240, 217, 181);
+        box-shadow: 0px 0px 0.5em 0.2em rgb(255, 188, 83) inset;
+    `,
+    promotionSelect: css`
+        background-color: rgb(255, 101, 101);
+    `,
+    lastMove: css`
+        background-color: rgb(255, 193, 101);
+    `,
+};
+const darkSquareCss: SquareCss = {
+    background: css`
+        background-color: rgb(181, 136, 99);
+    `,
+    hoveringOver: css`
+        box-shadow: none;
+        background-color: rgb(207, 135, 62);
+    `,
+    validMove: css`
+        background-color: rgb(181, 136, 99);
+        box-shadow: 0px 0px 0.5em 0.2em rgb(255, 156, 40) inset;
+    `,
+    promotionSelect: css`
+        background-color: rgb(207, 62, 62);
+    `,
+    lastMove: css`
+        background-color: rgb(207, 135, 62);
+    `,
+};
 
 export type Props = {
     piece: Piece | null;
@@ -90,6 +110,8 @@ export default function Square(props: Props) {
         props.setHoveringOver(null);
     };
 
+    const squareStyles = props.color === Color.White ? lightSquareCss : darkSquareCss;
+
     // Can't use emotion's css prop because of performance issues with adding new style to the Head on every mouse move
     const hoveringPieceCss: CSS.Properties = {
         position: "fixed",
@@ -103,21 +125,18 @@ export default function Square(props: Props) {
         <div
             css={[
                 squareCss,
-                props.color === Color.White ? whiteColorCss : blackColorCss,
-                props.hoveringOver && hoveringOverCss,
-                props.isValidMove && validMoveSquareCss,
-                props.promotionPiece && promotionSelectPieceCss,
-                props.isLastMove && (props.color === Color.White ? lastMoveWhiteCss : lastMoveBlackCss),
+                squareStyles.background,
+                props.isLastMove && squareStyles.lastMove,
+                props.isValidMove && squareStyles.validMove,
+                props.hoveringOver && squareStyles.hoveringOver,
+                props.promotionPiece && squareStyles.promotionSelect,
             ]}
             onMouseEnter={handleMouseOver}
             onMouseLeave={handleMouseLeave}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
         >
-            <div
-                css={[pieceCss, props.isSelected && selectedPieceCss]}
-                style={props.isSelected ? hoveringPieceCss : {}}
-            >
+            <div css={pieceCss} style={props.isSelected ? hoveringPieceCss : {}}>
                 {(props.promotionPiece && <PieceIcon pieceColorType={props.promotionPiece} />) ||
                     (props.piece && <PieceIcon piece={props.piece} />)}
             </div>
