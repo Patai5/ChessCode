@@ -7,6 +7,7 @@ from channels.generic.websocket import WebsocketConsumer
 from django.contrib.auth import get_user_model
 
 from ..consumers import error
+from ..friends.friends import getFriendStatus
 from . import serializers as s
 from .chess_board import ChessBoard, CustomTermination, get_opposite_color
 from .game import ALL_ACTIVE_GAMES_MANAGER, Game
@@ -121,11 +122,17 @@ class GameConsumer(WebsocketConsumer):
         if not self.user in self.game.players.users:
             return error(self, message="User is not playing in this game")
 
+        players = self.game.players.to_json_dict()
+        for player in players.values():
+            user = User.objects.get(username=player["username"])
+            if self.user != user:
+                player["friend_status"] = getFriendStatus(self.user, user).value
+
         self.send(
             text_data=json.dumps(
                 {
                     "type": "join",
-                    "players": self.game.players.to_json_dict(),
+                    "players": players,
                     "moves": self.game.get_moves_list(),
                     "offer_draw": self.game.players.get_opponent(self.user).offers_draw,
                 }
