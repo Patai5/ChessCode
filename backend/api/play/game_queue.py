@@ -195,10 +195,66 @@ class GameQueueManager:
             self.remove_user(player)
 
 
+Group = tuple[str, ...]
+"""A tuple of usernames present in the group, sorted alphabetically"""
+
+
+class GroupQueueManager:
+    def __init__(self):
+        self.groups: dict[Group, GameQueueManager] = {("Patai2", "Patai5"): GameQueueManager(DEFAULT_GAME_QUEUES)}
+        self.default = GameQueueManager(DEFAULT_GAME_QUEUES)
+
+    def get_queue_manager(self, group: Group | None) -> GameQueueManager | None:
+        """Returns a GameQueueManager for the given group. If the group does not exist, returns None"""
+        assert group is None or isinstance(group, tuple), "Group must be a tuple or None"
+        assert group is None or (
+            all(isinstance(item, str) for item in group)
+        ), "Group must be a tuple of strings or None"
+
+        if group is None:
+            return self.default
+        elif group in self.groups:
+            return self.groups[group]
+        else:
+            return None
+
+    def add_group(self, group: Group):
+        """Adds a group to the group queue manager"""
+        assert isinstance(group, tuple), "Group must be a tuple"
+        assert all(isinstance(item, str) for item in group), "Group must be a tuple of strings"
+
+        group: Group = tuple(sorted(group))
+
+        if group in self.groups:
+            raise ValueError("Group already exists")
+
+        self.groups[group] = GameQueueManager(DEFAULT_GAME_QUEUES)
+
+    def remove_group(self, group: Group):
+        """Removes a group from the group queue manager"""
+        assert isinstance(group, tuple), "Group must be a tuple"
+        assert all(isinstance(item, str) for item in group), "Group must be a tuple of strings"
+
+        if group not in self.groups:
+            raise ValueError("Group does not exist")
+
+        del self.groups[group]
+
+    def remove_player(self, user: User):
+        """Removes the player from all queues
+        - the algorithm is O(n), which could be improved, but it's not worth it"""
+        assert isinstance(user, User), "User must be a User object"
+
+        for group, queue in list(self.groups.items()) + [((user.username,), self.default)]:
+            if user.username in group:
+                if queue.is_player_queuing(user):
+                    queue.remove_user(user)
+
+
 DEFAULT_GAME_QUEUES = [
     GameQueue(game_mode, time_control) for game_mode in ACTIVE_GAME_MODES for time_control in game_mode.time_controls
 ]
 """Default game queues for all active game modes"""
 
-DEFAULT_GAME_QUEUE_MANAGER = GameQueueManager(DEFAULT_GAME_QUEUES)
-"""Default game queue manager for all active game modes"""
+DEFAULT_GROUP_QUEUE_MANAGER = GroupQueueManager()
+"""Default group game queue manager for all active game modes"""

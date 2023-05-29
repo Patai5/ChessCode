@@ -11,7 +11,7 @@ from ..friends.friends import getFriendStatus
 from . import serializers as s
 from .chess_board import ChessBoard, CustomTermination, get_opposite_color
 from .game import ALL_ACTIVE_GAMES_MANAGER, Game
-from .game_queue import DEFAULT_GAME_QUEUE_MANAGER
+from .game_queue import DEFAULT_GROUP_QUEUE_MANAGER, GameQueueManager, Group
 
 User = get_user_model()
 
@@ -45,35 +45,54 @@ class QueueConsumer(WebsocketConsumer):
         else:
             error(self, message="Invalid request type")
 
+    def get_queue_manager(self, group: Group | None) -> GameQueueManager | None:
+        queue_manager = DEFAULT_GROUP_QUEUE_MANAGER.get_queue_manager(group)
+
+        if not queue_manager:
+            return error(self, message="Invalid group")
+        return queue_manager
+
     def enqueue(self, json_data: dict):
         serializer = s.EnqueueSerializer(data=json_data)
         if not serializer.is_valid():
             return error(self, message=serializer.errors)
 
-        if DEFAULT_GAME_QUEUE_MANAGER.is_player_queuing(self.user):
+        group = tuple(serializer.validated_data["group"]) if serializer.validated_data.get("group") else None
+        queue_manager = self.get_queue_manager(group)
+        if not queue_manager:
+            return
+
+        if queue_manager.is_player_queuing(self.user):
             return error(self, message="User is already in queue")
 
         game_mode = serializer.validated_data["game_mode"]
         time_control = serializer.validated_data["time_control"]
-        gameQueue = DEFAULT_GAME_QUEUE_MANAGER.get_game_queue(game_mode, time_control)
+        gameQueue = queue_manager.get_game_queue(game_mode, time_control)
         if not gameQueue:
             return error(self, message="Invalid game mode or time control")
 
-        DEFAULT_GAME_QUEUE_MANAGER.add_user(self.user, gameQueue, self.game_found)
+        queue_manager.add_user(self.user, gameQueue, self.game_found)
 
     def stop_queuing(self, json_data: dict):
-        if not DEFAULT_GAME_QUEUE_MANAGER.is_player_queuing(self.user):
+        serializer = s.GroupSerializer(data=json_data)
+        if not serializer.is_valid():
+            return error(self, message=serializer.errors)
+
+        group = tuple(serializer.validated_data["group"]) if serializer.validated_data.get("group") else None
+        queue_manager = self.get_queue_manager(group)
+        if not queue_manager:
+            return
+
+        if not queue_manager.is_player_queuing(self.user):
             return error(self, message="User is not in queue")
 
-        DEFAULT_GAME_QUEUE_MANAGER.remove_user(self.user)
+        queue_manager.remove_user(self.user)
 
     def game_found(self, game: Game):
         self.send(json.dumps({"type": "game_found", "game_id": game.game_id}))
 
     def disconnect(self, code):
-        if DEFAULT_GAME_QUEUE_MANAGER.is_player_queuing(self.user):
-            DEFAULT_GAME_QUEUE_MANAGER.remove_user(self.user)
-
+        DEFAULT_GROUP_QUEUE_MANAGER.remove_player(self.user)
         self.close(code=code)
 
 
