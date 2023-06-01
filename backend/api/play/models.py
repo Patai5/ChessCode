@@ -16,7 +16,6 @@ class GameTerminations(models.IntegerChoices):
     TIMEOUT = 5, "TIMEOUT"
     RESIGNATION = 6, "RESIGNATION"
     AGREEMENT = 7, "AGREEMENT"
-    ABORTED = 8, "ABORTED"
 
     @staticmethod
     def from_chess_termination(termination: chess.Termination):
@@ -33,7 +32,6 @@ TERMINATIONS = {
     GameTerminations.TIMEOUT: CustomTermination.TIMEOUT,
     GameTerminations.RESIGNATION: CustomTermination.RESIGNATION,
     GameTerminations.AGREEMENT: CustomTermination.AGREEMENT,
-    GameTerminations.ABORTED: CustomTermination.ABORTED,
 }
 
 COLORS = {

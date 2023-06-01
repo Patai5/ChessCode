@@ -193,13 +193,16 @@ class Game:
         )
 
     def finish(self, result: chess.Outcome):
-        """Finishes the game and saves it to the database."""
+        """Finishes the game and saves it to the database.
+        - Does not save games with termination of `ABORTED`."""
         self.finished = True
         for player in self.players.players:
             player.stop_timer()
 
         self.callback_game_result(result)
-        self.save_to_db(result)
+
+        if result.termination != CustomTermination.ABORTED:
+            self.save_to_db(result)
 
         ALL_ACTIVE_GAMES_MANAGER.remove_game(self.game_id)
 
