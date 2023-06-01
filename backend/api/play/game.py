@@ -1,20 +1,16 @@
 import random
+import threading
 from typing import Dict, Iterable
 
 import chess
 from django.contrib.auth import get_user_model
 
 from ..utils import genUniqueID
-from .chess_board import (
-    CHESS_COLOR_NAMES,
-    ChessBoard,
-    CustomTermination,
-    get_opposite_color,
-)
+from .chess_board import CHESS_COLOR_NAMES, ChessBoard, CustomTermination
 from .game_modes import GameMode, TimeControl
 from .models import Game as GameModel
 from .models import GameTerminations, Move
-from .players import Player, Players
+from .players import Player, Players, TimeS
 
 User = get_user_model()
 
@@ -28,7 +24,7 @@ class Game:
         self.board = ChessBoard()
         self.finished = False
 
-        self.update_player_timers()
+        self.start_reset_abort_timer()
 
     @property
     def game_mode(self) -> GameMode:
@@ -92,6 +88,28 @@ class Game:
             if player.user != user:
                 player.api_callback("move", move)
 
+    def start_abort_timer(self, abortAfterTime: TimeS):
+        """Start the abort timer that aborts the game."""
+        self.abortTimer = threading.Timer(
+            abortAfterTime,
+            lambda: self.finish(chess.Outcome(CustomTermination.ABORTED, None)),
+        )
+        self.abortTimer.start()
+
+    def start_reset_abort_timer(self):
+        """Starts and resets the abort timer. Aborts for the first two moves of the game if the moves were not player in time."""
+        abortTime1: TimeS = 30
+        abortTime2: TimeS = 60
+
+        totalMoves = len(self.board.moves)
+        if totalMoves == 0:
+            self.start_abort_timer(abortTime1)
+        elif totalMoves == 1:
+            self.abortTimer.cancel()
+            self.start_abort_timer(abortTime2)
+        elif totalMoves == 2:
+            self.abortTimer.cancel()
+
     def get_moves_list(self) -> list[str]:
         """Returns a list of all moves made in the game in UCI notation."""
         return [move.uci() for move in self.board.moves]
@@ -113,6 +131,8 @@ class Game:
         result = self.board.move(move)
         if result is ChessBoard.ILLEGAL_MOVE or self.finished:
             return ChessBoard.ILLEGAL_MOVE
+
+        self.start_reset_abort_timer()
 
         self.update_player_timers()
         self.players.remove_draw_offers()

@@ -71,3 +71,4 @@ class CustomTermination(enum.Enum):
     TIMEOUT = enum.auto()
     RESIGNATION = enum.auto()
     AGREEMENT = enum.auto()
+    ABORTED = enum.auto()
