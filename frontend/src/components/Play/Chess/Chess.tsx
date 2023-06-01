@@ -23,6 +23,7 @@ export type PlayersProps = {
 type Props = {
     color: Color;
     players: PlayersProps;
+    isFirstMove: boolean;
     gameResult: GameResult | null;
     broadcastMove: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
     actions: Actions;
@@ -36,7 +37,7 @@ function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
             <div css={ChessCss}>
                 <ActionBar
                     player={props.players[getOppositeColor(props.color)]}
-                    timerPaused={props.color === colorToPlay || !!props.gameResult}
+                    timerPaused={props.isFirstMove || props.color === colorToPlay || !!props.gameResult}
                 />
                 <ChessBoard
                     color={props.color}
@@ -48,7 +49,7 @@ function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
                 <ActionBar
                     player={props.players[props.color]}
                     actions={props.actions}
-                    timerPaused={props.color !== colorToPlay || !!props.gameResult}
+                    timerPaused={props.isFirstMove || props.color !== colorToPlay || !!props.gameResult}
                 />
             </div>
         </>

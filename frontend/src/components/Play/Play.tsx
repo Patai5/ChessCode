@@ -47,6 +47,7 @@ export default function Play(props: Props) {
     const [color, setColor] = React.useState<Color>(Color.White);
     const [gameResult, setGameResult] = React.useState<GameResult | null>(null);
     const [highlightDrawButton, setHighlightDrawButton] = React.useState(false);
+    const [isFirstMove, setIsFirstMove] = React.useState(true);
     const players = React.useRef<PlayersProps | null>(null);
     const ws = React.useRef<WebSocket | null>(null);
     const chessboardRef = React.useRef<RefType>(null);
@@ -70,6 +71,7 @@ export default function Play(props: Props) {
     };
 
     const broadcastMove = (move: MoveInfo) => {
+        if (isFirstMove) setIsFirstMove(false);
         setHighlightDrawButton(false);
         sendMessage(JSON.stringify({ type: "move", move: move.toName() }));
     };
@@ -121,6 +123,7 @@ export default function Play(props: Props) {
     };
 
     const updateMove = (moveName: MoveName) => {
+        if (isFirstMove) setIsFirstMove(false);
         if (!chessboardRef.current) return;
         const { move, promotionPiece } = Move.fromName(moveName);
         chessboardRef.current.clientMakeMove(move, promotionPiece);
@@ -151,6 +154,7 @@ export default function Play(props: Props) {
         }
         updatePlayersFromAPI(data.players);
 
+        if (data.moves.length !== 0) setIsFirstMove(false);
         for (const move of data.moves) {
             updateMove(move);
         }
@@ -202,9 +206,10 @@ export default function Play(props: Props) {
                 {connectingState === ConnectingState.Connected && players.current && (
                     <Chess
                         color={color}
-                        broadcastMove={broadcastMove}
                         players={players.current}
+                        isFirstMove={isFirstMove}
                         gameResult={gameResult}
+                        broadcastMove={broadcastMove}
                         actions={{
                             highlightDraw: highlightDrawButton,
                             resign: handleResign,

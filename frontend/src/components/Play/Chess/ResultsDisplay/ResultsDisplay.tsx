@@ -16,6 +16,7 @@ export const GameTermination = {
     timeout: "on time",
     resignation: "by resignation",
     agreement: "by mutual agreement",
+    aborted: "Game aborted",
 };
 export type GameResult = {
     winner: keyof typeof GameWinner;
