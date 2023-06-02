@@ -1,12 +1,13 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
-import React from "react";
-import TimeControlPicker from "./TimeControlPicker/TimeControlPicker";
-import PlayAgainstPicker from "./PlayAgainstPicker/PlayAgainstPicker";
-import Paper from "components/shared/Paper";
-import Queuing, { QueueState } from "./Queuing/Queuing";
-import { getWSUri, WSErrorCodes } from "utils/websockets";
+import { css } from "@emotion/react";
+import axios from "axios";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
+import Paper from "components/shared/Paper";
+import React from "react";
+import { WSErrorCodes, getWSUri } from "utils/websockets";
+import PlayAgainstPicker, { playAgainstType } from "./PlayAgainstPicker/PlayAgainstPicker";
+import Queuing, { QueueState } from "./Queuing/Queuing";
+import TimeControlPicker from "./TimeControlPicker/TimeControlPicker";
 
 const findGameCss = css`
     background: linear-gradient(#05586d, #520476);
@@ -48,6 +49,7 @@ type Props = {};
 export default function FindGame(props: Props) {
     const [queuing, setQueuing] = React.useState<QueueState | null>(null);
     const [showQueuing, setShowQueuing] = React.useState(false);
+    const [playAgainst, setPlayAgainst] = React.useState<playAgainstType>("random");
     const [ws, setWebSocket] = React.useState<WebSocket | null>(null);
 
     const handleOnMessage = async (e: MessageEvent) => {
@@ -55,7 +57,7 @@ export default function FindGame(props: Props) {
         switch (data.type) {
             case "game_found":
                 if (!data.game_id) return;
-                window.location.href = `/play/${data.game_id}`;
+                joinGame(data.game_id);
                 break;
             case "error":
                 // If for whatever reason a user is already in a queue, we won't show an error and instead remove him from the queue
@@ -111,13 +113,44 @@ export default function FindGame(props: Props) {
         ws.send(message);
     };
 
+    const joinGame = (gameId: string) => {
+        window.location.href = `/play/${gameId}`;
+    };
+
     const startQueuingAPI = async (queue: QueueState) => {
         sendWSMessage(JSON.stringify({ type: "enqueue", game_mode: queue.gameMode, time_control: queue.timeControl }));
     };
+
+    const startLinkAPI = async (queue: QueueState) => {
+        try {
+            const res = await axios({
+                method: "get",
+                url: "/api/play/create_link",
+                params: {
+                    game_mode: queue.gameMode,
+                    time_control: queue.timeControl,
+                },
+            });
+            res.data.link && joinGame(res.data.game_id);
+        } catch (err) {
+            ErrorQueueClass.handleError(err);
+        }
+    };
+
     const handleStartQueueing: handleStartQueueingType = async (queue) => {
-        startQueuingAPI(queue);
-        setQueuing(queue);
-        setShowQueuing(true);
+        switch (playAgainst) {
+            case "random":
+                startQueuingAPI(queue);
+                setQueuing(queue);
+                setShowQueuing(true);
+                break;
+            case "friend":
+                // TODO: Implement friend play
+                break;
+            case "link":
+                await startLinkAPI(queue);
+                break;
+        }
     };
 
     const stopQueuingAPI = () => {
@@ -141,7 +174,7 @@ export default function FindGame(props: Props) {
             <div css={findGameCss}>
                 <h1 css={titleCss}>Find A Game</h1>
                 <Paper customCss={mainPaperCss}>
-                    <PlayAgainstPicker />
+                    <PlayAgainstPicker setPlayAgainst={setPlayAgainst} />
                     <TimeControlPicker disabled={!!queuing} setQueuing={handleStartQueueing} />
                 </Paper>
             </div>

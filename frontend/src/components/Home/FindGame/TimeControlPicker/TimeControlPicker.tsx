@@ -1,6 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
-import React from "react";
+import { css } from "@emotion/react";
 import GradientButtonPicker, { Item } from "components/shared/GradientButtonPicker";
 import Paper from "components/shared/Paper";
 import { secToTime } from "utils/utils";
@@ -40,7 +39,7 @@ export default function TimeControlPicker(props: Props) {
                 (timeControl) =>
                     ({
                         name: secToTime(timeControl),
-                        callback: () => {
+                        onSelect: () => {
                             props.setQueuing({ gameMode, timeControl });
                         },
                     } as Item)

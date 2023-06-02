@@ -1,5 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
+import { css } from "@emotion/react";
 import React from "react";
 
 const gradientButtonPickerCss = css`
@@ -60,7 +60,8 @@ const disabledCss = css`
 
 export interface Item {
     name: string;
-    callback?: () => void;
+    onSelect?: () => void;
+    onDeSelect?: () => void;
     isTitle?: boolean;
 }
 
@@ -70,6 +71,18 @@ export default function GradientButtonPicker(props: Props) {
     const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null);
     const gradiantColumns = props.items.length * 2 - 1;
     const highlightedIndex = hoveredIndex === 0 ? 0 : hoveredIndex || selectedIndex || 0;
+
+    const handleClicked = (index: number) => {
+        const item = props.items[index];
+
+        if (selectedIndex !== index) {
+            setSelectedIndex(index);
+            if (item.onSelect) item.onSelect();
+        } else {
+            setSelectedIndex(null);
+            if (item.onDeSelect) item.onDeSelect();
+        }
+    };
 
     const backgroundCss = css`
         background: linear-gradient(
@@ -128,8 +141,7 @@ export default function GradientButtonPicker(props: Props) {
                                 onMouseLeave: () => setHoveredIndex(null),
                                 onMouseEnter: () => setHoveredIndex(index),
                                 onClick: () => {
-                                    setSelectedIndex(index);
-                                    item.callback!();
+                                    handleClicked(index);
                                 },
                             })}
                     >
