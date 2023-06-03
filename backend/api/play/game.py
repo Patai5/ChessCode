@@ -1,3 +1,4 @@
+import enum
 import random
 import threading
 from typing import Dict, Iterable
@@ -10,20 +11,32 @@ from .chess_board import CHESS_COLOR_NAMES, ChessBoard, CustomTermination
 from .game_modes import GameMode, TimeControl
 from .models import Game as GameModel
 from .models import GameTerminations, Move
-from .players import Player, Players, TimeS
+from .players import APICallbackType, Player, Players, TimeS
 
 User = get_user_model()
 
 
+class GameStatus(enum.Enum):
+    NOT_STARTED = enum.auto()
+    IN_PROGRESS = enum.auto()
+    FINISHED = enum.auto()
+
+
 class Game:
-    def __init__(self, players: Players, game_mode: GameMode, time_control: TimeControl, game_id: str | None = None):
+    def __init__(
+        self,
+        players: Players,
+        game_mode: GameMode,
+        time_control: TimeControl,
+        game_id: str | None = None,
+    ):
         self.players = players
         self.game_mode = game_mode
         self.time_control = time_control
         self.game_id = game_id
-        self.board = ChessBoard()
-        self.finished = False
 
+        self.board = ChessBoard()
+        self.status = GameStatus.NOT_STARTED
         self.start_reset_abort_timer()
 
     @property
@@ -67,7 +80,25 @@ class Game:
 
         self._board = value
 
-    # TODO: Player's api_callback might not be initialized yet if the user hasn't joined the game yet
+    def join_player(self, user: User, api_callback: APICallbackType):
+        """Joins the player into the game."""
+        assert isinstance(user, User), "User must be a User object"
+
+        self.players.by_user(user).join_game(api_callback)
+
+        if self.status == GameStatus.NOT_STARTED:
+            if all(player.joined for player in self.players.players):
+                self.start()
+
+    def start(self):
+        """Starts the game."""
+        self.status = GameStatus.IN_PROGRESS
+        self.update_player_timers()
+        self.start_reset_abort_timer()
+
+        for player in self.players.players:
+            player.api_callback("game_started", {"game_started": True})
+
     def callback_game_result(self, result: chess.Outcome):
         """Calls the API callbacks with the game result."""
         assert isinstance(result, chess.Outcome), "Result must be a chess.Outcome object"
@@ -98,17 +129,23 @@ class Game:
 
     def start_reset_abort_timer(self):
         """Starts and resets the abort timer. Aborts for the first two moves of the game if the moves were not player in time."""
-        abortTime1: TimeS = 30
-        abortTime2: TimeS = 60
+        abortNotJoined: TimeS = 10
+        abortFirstMove: TimeS = 30
+        abortSecondMove: TimeS = 60
+
+        if self.status == GameStatus.NOT_STARTED:
+            self.start_abort_timer(abortNotJoined)
+            return
 
         totalMoves = len(self.board.moves)
+        if totalMoves > 3:
+            return
+
+        self.abortTimer.cancel()
         if totalMoves == 0:
-            self.start_abort_timer(abortTime1)
+            self.start_abort_timer(abortFirstMove)
         elif totalMoves == 1:
-            self.abortTimer.cancel()
-            self.start_abort_timer(abortTime2)
-        elif totalMoves == 2:
-            self.abortTimer.cancel()
+            self.start_abort_timer(abortSecondMove)
 
     def get_moves_list(self) -> list[str]:
         """Returns a list of all moves made in the game in UCI notation."""
@@ -129,7 +166,7 @@ class Game:
         assert isinstance(move, chess.Move) or isinstance(move, str), "move must be a chess.Move or str object"
 
         result = self.board.move(move)
-        if result is ChessBoard.ILLEGAL_MOVE or self.finished:
+        if result is ChessBoard.ILLEGAL_MOVE or self.status != GameStatus.IN_PROGRESS:
             return ChessBoard.ILLEGAL_MOVE
 
         self.start_reset_abort_timer()
@@ -195,7 +232,7 @@ class Game:
     def finish(self, result: chess.Outcome):
         """Finishes the game and saves it to the database.
         - Does not save games with termination of `ABORTED`."""
-        self.finished = True
+        self.status = GameStatus.FINISHED
         for player in self.players.players:
             player.stop_timer()
 

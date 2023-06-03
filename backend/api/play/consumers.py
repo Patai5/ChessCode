@@ -10,7 +10,7 @@ from ..consumers import error
 from ..friends.friends import getFriendStatus
 from . import serializers as s
 from .chess_board import ChessBoard, CustomTermination, get_opposite_color
-from .game import ALL_ACTIVE_GAMES_MANAGER, Game
+from .game import ALL_ACTIVE_GAMES_MANAGER, Game, GameStatus
 from .game_queue import DEFAULT_GROUP_QUEUE_MANAGER, GameQueueManager, Group
 
 User = get_user_model()
@@ -154,11 +154,12 @@ class GameConsumer(WebsocketConsumer):
                     "players": players,
                     "moves": self.game.get_moves_list(),
                     "offer_draw": self.game.players.get_opponent(self.user).offers_draw,
+                    "game_started": self.game.status == GameStatus.IN_PROGRESS,
                 }
             )
         )
 
-        self.game.players.by_user(self.user).add_api_callback(self.callback_game_state)
+        self.game.join_player(self.user, self.callback_game_state)
 
     def move(self, json_data: dict):
         if "move" not in json_data:
@@ -186,9 +187,11 @@ class GameConsumer(WebsocketConsumer):
         self.game.offer_draw(self.user)
 
     def callback_game_state(self, type: str, changed: Any = None):
-        assert type in ["move", "game_result", "out_of_time", "offer_draw"], "Invalid type"
+        assert type in ["game_started", "move", "game_result", "out_of_time", "offer_draw"], "Invalid type"
 
-        if type == "move":
+        if type == "game_started":
+            self.send(json.dumps({"type": "game_started", **changed}))
+        elif type == "move":
             self.send(json.dumps({"type": "move", "move": changed, "players": self.game.players.to_json_dict()}))
         elif type == "game_result":
             self.send(json.dumps({"type": "game_result", "termination": changed[0], "winner": changed[1]}))

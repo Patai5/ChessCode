@@ -20,21 +20,25 @@ class Player:
         user: User,
         color: chess.Color,
         time: TimeS,
-        api_callback: APICallbackType = None,
     ):
         self.user = user
         self.color = color
         self.time = time
-        self.api_callback = api_callback
 
+        self.joined = False
         self.offers_draw = False
         self.timer = None
         self.timer_start = None
 
-    def add_api_callback(self, callback: APICallbackType):
-        """Adds a callback function for the player to call the API"""
+    def api_callback(self, type: str, changed: any = None):
+        """Calls the API callback"""
+        if self.joined:
+            self._api_callback(type, changed)
 
-        self.api_callback = callback
+    def join_game(self, callback: APICallbackType):
+        """Joins the player to the game and adds an API callback"""
+        self.joined = True
+        self._api_callback = callback
 
     def get_current_time(self) -> TimeMs:
         """Gets the current time left for the player in milliseconds"""
