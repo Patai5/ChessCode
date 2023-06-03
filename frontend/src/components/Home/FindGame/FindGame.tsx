@@ -4,7 +4,7 @@ import axios from "axios";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import Paper from "components/shared/Paper";
 import React from "react";
-import { WSErrorCodes, getWSUri } from "utils/websockets";
+import { getWSUri } from "utils/websockets";
 import PlayAgainstPicker, { playAgainstType } from "./PlayAgainstPicker/PlayAgainstPicker";
 import Queuing, { QueueState } from "./Queuing/Queuing";
 import TimeControlPicker from "./TimeControlPicker/TimeControlPicker";
@@ -50,7 +50,12 @@ export default function FindGame(props: Props) {
     const [queuing, setQueuing] = React.useState<QueueState | null>(null);
     const [showQueuing, setShowQueuing] = React.useState(false);
     const [playAgainst, setPlayAgainst] = React.useState<playAgainstType>("random");
-    const [ws, setWebSocket] = React.useState<WebSocket | null>(null);
+    const ws = React.useRef<WebSocket | null>(null);
+
+    const setError = (error: string) => {
+        ErrorQueueClass.handleError(error);
+        setShowQueuing(false);
+    };
 
     const handleOnMessage = async (e: MessageEvent) => {
         const data = JSON.parse(e.data);
@@ -67,50 +72,42 @@ export default function FindGame(props: Props) {
                     await startQueuingAPI(queuing);
                     return;
                 }
-                ErrorQueueClass.addError({ errorMessage: data.message });
-                return handleStopQueuing();
+                setError(data.message);
+                break;
             default:
                 ErrorQueueClass.addError({ errorMessage: `Unknown message type received: ${data.type}` });
         }
     };
 
-    React.useEffect(() => {
-        // Configuring the websocket
-        // TODO: Better error handling, websocket might not be created yet when already calling the api
-        // Also when the socket gets closed we should create a new one
-        const ws = new WebSocket(getWSUri() + "/api/play/queue");
+    React.useLayoutEffect(() => {
+        if (ws.current) return;
 
-        ws.onmessage = (e) => {
+        const createWs = new WebSocket(getWSUri() + "/api/play/queue");
+        ws.current = createWs;
+
+        createWs.onmessage = (e) => {
             handleOnMessage(e);
         };
-
-        ws.onclose = (e) => {
-            if (e.code in WSErrorCodes)
-                ErrorQueueClass.addError({ errorMessage: WSErrorCodes[e.code as keyof typeof WSErrorCodes] });
-            else ErrorQueueClass.addError({ errorMessage: "Your connection was unexpectedly closed" });
-            handleStopQueuing();
+        createWs.onclose = (ev) => {
+            if (ev.code === 1000) return; // Normal closure
+            setError("Connection closed - CODE: " + ev.code);
+        };
+        createWs.onerror = (err) => {
+            setError("Error connecting to server");
         };
 
-        ws.onerror = (e) => {
-            ErrorQueueClass.addError({ errorMessage: "Error connecting to server" });
-            handleStopQueuing();
+        return () => {
+            if (createWs.readyState === createWs.OPEN) createWs.close();
         };
-
-        setWebSocket(ws);
     }, []);
 
-    /**
-        Function for sending a message to the websocket \
-        Needed for displaying an error message if the websocket is closed, which can happen at any time
-     */
     const sendWSMessage = (message: string) => {
-        if (!ws) return; // TODO: Error handling
-        if (ws.readyState === ws.CLOSED) {
+        if (!ws.current || ws.current.readyState !== ws.current.OPEN) {
+            setError("Not connected to server");
             handleStopQueuing(false);
-            ErrorQueueClass.addError({ errorMessage: "Your connection was unexpectedly closed" });
             return;
         }
-        ws.send(message);
+        ws.current.send(message);
     };
 
     const joinGame = (gameId: string) => {
@@ -140,9 +137,9 @@ export default function FindGame(props: Props) {
     const handleStartQueueing: handleStartQueueingType = async (queue) => {
         switch (playAgainst) {
             case "random":
-                startQueuingAPI(queue);
                 setQueuing(queue);
                 setShowQueuing(true);
+                startQueuingAPI(queue);
                 break;
             case "friend":
                 // TODO: Implement friend play
@@ -159,6 +156,7 @@ export default function FindGame(props: Props) {
     const handleStopQueuing = (callStopQueueingAPI: boolean = true) => {
         callStopQueueingAPI && stopQueuingAPI();
         setShowQueuing(false);
+        setQueuing(null);
     };
     const handleStoppedQueuing = () => {
         setQueuing(null);

@@ -184,27 +184,36 @@ export default function Play(props: Props) {
     };
 
     const sendMessage = (msg: string) => {
-        if (!ws.current) return;
+        if (!ws.current || ws.current.readyState !== ws.current.OPEN) {
+            setError("Not connected to server");
+            return;
+        }
         ws.current.send(msg);
     };
 
     React.useEffect(() => {
         if (!validateId()) return;
+        if (ws.current) return;
+
         const createWs = new WebSocket(getWSUri() + "/api/play/" + id);
 
         createWs.onopen = () => {
             ws.current = createWs;
             joinGame();
         };
+        createWs.onmessage = (e) => {
+            handleOnMessage(e);
+        };
         createWs.onclose = (ev) => {
             if (ev.code === 1000) return; // Normal closure
             setError("Connection closed - CODE: " + ev.code);
         };
         createWs.onerror = (err) => {
-            setError("Connection error");
+            setError("Error connecting to server");
         };
-        createWs.onmessage = (msg) => {
-            handleOnMessage(msg);
+
+        return () => {
+            if (createWs.readyState === createWs.OPEN) createWs.close();
         };
     }, []);
 

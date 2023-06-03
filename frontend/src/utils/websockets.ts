@@ -7,9 +7,3 @@ export function isWSMessageError(message: MessageEvent<any>) {
 export function getWSUri() {
     return getBaseUri().replace("http", "ws");
 }
-
-export const WSErrorCodes = {
-    4000: "Bad Request",
-    4001: "Unauthorized",
-    4004: "Not Found",
-};
