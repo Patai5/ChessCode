@@ -23,13 +23,14 @@ export type PlayersProps = {
 type Props = {
     color: Color;
     players: PlayersProps;
-    isFirstMove: boolean;
+    gameStarted: boolean;
     gameResult: GameResult | null;
     broadcastMove: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
     actions: Actions;
 };
 function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
     const [colorToPlay, setColorToPlay] = React.useState<Color>(Color.White);
+    const pauseGame = !props.gameStarted || !!props.gameResult;
 
     return (
         <>
@@ -37,11 +38,11 @@ function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
             <div css={ChessCss}>
                 <ActionBar
                     player={props.players[getOppositeColor(props.color)]}
-                    timerPaused={props.isFirstMove || props.color === colorToPlay || !!props.gameResult}
+                    timerPaused={props.color === colorToPlay || pauseGame}
                 />
                 <ChessBoard
                     color={props.color}
-                    isEnabled={!props.gameResult}
+                    isEnabled={!pauseGame}
                     broadcastMove={props.broadcastMove}
                     updateColorToPlay={setColorToPlay}
                     ref={forwardedRef}
@@ -49,7 +50,7 @@ function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
                 <ActionBar
                     player={props.players[props.color]}
                     actions={props.actions}
-                    timerPaused={props.isFirstMove || props.color !== colorToPlay || !!props.gameResult}
+                    timerPaused={props.color !== colorToPlay || pauseGame}
                 />
             </div>
         </>

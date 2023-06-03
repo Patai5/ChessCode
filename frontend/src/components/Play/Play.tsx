@@ -19,11 +19,16 @@ interface JoinAPIResponse {
     players: PlayersAPI;
     moves: MoveName[];
     offer_draw: boolean;
+    game_started: boolean;
 }
 
 interface MoveAPIResponse {
     move: MoveName;
     players: PlayersAPI;
+}
+
+interface GameStartedAPIResponse {
+    game_started: true;
 }
 
 interface GameResultAPIResponse extends GameResult {}
@@ -47,8 +52,8 @@ export default function Play(props: Props) {
     const [color, setColor] = React.useState<Color>(Color.White);
     const [gameResult, setGameResult] = React.useState<GameResult | null>(null);
     const [highlightDrawButton, setHighlightDrawButton] = React.useState(false);
-    const [isFirstMove, setIsFirstMove] = React.useState(true);
-    const players = React.useRef<PlayersProps | null>(null);
+    const [gameStarted, setGameStarted] = React.useState(true);
+    const [players, setPlayers] = React.useState<PlayersProps | null>(null);
     const ws = React.useRef<WebSocket | null>(null);
     const chessboardRef = React.useRef<RefType>(null);
     const { id } = useParams();
@@ -71,7 +76,6 @@ export default function Play(props: Props) {
     };
 
     const broadcastMove = (move: MoveInfo) => {
-        if (isFirstMove) setIsFirstMove(false);
         setHighlightDrawButton(false);
         sendMessage(JSON.stringify({ type: "move", move: move.toName() }));
     };
@@ -81,6 +85,9 @@ export default function Play(props: Props) {
         switch (data.type) {
             case "join":
                 handleJoined(data);
+                break;
+            case "game_started":
+                handleGameStarted(data);
                 break;
             case "move":
                 handleMove(data);
@@ -119,11 +126,10 @@ export default function Play(props: Props) {
                 ...player,
             };
         }
-        players.current = playersProps;
+        setPlayers(playersProps);
     };
 
     const updateMove = (moveName: MoveName) => {
-        if (isFirstMove) setIsFirstMove(false);
         if (!chessboardRef.current) return;
         const { move, promotionPiece } = Move.fromName(moveName);
         chessboardRef.current.clientMakeMove(move, promotionPiece);
@@ -154,11 +160,11 @@ export default function Play(props: Props) {
         }
         updatePlayersFromAPI(data.players);
 
-        if (data.moves.length !== 0) setIsFirstMove(false);
         for (const move of data.moves) {
             updateMove(move);
         }
 
+        setGameStarted(data.game_started);
         setHighlightDrawButton(data.offer_draw);
 
         setConnectingState(ConnectingState.Connected);
@@ -171,6 +177,10 @@ export default function Play(props: Props) {
                 game_id: id,
             })
         );
+    };
+
+    const handleGameStarted = (data: GameStartedAPIResponse) => {
+        setGameStarted(true);
     };
 
     const sendMessage = (msg: string) => {
@@ -203,11 +213,11 @@ export default function Play(props: Props) {
             <UserMenu />
             <div css={playCss}>
                 {connectingState === ConnectingState.Connecting && <Connecting />}
-                {connectingState === ConnectingState.Connected && players.current && (
+                {connectingState === ConnectingState.Connected && players && (
                     <Chess
                         color={color}
-                        players={players.current}
-                        isFirstMove={isFirstMove}
+                        players={players}
+                        gameStarted={gameStarted}
                         gameResult={gameResult}
                         broadcastMove={broadcastMove}
                         actions={{
