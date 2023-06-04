@@ -11,7 +11,7 @@ from .chess_board import CHESS_COLOR_NAMES, ChessBoard, CustomTermination
 from .game_modes import GameMode, TimeControl
 from .models import Game as GameModel
 from .models import GameTerminations, Move
-from .players import APICallbackType, Player, Players, TimeS
+from .players import APICallbackType, Player, Players, TimeS, UnknownPlayer
 
 User = get_user_model()
 
@@ -28,12 +28,14 @@ class Game:
         players: Players,
         game_mode: GameMode,
         time_control: TimeControl,
-        game_id: str | None = None,
+        game_id: str | None,
+        is_link_game: bool,
     ):
         self.players = players
         self.game_mode = game_mode
         self.time_control = time_control
         self.game_id = game_id
+        self.is_link_game = is_link_game
 
         self.board = ChessBoard()
         self.status = GameStatus.NOT_STARTED
@@ -80,11 +82,23 @@ class Game:
 
         self._board = value
 
+    def can_player_join(self, user: User) -> bool:
+        """Checks if the player can join the game."""
+        assert isinstance(user, User), "User must be a User object"
+
+        if user in self.players.users:
+            return True
+
+        if any(isinstance(player, UnknownPlayer) for player in self.players.users):
+            return True
+
+        return False
+
     def join_player(self, user: User, api_callback: APICallbackType):
         """Joins the player into the game."""
         assert isinstance(user, User), "User must be a User object"
 
-        self.players.by_user(user).join_game(api_callback)
+        self.players.join_game(user, api_callback)
 
         if self.status == GameStatus.NOT_STARTED:
             if all(player.joined for player in self.players.players):
@@ -130,11 +144,15 @@ class Game:
     def start_reset_abort_timer(self):
         """Starts and resets the abort timer. Aborts for the first two moves of the game if the moves were not player in time."""
         abortNotJoined: TimeS = 10
+        abortNotJoinedLinkGame: TimeS = 300
         abortFirstMove: TimeS = 30
         abortSecondMove: TimeS = 60
 
         if self.status == GameStatus.NOT_STARTED:
-            self.start_abort_timer(abortNotJoined)
+            if self.is_link_game:
+                self.start_abort_timer(abortNotJoinedLinkGame)
+            else:
+                self.start_abort_timer(abortNotJoined)
             return
 
         totalMoves = len(self.board.moves)
@@ -269,10 +287,18 @@ class GameManager:
         if self.get_game(game_id) is not None:
             del self.games[game_id]
 
-    def start_game(self, players: Iterable[User], game_mode: GameMode, time_control: TimeControl) -> Game:
+    def start_game(
+        self,
+        players: Iterable[User | UnknownPlayer],
+        game_mode: GameMode,
+        time_control: TimeControl,
+        link_game: bool = False,
+    ) -> Game:
         assert isinstance(players, Iterable), "Players must be a iterable"
         assert len(players) == 2, "Players must be a tuple of exactly two players"
-        assert all(isinstance(item, User) for item in players), "Players must be a iterable of Users"
+        assert all(
+            isinstance(item, (User, UnknownPlayer)) for item in players
+        ), "Players must be a iterable of Users or UnknownPlayers"
         assert isinstance(game_mode, GameMode), "Game mode must be a GameMode object"
         assert isinstance(time_control, TimeControl), "Time control must be a TimeControl object"
 
@@ -283,7 +309,7 @@ class GameManager:
 
         players = Players([Player(user, color, time_control.time) for user, color in zip(players, colors)])
 
-        game = Game(players, game_mode, time_control, game_id=game_id)
+        game = Game(players, game_mode, time_control, game_id, link_game)
         self.games[game_id] = game
         return game
 

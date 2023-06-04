@@ -3,8 +3,33 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 
 from ..utils import string_to_int_range
+from . import serializers as s
+from .game import ALL_ACTIVE_GAMES_MANAGER
+from .game_queue import DEFAULT_GROUP_QUEUE_MANAGER
 from .models import Game
 from .utils import game_to_dict, get_player_games_json
+
+
+class CreateLink(APIView):
+    def get(self, request: Request):
+        serializer = s.EnqueueSerializer(data=request.query_params)
+        if not serializer.is_valid():
+            return JsonResponse({"error": serializer.errors}, status=400)
+
+        game_mode = serializer.validated_data["game_mode"]
+        time_control = serializer.validated_data["time_control"]
+
+        queue_manager = DEFAULT_GROUP_QUEUE_MANAGER.default
+        gameQueue = queue_manager.get_game_queue(game_mode, time_control)
+        if not gameQueue:
+            return JsonResponse({"error": "Invalid game mode or time control"}, status=400)
+
+        players = [request.user, None]
+        game = ALL_ACTIVE_GAMES_MANAGER.start_game(
+            players, gameQueue.game_mode, gameQueue.time_control, link_game=True
+        )
+
+        return JsonResponse({"game_id": game.game_id})
 
 
 class GameAPI(APIView):

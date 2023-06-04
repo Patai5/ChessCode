@@ -1,10 +1,11 @@
 import threading
 import time
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Optional
 
 import chess
 from django.contrib.auth import get_user_model
 
+from ..friends.friends import getFriendStatus
 from .chess_board import CHESS_COLOR_NAMES, get_opposite_color
 
 User = get_user_model()
@@ -12,12 +13,13 @@ User = get_user_model()
 TimeS = float
 TimeMs = int
 APICallbackType = Callable[[str, any], None]
+UnknownPlayer = Optional[None]
 
 
 class Player:
     def __init__(
         self,
-        user: User,
+        user: User | UnknownPlayer,
         color: chess.Color,
         time: TimeS,
     ):
@@ -35,8 +37,11 @@ class Player:
         if self.joined:
             self._api_callback(type, changed)
 
-    def join_game(self, callback: APICallbackType):
+    def join_game(self, user: User, callback: APICallbackType):
         """Joins the player to the game and adds an API callback"""
+        if isinstance(self.user, UnknownPlayer):
+            self.user = user
+
         self.joined = True
         self._api_callback = callback
 
@@ -79,7 +84,7 @@ class Player:
 class Players:
     userPlayers: dict[User, Player]
 
-    def __init__(self, players: list[User]):
+    def __init__(self, players: list[Player]):
         self.userPlayers = {player.user: player for player in players}
 
     @property
@@ -99,6 +104,13 @@ class Players:
         for player in self.players:
             player.offers_draw = False
 
+    def join_game(self, user: User, callback: APICallbackType):
+        """Joins the given user to the game. Replaces the UnknownPlayer if it exists"""
+        if user not in self.userPlayers and None in self.userPlayers:
+            self.userPlayers[user] = self.userPlayers.pop(None)
+
+        self.by_user(user).join_game(user, callback)
+
     def get_opponent(self, user: User):
         """Gets the Player object for the opponent of the given user"""
         return self.by_color(get_opposite_color(self.by_user(user).color))
@@ -111,11 +123,20 @@ class Players:
 
     def by_user(self, user: User):
         """Gets the Player object for the given user"""
-        return self.userPlayers.get(user)
+        return self.userPlayers[user]
 
-    def to_json_dict(self) -> dict[str, dict[str, str]]:
-        """Converts the Players object to a JSON serializable dict"""
+    def to_json_dict(self, friend: User | None = None):
+        """Converts the Players object to a JSON serializable dict
+        - If `friend` parameter is not None, the friend status of the users will be added to the opponent"""
         return {
-            CHESS_COLOR_NAMES[player.color]: {"username": user.username, "time": player.get_current_time()}
+            CHESS_COLOR_NAMES[player.color]: {
+                "username": user.username if isinstance(user, User) else None,
+                "time": player.get_current_time(),
+                **(
+                    {"friend_status": getFriendStatus(friend, player.user).value}
+                    if isinstance(player.user, User) and friend != player.user
+                    else {}
+                ),
+            }
             for user, player in self.userPlayers.items()
         }

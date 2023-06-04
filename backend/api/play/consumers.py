@@ -7,7 +7,6 @@ from channels.generic.websocket import WebsocketConsumer
 from django.contrib.auth import get_user_model
 
 from ..consumers import error
-from ..friends.friends import getFriendStatus
 from . import serializers as s
 from .chess_board import ChessBoard, CustomTermination, get_opposite_color
 from .game import ALL_ACTIVE_GAMES_MANAGER, Game, GameStatus
@@ -138,28 +137,21 @@ class GameConsumer(WebsocketConsumer):
         if self.game is None:
             return error(self, message="There is no active game with the provided Game ID")
 
-        if not self.user in self.game.players.users:
+        if not self.game.can_player_join(self.user):
             return error(self, message="User is not playing in this game")
-
-        players = self.game.players.to_json_dict()
-        for player in players.values():
-            user = User.objects.get(username=player["username"])
-            if self.user != user:
-                player["friend_status"] = getFriendStatus(self.user, user).value
+        self.game.join_player(self.user, self.callback_game_state)
 
         self.send(
             text_data=json.dumps(
                 {
                     "type": "join",
-                    "players": players,
+                    "players": self.game.players.to_json_dict(self.user),
                     "moves": self.game.get_moves_list(),
                     "offer_draw": self.game.players.get_opponent(self.user).offers_draw,
                     "game_started": self.game.status == GameStatus.IN_PROGRESS,
                 }
             )
         )
-
-        self.game.join_player(self.user, self.callback_game_state)
 
     def move(self, json_data: dict):
         if "move" not in json_data:
@@ -190,7 +182,7 @@ class GameConsumer(WebsocketConsumer):
         assert type in ["game_started", "move", "game_result", "out_of_time", "offer_draw"], "Invalid type"
 
         if type == "game_started":
-            self.send(json.dumps({"type": "game_started", **changed}))
+            self.send(json.dumps({"type": "game_started", "players": self.game.players.to_json_dict(self.user)}))
         elif type == "move":
             self.send(json.dumps({"type": "move", "move": changed, "players": self.game.players.to_json_dict()}))
         elif type == "game_result":

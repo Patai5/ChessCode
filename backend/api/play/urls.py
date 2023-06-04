@@ -4,6 +4,7 @@ from . import consumers as c
 from . import views as v
 
 urlpatterns = [
+    path("create_link", v.CreateLink.as_view()),
     path("game/<int:game_id>", v.GameAPI.as_view()),
     path("player_games/<str:username>", v.PlayerGames.as_view()),
 ]
