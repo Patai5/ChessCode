@@ -5,7 +5,7 @@ import React from "react";
 import { FriendStatus, Status, Statuses } from "types/friendStatuses";
 import getCSRF from "utils/getCSRF";
 
-export default function useFriendsButton(initialFriendStatus: Statuses | null, username: string) {
+export default function useFriendsButton(initialFriendStatus: Statuses | null, username: string | null) {
     const [friendStatus, setFriendStatus] = React.useState<Status | null>(
         initialFriendStatus && FriendStatus[initialFriendStatus]
     );

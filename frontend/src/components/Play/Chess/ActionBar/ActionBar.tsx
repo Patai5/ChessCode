@@ -15,7 +15,7 @@ const ActionBarCss = css`
     flex-direction: horizontal;
 `;
 
-export type PlayerProps = { username: string; time: TimeMs; friend_status?: Statuses };
+export type PlayerProps = { username: string | null; time: TimeMs; friend_status?: Statuses };
 
 type Props = { player: PlayerProps; timerPaused: boolean; actions?: Actions };
 export default function ActionBar(props: Props) {

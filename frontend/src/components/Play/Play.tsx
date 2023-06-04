@@ -28,7 +28,7 @@ interface MoveAPIResponse {
 }
 
 interface GameStartedAPIResponse {
-    game_started: true;
+    players: PlayersAPI;
 }
 
 interface GameResultAPIResponse extends GameResult {}
@@ -181,6 +181,7 @@ export default function Play(props: Props) {
 
     const handleGameStarted = (data: GameStartedAPIResponse) => {
         setGameStarted(true);
+        updatePlayersFromAPI(data.players);
     };
 
     const sendMessage = (msg: string) => {

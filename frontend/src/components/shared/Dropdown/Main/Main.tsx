@@ -10,12 +10,10 @@ const MainCss = css`
     justify-content: center;
     align-items: center;
     padding: 0.7em 1em;
-
-    cursor: pointer;
-    user-select: none;
-
     transition: box-shadow 0.2s ease-in-out;
-
+`;
+const HoverCss = css`
+    cursor: pointer;
     :hover {
         box-shadow: inset 0 0 0.5em 0.5em rgba(0, 0, 0, 0.1);
     }
@@ -35,10 +33,11 @@ export type Props = {
     customCss?: SerializedStyles;
     textCss?: SerializedStyles;
     iconCss?: SerializedStyles;
+    isActive?: boolean;
 };
-export default function Display(props: Props) {
+export default function Main(props: Props) {
     return (
-        <div css={[MainCss, props.customCss]} onClick={props.onClick}>
+        <div css={[MainCss, props.isActive && HoverCss, props.customCss]} onClick={props.onClick}>
             {props.icon ? <props.icon css={props.iconCss} /> : props.image}
             <span css={[TextCss, props.textCss]}>{props.text}</span>
         </div>

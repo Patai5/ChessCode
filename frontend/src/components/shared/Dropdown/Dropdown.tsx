@@ -53,7 +53,7 @@ export default function Dropdown(props: Props) {
             onMouseEnter={() => setOpenDropdown(true)}
             onMouseLeave={() => setOpenDropdown(false)}
         >
-            <Main {...props.dropdownItems.main} />
+            <Main {...props.dropdownItems.main} isActive={props.dropdownItems.items.length !== 0} />
             <div
                 css={[
                     DropdownCss,

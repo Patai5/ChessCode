@@ -128,7 +128,7 @@ export default function FindGame(props: Props) {
                     time_control: queue.timeControl,
                 },
             });
-            res.data.link && joinGame(res.data.game_id);
+            res.data.game_id && joinGame(res.data.game_id);
         } catch (err) {
             ErrorQueueClass.handleError(err);
         }

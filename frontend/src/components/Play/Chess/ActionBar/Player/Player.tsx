@@ -4,6 +4,7 @@ import Dropdown, { DropdownItems } from "components/shared/Dropdown/Dropdown";
 import ProfilePicture from "components/shared/ProfilePicture";
 import useFriendsButton from "hooks/useFriendsButton";
 import { FaUser } from "react-icons/fa";
+import { IoIosGlobe } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 import { Statuses } from "types/friendStatuses";
 
@@ -30,7 +31,7 @@ const DropdownCss = css`
     translate: -50% 0;
     box-shadow: 0 0 0.5em 0.2em #000000ab, inset 0 0 0.3em #000000ab;
 `;
-type Props = { username: string; isOpponent: boolean; friendStatus: Statuses | null };
+type Props = { username: string | null; isOpponent: boolean; friendStatus: Statuses | null };
 export default function Player(props: Props) {
     const { friendStatus, handleFriendsOnClick, confirmPopup } = useFriendsButton(props.friendStatus, props.username);
     const navigate = useNavigate();
@@ -41,15 +42,20 @@ export default function Player(props: Props) {
 
     const dropdownItems: DropdownItems = {
         main: {
-            image: <ProfilePicture username={props.username} customCss={IconCss} />,
-            text: props.username,
+            image: props.username ? (
+                <ProfilePicture username={props.username} customCss={IconCss} />
+            ) : (
+                <IoIosGlobe css={IconCss} />
+            ),
+            text: props.username || "Anonymous",
             onClick: () => {},
             textCss: UsernameCss,
             customCss: UsernameContainerCss,
         },
-        items: [{ icon: FaUser, text: "Profile", onClick: navigateToProfile }],
+        items: [],
         dropdownCss: DropdownCss,
     };
+    if (props.username) dropdownItems.items.push({ icon: FaUser, text: "Profile", onClick: navigateToProfile });
     if (friendStatus) {
         dropdownItems.items.push({ icon: friendStatus.icon, text: friendStatus.text, onClick: handleFriendsOnClick });
     }
