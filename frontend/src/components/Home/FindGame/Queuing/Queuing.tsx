@@ -1,5 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import TransparentPopup, { CancelHandlers, PopupContent } from "components/shared/TransparentPopup/TransparentPopup";
+import MessageBox, { CancelHandlers, PopupContent } from "components/shared/MessageBox/MessageBox";
 import useTimeElapsed from "hooks/useTimeElapsed";
 import useWaitingDots from "hooks/useWaitingDots";
 import { FaSearch } from "react-icons/fa";
@@ -24,5 +24,5 @@ export default function Queuing(props: Props) {
         buttons: [{ label: "Cancel", closeWindow: true }],
     };
 
-    return <TransparentPopup content={popupContent} show={props.show} cancelHandlers={props.cancelHandlers} />;
+    return <MessageBox content={popupContent} show={props.show} cancelHandlers={props.cancelHandlers} />;
 }

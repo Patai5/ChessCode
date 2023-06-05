@@ -1,5 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import TransparentPopup, { PopupContent } from "components/shared/TransparentPopup/TransparentPopup";
+import MessageBox, { PopupContent } from "components/shared/MessageBox/MessageBox";
 import { FaTrophy } from "react-icons/fa";
 
 export const GameWinner = {
@@ -32,5 +32,5 @@ export default function ResultsDisplay(props: Props) {
         buttons: [{ label: "GG!", closeWindow: true }],
     };
 
-    return <TransparentPopup content={popupContent} show={props.show} />;
+    return <MessageBox content={popupContent} show={props.show} />;
 }

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
-import TransparentPopup, { PopupContent } from "components/shared/TransparentPopup/TransparentPopup";
+import MessageBox, { PopupContent } from "components/shared/MessageBox/MessageBox";
 import React from "react";
 import { FriendStatus, Status, Statuses } from "types/friendStatuses";
 import getCSRF from "utils/getCSRF";
@@ -47,7 +47,7 @@ export default function useFriendsButton(initialFriendStatus: Statuses | null, u
     };
 
     const confirmPopup = (
-        <TransparentPopup
+        <MessageBox
             content={popupContent}
             show={confirm}
             cancelHandlers={{ onClosedCallback: () => setConfirm(false) }}

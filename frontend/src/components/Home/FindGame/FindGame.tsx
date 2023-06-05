@@ -5,6 +5,8 @@ import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import Paper from "components/shared/Paper";
 import React from "react";
 import { getWSUri } from "utils/websockets";
+import FriendPicker from "./FriendPicker/FriendPicker";
+import { Username } from "./FriendPicker/Friends/Friends";
 import PlayAgainstPicker, { playAgainstType } from "./PlayAgainstPicker/PlayAgainstPicker";
 import Queuing, { QueueState } from "./Queuing/Queuing";
 import TimeControlPicker from "./TimeControlPicker/TimeControlPicker";
@@ -49,6 +51,7 @@ type Props = {};
 export default function FindGame(props: Props) {
     const [queuing, setQueuing] = React.useState<QueueState | null>(null);
     const [showQueuing, setShowQueuing] = React.useState(false);
+    const [selectedFriend, setSelectedFriend] = React.useState<Username | null>(null);
     const [playAgainst, setPlayAgainst] = React.useState<playAgainstType>("random");
     const ws = React.useRef<WebSocket | null>(null);
 
@@ -105,6 +108,7 @@ export default function FindGame(props: Props) {
         if (!ws.current || ws.current.readyState !== ws.current.OPEN) {
             setError("Not connected to server");
             handleStopQueuing(false);
+            handleStoppedQueuing();
             return;
         }
         ws.current.send(message);
@@ -142,7 +146,7 @@ export default function FindGame(props: Props) {
                 startQueuingAPI(queue);
                 break;
             case "friend":
-                // TODO: Implement friend play
+                console.log("WILL PLAY AGAINST: ", selectedFriend);
                 break;
             case "link":
                 await startLinkAPI(queue);
@@ -156,11 +160,16 @@ export default function FindGame(props: Props) {
     const handleStopQueuing = (callStopQueueingAPI: boolean = true) => {
         callStopQueueingAPI && stopQueuingAPI();
         setShowQueuing(false);
-        setQueuing(null);
     };
     const handleStoppedQueuing = () => {
         setQueuing(null);
     };
+    const handleSetPlayAgainst = (playAgainst: playAgainstType) => {
+        setPlayAgainst(playAgainst);
+        setSelectedFriend(null);
+    };
+
+    const isTimeControlPickerEnabled = !queuing && (playAgainst !== "friend" || !!selectedFriend);
 
     return (
         <>
@@ -169,11 +178,16 @@ export default function FindGame(props: Props) {
                 show={showQueuing}
                 cancelHandlers={{ onClosingCallback: handleStopQueuing, onClosedCallback: handleStoppedQueuing }}
             />
+            <FriendPicker
+                show={playAgainst === "friend" && !selectedFriend}
+                setSelectedFriend={setSelectedFriend}
+                closeFriendPicker={() => setPlayAgainst("random")}
+            />
             <div css={findGameCss}>
                 <h1 css={titleCss}>Find A Game</h1>
                 <Paper customCss={mainPaperCss}>
-                    <PlayAgainstPicker setPlayAgainst={setPlayAgainst} />
-                    <TimeControlPicker disabled={!!queuing} setQueuing={handleStartQueueing} />
+                    <PlayAgainstPicker setPlayAgainst={handleSetPlayAgainst} />
+                    <TimeControlPicker disabled={!isTimeControlPickerEnabled} setQueuing={handleStartQueueing} />
                 </Paper>
             </div>
         </>
