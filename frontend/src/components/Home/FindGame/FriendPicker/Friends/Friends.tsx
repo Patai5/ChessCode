@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import Friend, { Username } from "./Friends/Friend";
+import Friend, { Username } from "./Friend/Friend";
 
 const FriendsCss = css`
     display: flex;

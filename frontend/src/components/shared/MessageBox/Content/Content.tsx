@@ -17,6 +17,7 @@ const IconTextCss = css`
     font-family: "Lexend Deca", sans-serif;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.85);
+    text-align: center;
 `;
 
 const TitleCss = css`

@@ -7,9 +7,10 @@ import React from "react";
 import useKeypress from "utils/useKeypress";
 import CloseButton from "./CloseButton/CloseButton";
 import FriendSearch from "./FriendSearch/FriendSearch";
+import { Username } from "./Friends/Friend/Friend";
 import Friends, { Usernames } from "./Friends/Friends";
-import { Username } from "./Friends/Friends/Friend";
 import NoFriends from "./NoFriends/NoFriends";
+export { Username };
 
 const FriendPickerCss = css`
     display: flex;

@@ -5,8 +5,7 @@ import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import Paper from "components/shared/Paper";
 import React from "react";
 import { getWSUri } from "utils/websockets";
-import FriendPicker from "./FriendPicker/FriendPicker";
-import { Username } from "./FriendPicker/Friends/Friends";
+import FriendPicker, { Username } from "./FriendPicker/FriendPicker";
 import PlayAgainstPicker, { playAgainstType } from "./PlayAgainstPicker/PlayAgainstPicker";
 import Queuing, { QueueState } from "./Queuing/Queuing";
 import TimeControlPicker from "./TimeControlPicker/TimeControlPicker";
@@ -119,7 +118,14 @@ export default function FindGame(props: Props) {
     };
 
     const startQueuingAPI = async (queue: QueueState) => {
-        sendWSMessage(JSON.stringify({ type: "enqueue", game_mode: queue.gameMode, time_control: queue.timeControl }));
+        sendWSMessage(
+            JSON.stringify({
+                type: "enqueue",
+                game_mode: queue.gameMode,
+                time_control: queue.timeControl,
+                ...(queue.group && { group: queue.group }),
+            })
+        );
     };
 
     const startLinkAPI = async (queue: QueueState) => {
@@ -138,15 +144,23 @@ export default function FindGame(props: Props) {
         }
     };
 
+    const startQueueing = (queue: QueueState) => {
+        setQueuing(queue);
+        setShowQueuing(true);
+        startQueuingAPI(queue);
+    };
+
     const handleStartQueueing: handleStartQueueingType = async (queue) => {
         switch (playAgainst) {
             case "random":
-                setQueuing(queue);
-                setShowQueuing(true);
-                startQueuingAPI(queue);
+                startQueueing(queue);
                 break;
             case "friend":
-                console.log("WILL PLAY AGAINST: ", selectedFriend);
+                if (selectedFriend) {
+                    queue.group = [selectedFriend!, localStorage.getItem("username")!];
+                    queue.group.sort();
+                }
+                startQueueing(queue);
                 break;
             case "link":
                 await startLinkAPI(queue);
@@ -175,6 +189,7 @@ export default function FindGame(props: Props) {
         <>
             <Queuing
                 queue={queuing ? queuing : undefined}
+                selectedFriend={selectedFriend}
                 show={showQueuing}
                 cancelHandlers={{ onClosingCallback: handleStopQueuing, onClosedCallback: handleStoppedQueuing }}
             />
