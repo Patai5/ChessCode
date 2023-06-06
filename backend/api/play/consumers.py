@@ -10,7 +10,7 @@ from ..consumers import error
 from . import serializers as s
 from .chess_board import ChessBoard, CustomTermination, get_opposite_color
 from .game import ALL_ACTIVE_GAMES_MANAGER, Game, GameStatus
-from .game_queue import DEFAULT_GROUP_QUEUE_MANAGER, GameQueueManager, Group
+from .game_queue import GROUP_QUEUE_MANAGER, GameQueueManager, Group
 
 User = get_user_model()
 
@@ -40,12 +40,12 @@ class QueueConsumer(WebsocketConsumer):
         if json_data["type"] == "enqueue":
             self.enqueue(json_data)
         elif json_data["type"] == "stop_queuing":
-            self.stop_queuing(json_data)
+            self.stop_queuing()
         else:
             error(self, message="Invalid request type")
 
     def get_queue_manager(self, group: Group | None) -> GameQueueManager | None:
-        queue_manager = DEFAULT_GROUP_QUEUE_MANAGER.get_queue_manager(group)
+        queue_manager = GROUP_QUEUE_MANAGER.get_create_queue_manager(group)
 
         if not queue_manager:
             return error(self, message="Invalid group")
@@ -72,26 +72,14 @@ class QueueConsumer(WebsocketConsumer):
 
         queue_manager.add_user(self.user, gameQueue, self.game_found)
 
-    def stop_queuing(self, json_data: dict):
-        serializer = s.GroupSerializer(data=json_data)
-        if not serializer.is_valid():
-            return error(self, message=serializer.errors)
-
-        group = tuple(serializer.validated_data["group"]) if serializer.validated_data.get("group") else None
-        queue_manager = self.get_queue_manager(group)
-        if not queue_manager:
-            return
-
-        if not queue_manager.is_player_queuing(self.user):
-            return error(self, message="User is not in queue")
-
-        queue_manager.remove_user(self.user)
+    def stop_queuing(self):
+        GROUP_QUEUE_MANAGER.remove_player(self.user)
 
     def game_found(self, game: Game):
         self.send(json.dumps({"type": "game_found", "game_id": game.game_id}))
 
     def disconnect(self, code):
-        DEFAULT_GROUP_QUEUE_MANAGER.remove_player(self.user)
+        GROUP_QUEUE_MANAGER.remove_player(self.user)
         self.close(code=code)
 
 

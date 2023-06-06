@@ -108,8 +108,10 @@ class QueuingPlayer:
 
 
 class GameQueueManager:
-    def __init__(self, game_queues: list[GameQueue]):
-        self.game_queues = game_queues
+    def __init__(self, game_modes: list[GameMode]):
+        self.game_queues = [
+            GameQueue(game_mode, time_control) for game_mode in game_modes for time_control in game_mode.time_controls
+        ]
         self.queuing_players = {}
 
     @property
@@ -201,11 +203,11 @@ Group = tuple[str, ...]
 
 class GroupQueueManager:
     def __init__(self):
-        self.groups: dict[Group, GameQueueManager] = {("Patai2", "Patai5"): GameQueueManager(DEFAULT_GAME_QUEUES)}
-        self.default = GameQueueManager(DEFAULT_GAME_QUEUES)
+        self.groups: dict[Group, GameQueueManager] = {}
+        self.default = GameQueueManager(ACTIVE_GAME_MODES)
 
-    def get_queue_manager(self, group: Group | None) -> GameQueueManager | None:
-        """Returns a GameQueueManager for the given group. If the group does not exist, returns None"""
+    def get_create_queue_manager(self, group: Group | None) -> GameQueueManager:
+        """Returns a GameQueueManager for the given group. If the group does not exist, it will be created and returned"""
         assert group is None or isinstance(group, tuple), "Group must be a tuple or None"
         assert group is None or (
             all(isinstance(item, str) for item in group)
@@ -216,9 +218,9 @@ class GroupQueueManager:
         elif group in self.groups:
             return self.groups[group]
         else:
-            return None
+            return self.add_group(group)
 
-    def add_group(self, group: Group):
+    def add_group(self, group: Group) -> GameQueueManager:
         """Adds a group to the group queue manager"""
         assert isinstance(group, tuple), "Group must be a tuple"
         assert all(isinstance(item, str) for item in group), "Group must be a tuple of strings"
@@ -228,7 +230,9 @@ class GroupQueueManager:
         if group in self.groups:
             raise ValueError("Group already exists")
 
-        self.groups[group] = GameQueueManager(DEFAULT_GAME_QUEUES)
+        gameQueueManager = GameQueueManager(ACTIVE_GAME_MODES)
+        self.groups[group] = gameQueueManager
+        return gameQueueManager
 
     def remove_group(self, group: Group):
         """Removes a group from the group queue manager"""
@@ -245,16 +249,15 @@ class GroupQueueManager:
         - the algorithm is O(n), which could be improved, but it's not worth it"""
         assert isinstance(user, User), "User must be a User object"
 
-        for group, queue in list(self.groups.items()) + [((user.username,), self.default)]:
-            if user.username in group:
-                if queue.is_player_queuing(user):
-                    queue.remove_user(user)
+        for group, queue in list(self.groups.items()):
+            if user.username in group and queue.is_player_queuing(user):
+                queue.remove_user(user)
+                if len(queue.queuing_players) == 0:
+                    self.remove_group(group)
+
+        if self.default.is_player_queuing(user):
+            self.default.remove_user(user)
 
 
-DEFAULT_GAME_QUEUES = [
-    GameQueue(game_mode, time_control) for game_mode in ACTIVE_GAME_MODES for time_control in game_mode.time_controls
-]
-"""Default game queues for all active game modes"""
-
-DEFAULT_GROUP_QUEUE_MANAGER = GroupQueueManager()
+GROUP_QUEUE_MANAGER = GroupQueueManager()
 """Default group game queue manager for all active game modes"""
