@@ -213,9 +213,13 @@ export default function FindGame(props: Props) {
             <div css={findGameCss}>
                 <h1 css={titleCss}>Find A Game</h1>
                 <Paper customCss={mainPaperCss}>
-                    <PlayAgainstPicker setPlayAgainst={handleSetPlayAgainst} ref={playAgainstPickerRef} />
+                    <PlayAgainstPicker
+                        enabled={!queuing}
+                        setPlayAgainst={handleSetPlayAgainst}
+                        ref={playAgainstPickerRef}
+                    />
                     <TimeControlPicker
-                        disabled={!isTimeControlPickerEnabled}
+                        enabled={isTimeControlPickerEnabled}
                         setQueuing={handleStartQueueing}
                         ref={timeControlPickerRef}
                     />

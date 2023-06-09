@@ -4,7 +4,7 @@ import React from "react";
 
 export type playAgainstType = "link" | "friend" | "random";
 
-type Props = { setPlayAgainst: (playAgainst: playAgainstType) => void; ref: React.Ref<GradientButtonPickerMethods> };
+type Props = { setPlayAgainst: (playAgainst: playAgainstType) => void; enabled: boolean };
 const PlayAgainstPicker = React.forwardRef((props: Props, ref: React.Ref<GradientButtonPickerMethods>) => {
     const deselect = () => {
         props.setPlayAgainst("random");
@@ -13,6 +13,7 @@ const PlayAgainstPicker = React.forwardRef((props: Props, ref: React.Ref<Gradien
     return (
         <GradientButtonPicker
             ref={ref}
+            enabled={props.enabled}
             backgroundColors={["#006f72", "#00764b"]}
             buttons={[
                 { name: "Create link", onSelect: () => props.setPlayAgainst("link"), onDeSelect: deselect },

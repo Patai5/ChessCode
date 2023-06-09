@@ -47,7 +47,7 @@ const defaultGameModes: GameModes = {
     Rapid: { name: "Rapid", timeControls: [600, 1200, 1800], backgroundColors: ["#B84200", "#8B0086"] },
 };
 
-type Props = { setQueuing: handleStartQueueingType; disabled?: boolean };
+type Props = { setQueuing: handleStartQueueingType; enabled: boolean };
 const TimeControlPicker = React.forwardRef((props: Props, ref: React.Ref<TimeControlPickerMethods>) => {
     const getTimeControlItemsButtonProps = (gameMode: GameMode): Button[] => {
         return gameMode.timeControls.map((timeControl) => ({
@@ -90,7 +90,7 @@ const TimeControlPicker = React.forwardRef((props: Props, ref: React.Ref<TimeCon
                 buttons={buttonGroup.buttons}
                 key={index}
                 backgroundColors={buttonGroup.backgroundColors}
-                disabled={props.disabled}
+                enabled={props.enabled}
                 ref={buttonGroup.ref}
             />
         )),

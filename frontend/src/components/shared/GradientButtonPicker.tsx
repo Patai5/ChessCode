@@ -52,6 +52,18 @@ const selectedButtonCss = css`
 const disabledCss = css`
     cursor: default;
 `;
+const activeBackgroundForTwoCss = css`
+    :nth-of-type(1) {
+        :hover {
+            background-position: 100% 0%;
+        }
+    }
+    :nth-of-type(2) {
+        :hover {
+            background-position: 0% 0%;
+        }
+    }
+`;
 
 export interface GradientButtonPickerMethods {
     resetButtons: () => void;
@@ -69,7 +81,7 @@ export interface Button {
     isTitle?: boolean;
 }
 
-type Props = { backgroundColors: [string, string]; buttons: Button[]; hasTitle?: boolean; disabled?: boolean };
+type Props = { backgroundColors: [string, string]; buttons: Button[]; hasTitle?: boolean; enabled?: boolean };
 const GradientButtonPicker = React.forwardRef((props: Props, ref: React.Ref<GradientButtonPickerMethods>) => {
     const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
     const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null);
@@ -110,15 +122,9 @@ const GradientButtonPicker = React.forwardRef((props: Props, ref: React.Ref<Grad
         background-size: 200% 100%;
         :nth-of-type(1) {
             background-image: linear-gradient(90deg, ${props.backgroundColors[0]}, ${props.backgroundColors[1]} 50%);
-            :hover {
-                background-position: 100% 0%;
-            }
         }
         :nth-of-type(2) {
             background-image: linear-gradient(90deg, ${props.backgroundColors[1]} 50%, ${props.backgroundColors[0]});
-            :hover {
-                background-position: 0% 0%;
-            }
         }
     `;
 
@@ -133,6 +139,7 @@ const GradientButtonPicker = React.forwardRef((props: Props, ref: React.Ref<Grad
             gradientButtonCss,
             backgroundCss,
             props.buttons.length === 2 && backgroundForTwo,
+            props.buttons.length === 2 && props.enabled && activeBackgroundForTwoCss,
             backgroundPositionCss,
             button.isTitle && titleButtonCss,
             index === hoveredIndex && highlightedButtonCss,
@@ -140,7 +147,7 @@ const GradientButtonPicker = React.forwardRef((props: Props, ref: React.Ref<Grad
                 highlightedButtonCss,
                 selectedButtonCss,
             ],
-            props.disabled && disabledCss,
+            !props.enabled && disabledCss,
         ];
     };
 
@@ -151,7 +158,7 @@ const GradientButtonPicker = React.forwardRef((props: Props, ref: React.Ref<Grad
                 key={index}
                 {...(!button.isTitle && {
                     onMouseLeave: () => setHoveredIndex(null),
-                    ...(!props.disabled && {
+                    ...(props.enabled && {
                         onMouseEnter: () => setHoveredIndex(index),
                         onClick: () => {
                             handleClicked(index);
