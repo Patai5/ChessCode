@@ -2,6 +2,7 @@
 import { css } from "@emotion/react";
 import axios from "axios";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
+import { GradientButtonPickerMethods } from "components/shared/GradientButtonPicker";
 import Paper from "components/shared/Paper";
 import React from "react";
 import { getWSUri } from "utils/websockets";
@@ -52,7 +53,8 @@ export default function FindGame(props: Props) {
     const [showQueuing, setShowQueuing] = React.useState(false);
     const [selectedFriend, setSelectedFriend] = React.useState<Username | null>(null);
     const [playAgainst, setPlayAgainst] = React.useState<playAgainstType>("random");
-    const buttonsRef = React.useRef<TimeControlPickerMethods | null>(null);
+    const playAgainstPickerRef = React.useRef<GradientButtonPickerMethods | null>(null);
+    const timeControlPickerRef = React.useRef<TimeControlPickerMethods | null>(null);
     const ws = React.useRef<WebSocket | null>(null);
 
     const setError = (error: string) => {
@@ -181,12 +183,16 @@ export default function FindGame(props: Props) {
         resetTimeControlPicker();
     };
     const handleSetPlayAgainst = (playAgainst: playAgainstType) => {
+        if (playAgainst === "random") resetPlayAgainstPicker();
         setPlayAgainst(playAgainst);
         setSelectedFriend(null);
     };
 
     const resetTimeControlPicker = () => {
-        buttonsRef.current?.resetButtons();
+        timeControlPickerRef.current?.resetButtons();
+    };
+    const resetPlayAgainstPicker = () => {
+        playAgainstPickerRef.current?.resetButtons();
     };
 
     const isTimeControlPickerEnabled = !queuing && (playAgainst !== "friend" || !!selectedFriend);
@@ -202,16 +208,16 @@ export default function FindGame(props: Props) {
             <FriendPicker
                 show={playAgainst === "friend" && !selectedFriend}
                 setSelectedFriend={setSelectedFriend}
-                closeFriendPicker={() => setPlayAgainst("random")}
+                closeFriendPicker={() => handleSetPlayAgainst("random")}
             />
             <div css={findGameCss}>
                 <h1 css={titleCss}>Find A Game</h1>
                 <Paper customCss={mainPaperCss}>
-                    <PlayAgainstPicker setPlayAgainst={handleSetPlayAgainst} />
+                    <PlayAgainstPicker setPlayAgainst={handleSetPlayAgainst} ref={playAgainstPickerRef} />
                     <TimeControlPicker
                         disabled={!isTimeControlPickerEnabled}
                         setQueuing={handleStartQueueing}
-                        ref={buttonsRef}
+                        ref={timeControlPickerRef}
                     />
                 </Paper>
             </div>

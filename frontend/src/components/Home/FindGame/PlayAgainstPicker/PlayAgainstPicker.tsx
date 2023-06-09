@@ -1,16 +1,18 @@
 /** @jsxImportSource @emotion/react */
-import GradientButtonPicker from "components/shared/GradientButtonPicker";
+import GradientButtonPicker, { GradientButtonPickerMethods } from "components/shared/GradientButtonPicker";
+import React from "react";
 
 export type playAgainstType = "link" | "friend" | "random";
 
-type Props = { setPlayAgainst: (playAgainst: playAgainstType) => void };
-export default function PlayAgainstPicker(props: Props) {
+type Props = { setPlayAgainst: (playAgainst: playAgainstType) => void; ref: React.Ref<GradientButtonPickerMethods> };
+const PlayAgainstPicker = React.forwardRef((props: Props, ref: React.Ref<GradientButtonPickerMethods>) => {
     const deselect = () => {
         props.setPlayAgainst("random");
     };
 
     return (
         <GradientButtonPicker
+            ref={ref}
             backgroundColors={["#006f72", "#00764b"]}
             buttons={[
                 { name: "Create link", onSelect: () => props.setPlayAgainst("link"), onDeSelect: deselect },
@@ -18,4 +20,6 @@ export default function PlayAgainstPicker(props: Props) {
             ]}
         />
     );
-}
+});
+
+export default PlayAgainstPicker;
