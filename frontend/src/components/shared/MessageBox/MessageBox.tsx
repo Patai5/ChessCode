@@ -51,7 +51,7 @@ export default function MessageBox(props: Props) {
         }
     }, [show]);
 
-    useKeypress("Escape", handleClose);
+    useKeypress("Escape", handleClose, show);
 
     return (
         <TransparentPopup show={show} customCss={MessageBoxCss}>

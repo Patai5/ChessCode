@@ -30,7 +30,7 @@ export default function FriendPicker(props: Props) {
     const [searchedFriends, setSearchedFriends] = React.useState<Usernames>([]);
     const isFirstFetch = React.useRef(false);
 
-    useKeypress("Escape", () => props.closeFriendPicker());
+    useKeypress("Escape", () => props.closeFriendPicker(), props.show);
 
     const fetchFriends = async () => {
         const username = localStorage.getItem("username");
