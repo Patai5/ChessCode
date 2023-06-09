@@ -8,7 +8,7 @@ import { getWSUri } from "utils/websockets";
 import FriendPicker, { Username } from "./FriendPicker/FriendPicker";
 import PlayAgainstPicker, { playAgainstType } from "./PlayAgainstPicker/PlayAgainstPicker";
 import Queuing, { QueueState } from "./Queuing/Queuing";
-import TimeControlPicker from "./TimeControlPicker/TimeControlPicker";
+import TimeControlPicker, { TimeControlPickerMethods } from "./TimeControlPicker/TimeControlPicker";
 
 const findGameCss = css`
     background: linear-gradient(#05586d, #520476);
@@ -52,6 +52,7 @@ export default function FindGame(props: Props) {
     const [showQueuing, setShowQueuing] = React.useState(false);
     const [selectedFriend, setSelectedFriend] = React.useState<Username | null>(null);
     const [playAgainst, setPlayAgainst] = React.useState<playAgainstType>("random");
+    const buttonsRef = React.useRef<TimeControlPickerMethods | null>(null);
     const ws = React.useRef<WebSocket | null>(null);
 
     const setError = (error: string) => {
@@ -177,10 +178,15 @@ export default function FindGame(props: Props) {
     };
     const handleStoppedQueuing = () => {
         setQueuing(null);
+        resetTimeControlPicker();
     };
     const handleSetPlayAgainst = (playAgainst: playAgainstType) => {
         setPlayAgainst(playAgainst);
         setSelectedFriend(null);
+    };
+
+    const resetTimeControlPicker = () => {
+        buttonsRef.current?.resetButtons();
     };
 
     const isTimeControlPickerEnabled = !queuing && (playAgainst !== "friend" || !!selectedFriend);
@@ -202,7 +208,11 @@ export default function FindGame(props: Props) {
                 <h1 css={titleCss}>Find A Game</h1>
                 <Paper customCss={mainPaperCss}>
                     <PlayAgainstPicker setPlayAgainst={handleSetPlayAgainst} />
-                    <TimeControlPicker disabled={!isTimeControlPickerEnabled} setQueuing={handleStartQueueing} />
+                    <TimeControlPicker
+                        disabled={!isTimeControlPickerEnabled}
+                        setQueuing={handleStartQueueing}
+                        ref={buttonsRef}
+                    />
                 </Paper>
             </div>
         </>

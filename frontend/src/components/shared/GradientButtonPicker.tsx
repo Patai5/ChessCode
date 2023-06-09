@@ -9,7 +9,6 @@ const gradientButtonPickerCss = css`
     border-radius: 0.65em;
     overflow: hidden;
 `;
-
 const gradientButtonCss = css`
     background: transparent;
     cursor: pointer;
@@ -30,7 +29,6 @@ const gradientButtonCss = css`
         border-left: none;
     }
 `;
-
 const titleButtonCss = css`
     font-weight: 600;
     cursor: default;
@@ -38,7 +36,6 @@ const titleButtonCss = css`
         box-shadow: none;
     }
 `;
-
 const highlightedButtonCss = css`
     filter: saturate(1.2);
     filter: brightness(1.2);
@@ -47,52 +44,67 @@ const highlightedButtonCss = css`
         box-shadow: inset 0 0 0.5em 0.5em rgba(0, 0, 0, 0.1);
     }
 `;
-
 const selectedButtonCss = css`
     :hover {
         box-shadow: none;
     }
 `;
-
 const disabledCss = css`
     cursor: default;
 `;
 
-export interface Item {
+export interface GradientButtonPickerMethods {
+    resetButtons: () => void;
+}
+
+export type ButtonGroup = {
+    ref: React.MutableRefObject<GradientButtonPickerMethods | null>;
+    buttons: Button[];
+};
+
+export interface Button {
     name: string;
     onSelect?: () => void;
     onDeSelect?: () => void;
     isTitle?: boolean;
 }
 
-type Props = { backgroundColors: [string, string]; items: Item[]; hasTitle?: boolean; disabled?: boolean };
-export default function GradientButtonPicker(props: Props) {
+type Props = { backgroundColors: [string, string]; buttons: Button[]; hasTitle?: boolean; disabled?: boolean };
+const GradientButtonPicker = React.forwardRef((props: Props, ref: React.Ref<GradientButtonPickerMethods>) => {
     const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
     const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null);
-    const gradiantColumns = props.items.length * 2 - 1;
+    const gradientColumns = props.buttons.length * 2 - 1;
     const highlightedIndex = hoveredIndex === 0 ? 0 : hoveredIndex || selectedIndex || 0;
 
     const handleClicked = (index: number) => {
-        const item = props.items[index];
+        const button = props.buttons[index];
 
         if (selectedIndex !== index) {
             setSelectedIndex(index);
-            if (item.onSelect) item.onSelect();
+            if (button.onSelect) button.onSelect();
         } else {
             setSelectedIndex(null);
-            if (item.onDeSelect) item.onDeSelect();
+            if (button.onDeSelect) button.onDeSelect();
         }
     };
+
+    const resetButtons = () => {
+        setSelectedIndex(null);
+    };
+
+    React.useImperativeHandle(ref, () => ({
+        resetButtons: resetButtons,
+    }));
 
     const backgroundCss = css`
         background: linear-gradient(
             90deg,
             ${props.backgroundColors[1]},
-            ${props.backgroundColors[0]} ${(100 / gradiantColumns) * (props.items.length - 1)}%,
-            ${props.backgroundColors[0]} ${(100 / gradiantColumns) * props.items.length}%,
+            ${props.backgroundColors[0]} ${(100 / gradientColumns) * (props.buttons.length - 1)}%,
+            ${props.backgroundColors[0]} ${(100 / gradientColumns) * props.buttons.length}%,
             ${props.backgroundColors[1]}
         );
-        background-size: ${gradiantColumns * 100}% 100%;
+        background-size: ${gradientColumns * 100}% 100%;
     `;
     const backgroundForTwo = css`
         background-size: 200% 100%;
@@ -110,45 +122,55 @@ export default function GradientButtonPicker(props: Props) {
         }
     `;
 
+    const getButtonCss = (button: Button, index: number) => {
+        const backgroundPositionCss = css`
+            background-position: ${(100 / (gradientColumns - 1)) *
+                (props.buttons.length - 1 + index - highlightedIndex)}%
+                0%;
+        `;
+
+        return [
+            gradientButtonCss,
+            backgroundCss,
+            props.buttons.length === 2 && backgroundForTwo,
+            backgroundPositionCss,
+            button.isTitle && titleButtonCss,
+            index === hoveredIndex && highlightedButtonCss,
+            [highlightedIndex, selectedIndex].every((val) => val === index) && [
+                highlightedButtonCss,
+                selectedButtonCss,
+            ],
+            props.disabled && disabledCss,
+        ];
+    };
+
+    const getButtonElement = (button: Button, index: number) => {
+        return (
+            <span
+                css={getButtonCss(button, index)}
+                key={index}
+                {...(!button.isTitle && {
+                    onMouseLeave: () => setHoveredIndex(null),
+                    ...(!props.disabled && {
+                        onMouseEnter: () => setHoveredIndex(index),
+                        onClick: () => {
+                            handleClicked(index);
+                        },
+                    }),
+                })}
+            >
+                {button.name}
+            </span>
+        );
+    };
+
     return (
         <div css={[gradientButtonPickerCss]}>
-            {props.items.map((item, index) => {
-                const backgroundPositionCss = css`
-                    background-position: ${(100 / (gradiantColumns - 1)) *
-                        (props.items.length - 1 + index - highlightedIndex)}%
-                        0%;
-                `;
-                const cssArray = [
-                    gradientButtonCss,
-                    backgroundCss,
-                    props.items.length === 2 && backgroundForTwo,
-                    backgroundPositionCss,
-                    item.isTitle && titleButtonCss,
-                    index === hoveredIndex && highlightedButtonCss,
-                    [highlightedIndex, selectedIndex].every((val) => val === index) && [
-                        highlightedButtonCss,
-                        selectedButtonCss,
-                    ],
-                    props.disabled && disabledCss,
-                ];
-
-                return (
-                    <span
-                        css={cssArray}
-                        key={index}
-                        {...(!item.isTitle &&
-                            !props.disabled && {
-                                onMouseLeave: () => setHoveredIndex(null),
-                                onMouseEnter: () => setHoveredIndex(index),
-                                onClick: () => {
-                                    handleClicked(index);
-                                },
-                            })}
-                    >
-                        {item.name}
-                    </span>
-                );
+            {props.buttons.map((button, index) => {
+                return getButtonElement(button, index);
             })}
         </div>
     );
-}
+});
+
+export default GradientButtonPicker;

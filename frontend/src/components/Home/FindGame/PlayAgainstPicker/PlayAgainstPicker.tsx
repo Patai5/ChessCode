@@ -12,7 +12,7 @@ export default function PlayAgainstPicker(props: Props) {
     return (
         <GradientButtonPicker
             backgroundColors={["#006f72", "#00764b"]}
-            items={[
+            buttons={[
                 { name: "Create link", onSelect: () => props.setPlayAgainst("link"), onDeSelect: deselect },
                 { name: "Play a Friend", onSelect: () => props.setPlayAgainst("friend"), onDeSelect: deselect },
             ]}
