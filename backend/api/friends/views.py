@@ -4,6 +4,7 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 
 from . import friend_requests, friends
+from .friends import FriendStatus
 
 User = get_user_model()
 
@@ -20,21 +21,35 @@ class FriendsList(APIView):
 
 
 def userAuthenticated(func: callable) -> JsonResponse:
-    def wrapper(self, request: Request):
+    def wrapper(self, request: Request, *args, **kwargs):
         if not request.user.is_authenticated:
             return JsonResponse({"error": "You must be logged in"}, status=401)
 
-        return func(self, request)
+        return func(self, request, *args, **kwargs)
 
     return wrapper
 
 
-def validateUsername(func: callable) -> JsonResponse:
+def parseUsernameFromRequest(func: callable) -> JsonResponse:
     def wrapper(self, request: Request):
         username = request.query_params.get("username")
         if not username:
             return JsonResponse({"error": "Username not provided"}, status=400)
 
+        return func(self, request, username)
+
+    return wrapper
+
+
+def parseUsernameFromUrl(func: callable) -> JsonResponse:
+    def wrapper(self, request: Request, username: str):
+        return func(self, request, username)
+
+    return wrapper
+
+
+def validateUsername(func: callable) -> JsonResponse:
+    def wrapper(self, request: Request, username: str):
         user = User.objects.filter(username=username)
         if not user.exists():
             return JsonResponse({"error": "User does not exist"}, status=404)
@@ -54,14 +69,32 @@ def validateNotYourself(func: callable) -> JsonResponse:
     return wrapper
 
 
+class FriendsWithStatusesList(APIView):
+    @userAuthenticated
+    @parseUsernameFromUrl
+    @validateUsername
+    def get(self, request: Request, username: str):
+        userFriends = friends.getFriendsWithStatuses(request.user, username)
+        return JsonResponse(
+            {
+                "friends": {
+                    friend[0].username: friend[1].value if isinstance(friend[1], FriendStatus) else None
+                    for friend in userFriends
+                }
+            }
+        )
+
+
 class Friend(APIView):
     @userAuthenticated
+    @parseUsernameFromRequest
     @validateUsername
     @validateNotYourself
     def get(self, request: Request, user: User):
         return JsonResponse({"success": friends.getFriendStatus(request.user, user).value})
 
     @userAuthenticated
+    @parseUsernameFromRequest
     @validateUsername
     @validateNotYourself
     def delete(self, request: Request, user: User):
@@ -92,6 +125,7 @@ def friendRequestValid(func: callable) -> JsonResponse:
     - request user is not already friends with the provided user"""
 
     @userAuthenticated
+    @parseUsernameFromRequest
     @validateUsername
     @validateNotYourself
     @validateNotFriendsWithUser

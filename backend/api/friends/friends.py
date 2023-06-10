@@ -30,8 +30,11 @@ class FriendStatus(Enum):
     friendRequestReceived = "friend_request_received"
 
 
-def getFriendStatus(fromUser: User, toUser: User) -> FriendStatus:
-    """Returns the status of the friendship between user1 and user2"""
+def getFriendStatus(fromUser: User, toUser: User) -> FriendStatus | None:
+    """Returns the status of the friendship between user1 and user2, None if both users are the same user"""
+    if fromUser == toUser:
+        return None
+
     if getFriendship(fromUser, toUser):
         return FriendStatus.friends
     elif friend_requests.getFriendRequest(fromUser, toUser):
@@ -40,3 +43,9 @@ def getFriendStatus(fromUser: User, toUser: User) -> FriendStatus:
         return FriendStatus.friendRequestReceived
     else:
         return FriendStatus.notFriends
+
+
+def getFriendsWithStatuses(fromUser: User, user: User) -> list[tuple[User, FriendStatus | None]]:
+    """Returns a list of users that are friends with the user, along with their statuses"""
+    friends = getFriends(user)
+    return [(friend, getFriendStatus(fromUser, friend)) for friend in friends]
