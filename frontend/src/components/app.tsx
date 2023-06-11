@@ -1,6 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { Global, css } from "@emotion/react";
 import { Route, Routes } from "react-router-dom";
+import Friends from "./Friends/Friends";
 import Home from "./Home/Home";
 import Login from "./Login/Login";
 import Play from "./Play/Play";
@@ -25,6 +26,8 @@ export default function app(props: Props) {
                 <Route path="/login" element={<Login register={false} />} />
                 <Route path="/signup" element={<Login register={true} />} />
                 <Route path="/profile/:username" element={<Profile />} />
+                <Route path="/friends/:username" element={<Friends />} />
+                <Route path="/friends" element={<Friends />} />
                 <Route path="/play/:id" element={<Play />} />
                 <Route path="/" element={<Home />} />
             </Routes>

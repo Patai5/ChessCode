@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
+import { SerializedStyles } from "@emotion/utils";
 import { IconType } from "react-icons";
 
 const ButtonCss = css`
@@ -11,9 +12,9 @@ const ButtonCss = css`
     padding: 0.5em 3.1em;
     border: none;
     cursor: pointer;
+    background-color: #ffffff26;
 
-    transition: all 0.5s ease;
-    transition-property: background-position, box-shadow;
+    transition: box-shadow 0.5s ease;
 
     :hover {
         box-shadow: inset 0 0 0.5em 0.5em rgba(0, 0, 0, 0.1);
@@ -31,19 +32,27 @@ const IconCss = css`
     margin-left: -1em;
 `;
 
-type Props = { label: string; onClick?: () => void; icon?: IconType; color?: string; fontSize?: string };
+type Props = {
+    label: string;
+    onClick?: () => void;
+    icon?: IconType;
+    fontSize?: string;
+    customCss?: SerializedStyles;
+};
 export default function Button(props: Props) {
-    const { color = "#ffffff26", onClick = () => {}, fontSize = "1em" } = props;
+    const { onClick = () => {}, fontSize = "1em" } = props;
 
-    const backgroundColorCss = {
-        background: color,
+    const handleOnClick = (event: React.MouseEvent) => {
+        event.stopPropagation();
+        onClick();
     };
+
     const fontSizeCss = {
         fontSize: fontSize,
     };
 
     return (
-        <span css={ButtonCss} style={backgroundColorCss} onClick={onClick}>
+        <span css={[ButtonCss, props.customCss]} onClick={handleOnClick}>
             {props.icon && <props.icon css={IconCss} />}
             <p css={LabelCss} style={fontSizeCss}>
                 {props.label}

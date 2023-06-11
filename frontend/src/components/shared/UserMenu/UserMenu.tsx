@@ -4,7 +4,7 @@ import axios from "axios";
 import Dropdown, { DropdownItems } from "components/shared/Dropdown/Dropdown";
 import ProfilePicture from "components/shared/ProfilePicture";
 import React from "react";
-import { FaSignInAlt, FaSignOutAlt, FaUser } from "react-icons/fa";
+import { FaSignInAlt, FaSignOutAlt, FaUser, FaUserFriends } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import getCSRF from "utils/getCSRF";
 
@@ -50,6 +50,7 @@ export default function UserMenu(props: Props) {
         },
         items: [
             { icon: FaUser, text: "Profile", onClick: () => navigate("/profile/" + clientUsername) },
+            { icon: FaUserFriends, text: "Friends", onClick: () => navigate("/friends") },
             { icon: FaSignOutAlt, text: "Sign out", onClick: signOut },
         ],
         dropdownCss: DropdownCss,

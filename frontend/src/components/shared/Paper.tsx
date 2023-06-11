@@ -1,6 +1,5 @@
 /** @jsxImportSource @emotion/react */
 import { css, SerializedStyles } from "@emotion/react";
-import CSS from "csstype";
 import React from "react";
 
 const paperCss = css`
@@ -20,12 +19,12 @@ export default function Paper(props: Props) {
     const { elevation = 3, white = false } = props;
 
     const color = ((white ? "255" : "0") + ", ").repeat(3);
-    const elevationStyle: CSS.Properties = {
-        background: `rgba(${color}${0.05 * elevation})`,
-    };
+    const ElevationCss = css`
+        background: rgba(${color}${0.05 * elevation});
+    `;
 
     return (
-        <div css={[paperCss, props.customCss]} style={elevationStyle} {...props.applyProps}>
+        <div css={[paperCss, ElevationCss, props.customCss]} {...props.applyProps}>
             {props.children}
         </div>
     );
