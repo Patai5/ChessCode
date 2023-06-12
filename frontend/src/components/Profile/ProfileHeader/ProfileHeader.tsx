@@ -3,6 +3,7 @@ import { css } from "@emotion/react";
 import Paper from "components/shared/Paper";
 import ProfilePicture from "components/shared/ProfilePicture";
 import { FaCalendarAlt, FaGamepad, FaUserFriends } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import { formatDateString } from "utils/utils";
 import InfoPoint from "./InfoPoint/InfoPoint";
 
@@ -40,6 +41,7 @@ const InfoPointsCss = css`
     width: 100%;
     height: 100%;
     display: flex;
+    align-items: center;
     justify-content: space-evenly;
 `;
 
@@ -47,7 +49,12 @@ export type ProfileDataProps = { username: string; joinedDate: string; friendsCo
 
 type Props = { data: ProfileDataProps | null };
 export default function ProfileHeader(props: Props) {
+    const navigate = useNavigate();
     if (!props.data) return null;
+
+    const handleFriendsOnClick = () => {
+        navigate(`/friends/${props.data!.username}`);
+    };
 
     return (
         <Paper customCss={ProfileHeaderCss} elevation={1} white={true}>
@@ -66,7 +73,12 @@ export default function ProfileHeader(props: Props) {
                             margin: 0.2em 0;
                         `}
                     />
-                    <InfoPoint icon={FaUserFriends} tooltip="Total friends" data={String(props.data.friendsCount)} />
+                    <InfoPoint
+                        icon={FaUserFriends}
+                        tooltip="Total friends"
+                        data={String(props.data.friendsCount)}
+                        onClick={handleFriendsOnClick}
+                    />
                     <InfoPoint icon={FaGamepad} tooltip="Total played games" data={String(props.data.gamesCount)} />
                 </div>
             </div>

@@ -7,7 +7,13 @@ import { IconType } from "react-icons";
 const InfoPointCss = css`
     display: flex;
     align-items: center;
+    justify-content: center;
     padding: 0.5em;
+    border-radius: 0.5em;
+    height: min-content;
+
+    transition: all 0.3s ease;
+    transition-property: background-color, box-shadow;
 `;
 const TooltipContainerCss = css`
     display: flex;
@@ -25,12 +31,25 @@ const TextCss = css`
     font-weight: 500;
 `;
 
-type Props = { icon: IconType; data: string; tooltip: string; iconCss?: SerializedStyles };
+const ClickableCss = css`
+    cursor: pointer;
+    :hover {
+        background-color: rgba(255, 255, 255, 0.075);
+        box-shadow: 0 0 0.3em 0.1em rgba(255, 255, 255, 0.2);
+    }
+`;
+
+type Props = { icon: IconType; data: string; tooltip: string; onClick?: () => void; iconCss?: SerializedStyles };
 export default function InfoPoint(props: Props) {
     const [isHovered, setIsHover] = React.useState(false);
 
     return (
-        <div css={InfoPointCss} onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)}>
+        <div
+            css={[InfoPointCss, props.onClick && ClickableCss]}
+            onMouseEnter={() => setIsHover(true)}
+            onMouseLeave={() => setIsHover(false)}
+            onClick={props.onClick}
+        >
             <div css={TooltipContainerCss}>
                 <Tooltip text={props.tooltip} show={isHovered} />
                 <props.icon css={[IconCss, props.iconCss]} />
