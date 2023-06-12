@@ -4,6 +4,7 @@ import axios from "axios";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import Paper from "components/shared/Paper";
 import React from "react";
+import { FaUsers } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 import { Statuses as FriendStatus } from "types/friendStatuses";
 import Friend from "./Friend/Friend";
@@ -23,7 +24,7 @@ const FriendsContainerCss = css`
     width: 40em;
     margin: 2em auto;
 
-    background: linear-gradient(#8a0020, #6f0951);
+    background: linear-gradient(#641987, #382195);
 
     color: white;
 `;
@@ -34,6 +35,26 @@ const FriendsCss = css`
     margin: 0.4em;
     padding: 0.8em;
     box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, 0.25);
+`;
+const TitleContainerCss = css`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 1.5em;
+    padding: 1em 0;
+`;
+const FriendsIconCss = css`
+    font-size: 3em;
+`;
+const TitleCss = css`
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+    margin: 0;
+    font-size: 2em;
+    font-family: "Lexend Deca", sans-serif;
+    font-weight: 600;
 `;
 
 type Props = {};
@@ -64,7 +85,10 @@ export default function Friends(props: Props) {
 
     return (
         <Paper customCss={FriendsContainerCss}>
-            <h1>{isSelfView ? "Your friends" : `${username}'s friends`}</h1>
+            <div css={TitleContainerCss}>
+                <FaUsers css={FriendsIconCss} />
+                <h1 css={TitleCss}>{isSelfView ? "Your friends" : `${username}'s friends`}</h1>
+            </div>
             <Paper customCss={FriendsCss} elevation={4}>
                 {friends &&
                     Object.entries(friends).map(([username, friendStatus]) => (

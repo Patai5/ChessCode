@@ -26,10 +26,12 @@ const LabelCss = css`
 
     margin: 0;
 `;
+const IconButtonCss = css`
+    padding-left: 2.1em;
+`;
 const IconCss = css`
     width: 1.25em;
     height: 1.25em;
-    margin-left: -1em;
 `;
 
 type Props = {
@@ -52,7 +54,7 @@ export default function Button(props: Props) {
     };
 
     return (
-        <span css={[ButtonCss, props.customCss]} onClick={handleOnClick}>
+        <span css={[ButtonCss, props.icon && IconButtonCss, props.customCss]} onClick={handleOnClick}>
             {props.icon && <props.icon css={IconCss} />}
             <p css={LabelCss} style={fontSizeCss}>
                 {props.label}
