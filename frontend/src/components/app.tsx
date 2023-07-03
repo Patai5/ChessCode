@@ -1,6 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { Global, css } from "@emotion/react";
 import axios, { AxiosError } from "axios";
+import { AppContext } from "hooks/appContext";
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 import Friends from "./Friends/Friends";
@@ -20,15 +21,26 @@ const globalCss = css`
 
 type Props = {};
 export default function app(props: Props) {
+    const [username, setUsername] = React.useState<string | null>(null);
+
+    const handleSetUsername = (username: string | null) => {
+        setUsername(username);
+
+        if (username) {
+            localStorage.setItem("username", username);
+        } else {
+            localStorage.removeItem("username");
+        }
+    };
+
     React.useEffect(() => {
+        const username = localStorage.getItem("username");
+        setUsername(username);
+
         const removeUsernameOnRetiredSession = async () => {
             const isAuthenticated = await getIsAuthenticated();
-
-            if (isAuthenticated === false) {
-                localStorage.removeItem("username");
-            }
+            if (!isAuthenticated) handleSetUsername(null);
         };
-
         removeUsernameOnRetiredSession();
     }, []);
 
@@ -46,7 +58,7 @@ export default function app(props: Props) {
     };
 
     return (
-        <>
+        <AppContext.Provider value={{ username, setUsername: handleSetUsername }}>
             <ErrorQueue />
             <Global styles={globalCss} />
             <Routes>
@@ -58,6 +70,6 @@ export default function app(props: Props) {
                 <Route path="/play/:id" element={<Play />} />
                 <Route path="/" element={<Home />} />
             </Routes>
-        </>
+        </AppContext.Provider>
     );
 }

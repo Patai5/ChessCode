@@ -2,6 +2,7 @@
 import { css } from "@emotion/react";
 import axios, { AxiosError } from "axios";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
+import { AppContext } from "hooks/appContext";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import getCSRF from "../../utils/getCSRF";
@@ -58,6 +59,7 @@ export default function Login(props: Props) {
     });
     const [loggingInAnimation, setLoggingInAnimation] = React.useState(false);
     const [errorMessage, setErrorMessage] = React.useState("");
+    const appContext = React.useContext(AppContext);
     const navigate = useNavigate();
 
     // Removes the error message when the user switches between login and register
@@ -184,7 +186,7 @@ export default function Login(props: Props) {
                 }
             } else {
                 // Successfully authed
-                localStorage.setItem("username", loginForm.username);
+                appContext.setUsername(loginForm.username);
                 handleAuthRequestAnimation("success");
             }
         }

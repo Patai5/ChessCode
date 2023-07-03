@@ -3,6 +3,7 @@ import { css } from "@emotion/react";
 import axios from "axios";
 import Dropdown, { DropdownItems } from "components/shared/Dropdown/Dropdown";
 import ProfilePicture from "components/shared/ProfilePicture";
+import { AppContext } from "hooks/appContext";
 import React from "react";
 import { FaSignInAlt, FaSignOutAlt, FaUser, FaUserFriends } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
@@ -23,12 +24,13 @@ const DropdownCss = css`
 
 type Props = {};
 export default function UserMenu(props: Props) {
+    const appContext = React.useContext(AppContext);
     const navigate = useNavigate();
 
-    const clientUsername = React.useMemo(() => localStorage.getItem("username"), []);
+    const clientUsername = appContext.username;
 
     const signOut = () => {
-        localStorage.removeItem("username");
+        appContext.setUsername(null);
 
         axios({
             method: "post",

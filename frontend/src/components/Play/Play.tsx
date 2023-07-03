@@ -2,6 +2,7 @@
 import { css } from "@emotion/react";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import UserMenu from "components/shared/UserMenu/UserMenu";
+import { AppContext } from "hooks/appContext";
 import React from "react";
 import { useParams } from "react-router-dom";
 import { getWSUri } from "utils/websockets";
@@ -56,6 +57,7 @@ export default function Play(props: Props) {
     const [players, setPlayers] = React.useState<PlayersProps | null>(null);
     const ws = React.useRef<WebSocket | null>(null);
     const chessboardRef = React.useRef<RefType>(null);
+    const appContext = React.useContext(AppContext);
     const { id } = useParams();
 
     const setError = (error: string) => {
@@ -150,7 +152,7 @@ export default function Play(props: Props) {
     };
 
     const handleJoined = (data: JoinAPIResponse) => {
-        const clientUsername = localStorage.getItem("username");
+        const clientUsername = appContext.username;
         if (!clientUsername) return setError("Username is not set");
 
         for (const [color, player] of Object.entries(data.players)) {

@@ -3,6 +3,7 @@ import { css } from "@emotion/react";
 import axios from "axios";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import Paper from "components/shared/Paper";
+import { AppContext } from "hooks/appContext";
 import React from "react";
 import { FaUsers } from "react-icons/fa";
 import { useParams } from "react-router-dom";
@@ -60,10 +61,12 @@ const TitleCss = css`
 type Props = {};
 export default function Friends(props: Props) {
     const [friends, setFriends] = React.useState<Friends | null>(null);
+    const appContext = React.useContext(AppContext);
 
     const paramUsername = useParams().username;
-    const clientUsername = React.useMemo(() => localStorage.getItem("username"), []);
+    const clientUsername = appContext.username;
     const username = paramUsername || clientUsername;
+
     const isSelfView = !paramUsername || paramUsername === clientUsername;
 
     const fetchFriends = async () => {
@@ -80,7 +83,7 @@ export default function Friends(props: Props) {
     };
 
     React.useEffect(() => {
-        fetchFriends();
+        if (username) fetchFriends();
     }, [username]);
 
     return (

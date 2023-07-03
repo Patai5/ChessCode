@@ -3,6 +3,7 @@ import { css } from "@emotion/react";
 import axios from "axios";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import TransparentPopup from "components/shared/TransparentPopup/TransparentPopup";
+import { AppContext } from "hooks/appContext";
 import React from "react";
 import useKeypress from "utils/useKeypress";
 import CloseButton from "./CloseButton/CloseButton";
@@ -28,14 +29,14 @@ type Props = { show: boolean; closeFriendPicker: () => void; setSelectedFriend: 
 export default function FriendPicker(props: Props) {
     const [friends, setFriends] = React.useState<Usernames>([]);
     const [searchedFriends, setSearchedFriends] = React.useState<Usernames>([]);
+    const appContext = React.useContext(AppContext);
     const isFirstFetch = React.useRef(false);
 
     useKeypress("Escape", () => props.closeFriendPicker(), props.show);
 
     const fetchFriends = async () => {
-        const username = localStorage.getItem("username");
         try {
-            const data: PlayersAPI = (await axios({ method: "GET", url: `/api/friends/${username}` })).data;
+            const data: PlayersAPI = (await axios({ method: "GET", url: `/api/friends/${appContext.username}` })).data;
             setFriends(data.friends);
         } catch (err) {
             ErrorQueueClass.handleError(err);

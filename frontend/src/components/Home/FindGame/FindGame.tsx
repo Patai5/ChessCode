@@ -4,6 +4,7 @@ import axios from "axios";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import { GradientButtonPickerMethods } from "components/shared/GradientButtonPicker";
 import Paper from "components/shared/Paper";
+import { AppContext } from "hooks/appContext";
 import React from "react";
 import { getWSUri } from "utils/websockets";
 import FriendPicker, { Username } from "./FriendPicker/FriendPicker";
@@ -55,6 +56,7 @@ export default function FindGame(props: Props) {
     const [playAgainst, setPlayAgainst] = React.useState<playAgainstType>("random");
     const playAgainstPickerRef = React.useRef<GradientButtonPickerMethods | null>(null);
     const timeControlPickerRef = React.useRef<TimeControlPickerMethods | null>(null);
+    const appContext = React.useContext(AppContext);
     const ws = React.useRef<WebSocket | null>(null);
 
     const setError = (error: string) => {
@@ -160,7 +162,7 @@ export default function FindGame(props: Props) {
                 break;
             case "friend":
                 if (selectedFriend) {
-                    queue.group = [selectedFriend!, localStorage.getItem("username")!];
+                    queue.group = [selectedFriend!, appContext.username!];
                     queue.group.sort();
                 }
                 startQueueing(queue);
