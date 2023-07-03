@@ -1,12 +1,14 @@
 /** @jsxImportSource @emotion/react */
 import { Global, css } from "@emotion/react";
+import axios, { AxiosError } from "axios";
+import React from "react";
 import { Route, Routes } from "react-router-dom";
 import Friends from "./Friends/Friends";
 import Home from "./Home/Home";
 import Login from "./Login/Login";
 import Play from "./Play/Play";
 import Profile from "./Profile/Profile";
-import ErrorQueue from "./shared/ErrorQueue/ErrorQueue";
+import ErrorQueue, { ErrorQueueClass } from "./shared/ErrorQueue/ErrorQueue";
 
 const globalCss = css`
     body {
@@ -18,6 +20,31 @@ const globalCss = css`
 
 type Props = {};
 export default function app(props: Props) {
+    React.useEffect(() => {
+        const removeUsernameOnRetiredSession = async () => {
+            const isAuthenticated = await getIsAuthenticated();
+
+            if (isAuthenticated === false) {
+                localStorage.removeItem("username");
+            }
+        };
+
+        removeUsernameOnRetiredSession();
+    }, []);
+
+    const getIsAuthenticated = async (): Promise<boolean | AxiosError> => {
+        try {
+            const res = await axios({
+                method: "get",
+                url: "/api/auth/is_authenticated",
+            });
+            return res.data["is_authenticated"];
+        } catch (err) {
+            ErrorQueueClass.handleError(err);
+            return err;
+        }
+    };
+
     return (
         <>
             <ErrorQueue />

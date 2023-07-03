@@ -47,3 +47,8 @@ class Logout(APIView):
     def post(self, request):
         logout(request)
         return JsonResponse({"message": "OK"}, status=200)
+    
+
+class IsAuthenticated(APIView):
+    def get(self, request):
+        return JsonResponse({"is_authenticated": request.user.is_authenticated}, status=200)
