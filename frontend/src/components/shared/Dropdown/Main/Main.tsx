@@ -11,6 +11,7 @@ const MainCss = css`
     align-items: center;
     padding: 0.7em 1em;
     transition: box-shadow 0.2s ease-in-out;
+    border-radius: inherit;
 `;
 const HoverCss = css`
     cursor: pointer;

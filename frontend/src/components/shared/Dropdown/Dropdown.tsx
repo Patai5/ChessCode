@@ -37,15 +37,16 @@ const UpwardsCss = css`
 
 export type DropdownItems = { main: MainItem; items: DropdownItem[]; dropdownCss?: SerializedStyles };
 
-type Props = { dropdownItems: DropdownItems; upwards?: boolean; customCss?: SerializedStyles };
+type Props = { dropdownItems: DropdownItems; upwards?: boolean; isActive?: boolean, customCss?: SerializedStyles };
 export default function Dropdown(props: Props) {
+    const [openDropdown, setOpenDropdown] = React.useState(false);
     const { upwards = false } = props;
 
     const maxHeightCss = {
         maxHeight: `${props.dropdownItems.items.length * 2.75}em`,
     };
 
-    const [openDropdown, setOpenDropdown] = React.useState(false);
+    const isMainActive = props.dropdownItems.items.length > 0 || props.isActive;
 
     return (
         <div
@@ -53,7 +54,7 @@ export default function Dropdown(props: Props) {
             onMouseEnter={() => setOpenDropdown(true)}
             onMouseLeave={() => setOpenDropdown(false)}
         >
-            <Main {...props.dropdownItems.main} isActive={props.dropdownItems.items.length !== 0} />
+            <Main {...props.dropdownItems.main} isActive={isMainActive} />
             <div
                 css={[
                     DropdownCss,

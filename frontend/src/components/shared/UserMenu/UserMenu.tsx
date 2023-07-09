@@ -64,7 +64,7 @@ export default function UserMenu(props: Props) {
 
     return (
         <div css={MenuCss}>
-            <Dropdown dropdownItems={dropdownItems} customCss={UserMenuCss} />
+            <Dropdown dropdownItems={dropdownItems} customCss={UserMenuCss} isActive={true}/>
         </div>
     );
 }
