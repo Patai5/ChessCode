@@ -58,7 +58,12 @@ export default function Play(props: Props) {
     const ws = React.useRef<WebSocket | null>(null);
     const chessboardRef = React.useRef<RefType>(null);
     const appContext = React.useContext(AppContext);
+    const clientUsername = React.useRef(appContext.username);
     const { id } = useParams();
+
+    React.useEffect(() => {
+        clientUsername.current = appContext.username;
+    }, [appContext.username]);
 
     const setError = (error: string) => {
         ErrorQueueClass.addError({ errorMessage: error });
@@ -152,11 +157,10 @@ export default function Play(props: Props) {
     };
 
     const handleJoined = (data: JoinAPIResponse) => {
-        const clientUsername = appContext.username;
-        if (!clientUsername) return setError("Username is not set");
+        if (!clientUsername.current) return setError("Username is not set");
 
         for (const [color, player] of Object.entries(data.players)) {
-            if (player.username === clientUsername) {
+            if (player.username === clientUsername.current) {
                 setColor(ColorName[color as "white" | "black"]);
             }
         }

@@ -22,6 +22,7 @@ const globalCss = css`
 type Props = {};
 export default function app(props: Props) {
     const [username, setUsername] = React.useState<string | null>(null);
+    const isFirstRun = React.useRef(false);
 
     const handleSetUsername = (username: string | null) => {
         setUsername(username);
@@ -34,6 +35,9 @@ export default function app(props: Props) {
     };
 
     React.useEffect(() => {
+        if (isFirstRun.current === true) return;
+        else isFirstRun.current = true;
+
         const username = localStorage.getItem("username");
         setUsername(username);
 
