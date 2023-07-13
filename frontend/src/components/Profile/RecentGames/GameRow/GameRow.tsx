@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import { GameTermination, GameWinner } from "components/Play/Chess/ResultsDisplay/ResultsDisplay";
+import { GameTermination, GameWinner } from "components/shared/Chess/ResultsDisplay/ResultsDisplay";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { formatDateString, secToTime } from "utils/utils";

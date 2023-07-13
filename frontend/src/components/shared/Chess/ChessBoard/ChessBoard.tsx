@@ -1,9 +1,9 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
+import { css } from "@emotion/react";
 import React from "react";
 import { CastlingFiles, Move, MoveInfo, Position } from "./ChessLogic/board";
 import Chess from "./ChessLogic/chess";
-import { Color, Piece, Pieces, PromotionPieces, PromotionPieceType } from "./ChessLogic/pieces";
+import { Color, Piece, Pieces, PromotionPieceType, PromotionPieces } from "./ChessLogic/pieces";
 import { isPositionInMoves } from "./ChessLogic/utils";
 import Square, { AnyProps as squareAnyProps, Props as squareProps } from "./Square/Square";
 
@@ -33,7 +33,7 @@ export interface RefType {
 type Props = {
     color: Color;
     isEnabled: boolean;
-    broadcastMove: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
+    broadcastMove?: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
     updateColorToPlay: (color: Color) => void;
 };
 function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
@@ -210,7 +210,7 @@ function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
 
     const makeMove = (move: Move, promotionPiece: PromotionPieceType | null = null) => {
         const moveInfo = clientMakeMove(move, promotionPiece);
-        props.broadcastMove(moveInfo, promotionPiece);
+        props.broadcastMove!(moveInfo, promotionPiece);
     };
 
     const clientMakeMove = (move: Move, promotionPiece: PromotionPieceType | null = null) => {
