@@ -11,8 +11,10 @@ def game_to_dict(game: Game, include_moves: bool = True, friend_status_from_user
     """Returns a dictionary representation of the given game."""
     return {
         "game_id": game.game_id,
-        "player_white": player_status_dict(game.player_white, friend_status_from_user),
-        "player_black": player_status_dict(game.player_black, friend_status_from_user),
+        "players": {
+            "white": player_status_dict(game.player_white, friend_status_from_user),
+            "black": player_status_dict(game.player_black, friend_status_from_user),
+        },
         "termination": TERMINATIONS.get(game.termination).name.lower(),
         "winner_color": COLORS.get(game.winner_color),
         **(
