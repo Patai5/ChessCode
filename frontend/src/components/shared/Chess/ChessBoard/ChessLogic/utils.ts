@@ -1,5 +1,5 @@
-import { Board, Position, Move } from "./board";
-import { Piece, Pieces, Color } from "./pieces";
+import { Board, Move, Position } from "./board";
+import { Color, Piece, Pieces } from "./pieces";
 
 export const genDefaultBoard = (): Board => {
     const defaultPieceOrder = [
@@ -43,3 +43,14 @@ export const isPositionInPositions = (position: Position, positionArray: Positio
 export const getOppositeColor = (color: Color) => {
     return color === Color.White ? Color.Black : Color.White;
 };
+
+export function* positionGenerator(board: Board) {
+    for (let file = 0; file < 8; file++) {
+        for (let rank = 0; rank < 8; rank++) {
+            const position = new Position(file, rank);
+            const piece = board.getPiece(position);
+
+            yield { position, piece };
+        }
+    }
+}
