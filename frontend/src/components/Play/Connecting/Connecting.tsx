@@ -1,6 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
-import React from "react";
+import { css } from "@emotion/react";
 
 const connectingCss = css`
     display: flex;
@@ -10,8 +9,7 @@ const connectingCss = css`
     color: white;
 `;
 
-type Props = {};
-export default function Connecting(props: Props) {
+export default function Connecting() {
     // TODO: Improve visual design
     return <div css={connectingCss}>Connecting...</div>;
 }

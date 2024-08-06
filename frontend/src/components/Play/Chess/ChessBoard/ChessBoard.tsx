@@ -1,5 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
+import { css } from "@emotion/react";
 import React from "react";
 import { CastlingFiles, Move, MoveInfo, Position } from "./ChessLogic/board";
 import Chess from "./ChessLogic/chess";
@@ -175,7 +175,7 @@ function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
             updateSquaresProps(updatedChessboard, selectPiecePosition, {
                 promotionPiece: { piece: promotionPiece, color: piece.color },
             });
-            piece.color === Color.White ? selectPiecePosition.rank-- : selectPiecePosition.rank++;
+            selectPiecePosition.rank += piece.color === Color.White ? -1 : 1;
         }
 
         setChessboard(updatedChessboard);

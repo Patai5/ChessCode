@@ -1,4 +1,3 @@
-import React from "react";
 import { PieceIconProps } from "./PieceIcon";
 
 export default function Pawn(props: PieceIconProps) {

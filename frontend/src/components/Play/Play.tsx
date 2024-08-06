@@ -32,7 +32,7 @@ interface GameStartedAPIResponse {
     players: PlayersAPI;
 }
 
-interface GameResultAPIResponse extends GameResult {}
+type GameResultAPIResponse = GameResult
 
 const playCss = css`
     display: flex;
@@ -47,8 +47,7 @@ const enum ConnectingState {
     Error,
 }
 
-type Props = {};
-export default function Play(props: Props) {
+export default function Play() {
     const [connectingState, setConnectingState] = React.useState(ConnectingState.Connecting);
     const [color, setColor] = React.useState<Color>(Color.White);
     const [gameResult, setGameResult] = React.useState<GameResult | null>(null);
@@ -215,7 +214,7 @@ export default function Play(props: Props) {
             if (ev.code === 1000) return; // Normal closure
             setError("Connection closed - CODE: " + ev.code);
         };
-        createWs.onerror = (err) => {
+        createWs.onerror = () => {
             setError("Error connecting to server");
         };
 

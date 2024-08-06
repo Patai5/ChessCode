@@ -22,8 +22,7 @@ const DropdownCss = css`
     border-radius: 1em 0 0 1em;
 `;
 
-type Props = {};
-export default function UserMenu(props: Props) {
+export default function UserMenu() {
     const appContext = React.useContext(AppContext);
     const navigate = useNavigate();
 

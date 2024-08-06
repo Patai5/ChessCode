@@ -22,5 +22,6 @@ const PlayAgainstPicker = React.forwardRef((props: Props, ref: React.Ref<Gradien
         />
     );
 });
+PlayAgainstPicker.displayName = "PlayAgainstPicker";
 
 export default PlayAgainstPicker;

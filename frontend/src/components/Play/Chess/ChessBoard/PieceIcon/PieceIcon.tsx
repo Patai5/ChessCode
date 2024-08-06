@@ -1,4 +1,3 @@
-import React from "react";
 import { Color, Piece, PiecesTypes, PieceColorType } from "../ChessLogic/pieces";
 import Bishop from "./Bishop";
 import King from "./King";

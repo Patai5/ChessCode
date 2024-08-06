@@ -20,7 +20,7 @@ export default function Queuing(props: Props) {
 
     const popupContent: PopupContent = {
         icon: FaSearch,
-        iconText: !!props.selectedFriend
+        iconText: props.selectedFriend
             ? `Waiting for ${props.selectedFriend}${waitingDots}`
             : `Searching${waitingDots}`,
         title: `${queue.gameMode} - ${secToTime(queue.timeControl)}`,

@@ -103,10 +103,10 @@ export default function Square(props: Props) {
         if (props.isValidMove) props.setMovedTo(props.position);
     };
 
-    const handleMouseOver = (e: React.MouseEvent) => {
+    const handleMouseOver = () => {
         props.setHoveringOver(props.position);
     };
-    const handleMouseLeave = (e: React.MouseEvent) => {
+    const handleMouseLeave = () => {
         props.setHoveringOver(null);
     };
 

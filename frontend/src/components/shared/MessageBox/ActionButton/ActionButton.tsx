@@ -3,7 +3,7 @@ import Button from "components/shared/Button";
 
 export type ButtonProps = { label: string; onClick?: () => void; closeWindow?: boolean };
 interface Props extends ButtonProps {
-    onClose: () => {};
+    onClose: () => void;
 }
 export default function ActionButton(props: Props) {
     const handleOnClick = () => {
