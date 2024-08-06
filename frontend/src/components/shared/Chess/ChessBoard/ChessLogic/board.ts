@@ -1,4 +1,4 @@
-import { Piece, Pieces, Color, PromotionPiecesShort, PromotionPieceType } from "./pieces";
+import { Color, Piece, Pieces, PromotionPieceType, PromotionPiecesShort } from "./pieces";
 import { isPositionInPositions } from "./utils";
 
 export type MoveName = string;
@@ -240,10 +240,10 @@ export class Board {
         rookPosition.file = CastlingFiles[lastMove.castleSide].rookFrom;
         rookPositionTo.file = CastlingFiles[lastMove.castleSide].rookTo;
 
-        const rook = this.getPiece(rookPosition)!;
-        this.setPosition(rookPosition, null);
+        const rook = this.getPiece(rookPositionTo)!;
+        this.setPosition(rookPositionTo, null);
 
-        rook.position = rookPositionTo;
+        rook.position = rookPosition;
         this.setPiece(rook);
     };
 

@@ -3,7 +3,7 @@ import { css } from "@emotion/react";
 import { Statuses } from "types/friendStatuses";
 import ChessTimer, { TimeMs } from "./ChessTimer/ChessTimer";
 import Player from "./Player/Player";
-import QuickActions, { Actions } from "./QuickActions/QuickActions";
+import QuickActions, { ActionsType } from "./QuickActions/QuickActions";
 
 const ActionBarCss = css`
     margin: 0.5em 0 0.5em 0;
@@ -16,8 +16,9 @@ const ActionBarCss = css`
 `;
 
 export type PlayerProps = { username: string | null; time: TimeMs; friend_status?: Statuses };
+export type PlayersProps = { white: PlayerProps; black: PlayerProps };
 
-type Props = { player: PlayerProps; timerPaused: boolean; actions?: Actions };
+type Props = { player: PlayerProps; timerPaused: boolean; actions?: ActionsType; isReplay: boolean };
 export default function ActionBar(props: Props) {
     return (
         <div css={ActionBarCss}>
@@ -26,8 +27,8 @@ export default function ActionBar(props: Props) {
                 isOpponent={!props.actions}
                 friendStatus={props.player.friend_status || null}
             />
-            {props.actions && <QuickActions actions={props.actions} />}
-            <ChessTimer time={props.player.time} paused={props.timerPaused} />
+            {props.actions && <QuickActions actions={props.actions} isReplay={props.isReplay} />}
+            {!props.isReplay && <ChessTimer time={props.player.time} paused={props.timerPaused} />}
         </div>
     );
 }

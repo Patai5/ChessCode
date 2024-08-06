@@ -38,7 +38,11 @@ class GameAPI(APIView):
             game = Game.objects.get(game_id=game_id)
         except Game.DoesNotExist:
             return JsonResponse({"error": "No game found with the provided ID"}, status=404)
-        return JsonResponse(game_to_dict(game))
+
+        user = request.user if request.user.is_authenticated else None
+        gameDict = game_to_dict(game, friend_status_from_user=user)
+
+        return JsonResponse(gameDict)
 
 
 class PlayerGames(APIView):
