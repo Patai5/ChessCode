@@ -13,8 +13,7 @@ const HeaderRowCss = css`
     }
 `;
 
-type Props = {};
-export default function HeaderRow(props: Props) {
+export default function HeaderRow() {
     return (
         <thead>
             <tr css={HeaderRowCss}>

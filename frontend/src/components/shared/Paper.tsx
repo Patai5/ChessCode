@@ -13,7 +13,7 @@ type Props = {
     white?: boolean;
     customCss?: SerializedStyles;
     children: React.ReactNode;
-    applyProps?: any;
+    applyProps?: React.PropsWithRef<JSX.IntrinsicElements["div"]>;
 };
 export default function Paper(props: Props) {
     const { elevation = 3, white = false } = props;

@@ -179,5 +179,6 @@ const GradientButtonPicker = React.forwardRef((props: Props, ref: React.Ref<Grad
         </div>
     );
 });
+GradientButtonPicker.displayName = "GradientButtonPicker";
 
 export default GradientButtonPicker;

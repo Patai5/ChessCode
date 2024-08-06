@@ -58,8 +58,7 @@ const TitleCss = css`
     font-weight: 600;
 `;
 
-type Props = {};
-export default function Friends(props: Props) {
+export default function Friends() {
     const [friends, setFriends] = React.useState<Friends | null>(null);
     const appContext = React.useContext(AppContext);
 

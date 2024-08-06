@@ -22,8 +22,7 @@ const TextCss = css`
 
 export type Username = string;
 
-type Props = {};
-export default function NoFriends(props: Props) {
+export default function NoFriends() {
     return (
         <div css={NoFriendsCss}>
             <FaUsers css={IconCss} />

@@ -19,8 +19,7 @@ const globalCss = css`
     }
 `;
 
-type Props = {};
-export default function app(props: Props) {
+export default function app() {
     const [username, setUsername] = React.useState<string | null>(null);
     const isFirstRun = React.useRef(false);
 

@@ -2,8 +2,7 @@
 import UserMenu from "components/shared/UserMenu/UserMenu";
 import FindGame from "./FindGame/FindGame";
 
-type Props = {};
-export default function Home(props: Props) {
+export default function Home() {
     return (
         <>
             <UserMenu />

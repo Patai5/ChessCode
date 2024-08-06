@@ -1,9 +1,9 @@
 export function getCookie(name: string) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== "") {
-        let cookies = document.cookie.split(";");
+        const cookies = document.cookie.split(";");
         for (let i = 0; i < cookies.length; i++) {
-            let cookie = cookies[i].trim();
+            const cookie = cookies[i].trim();
             if (cookie.substring(0, name.length + 1) == name + "=") {
                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                 break;
@@ -14,9 +14,9 @@ export function getCookie(name: string) {
 }
 
 export function secToTime(sec: number) {
-    let hours = Math.floor(sec / 3600);
-    let minutes = Math.floor((sec - hours * 3600) / 60);
-    let seconds = sec - hours * 3600 - minutes * 60;
+    const hours = Math.floor(sec / 3600);
+    const minutes = Math.floor((sec - hours * 3600) / 60);
+    const seconds = sec - hours * 3600 - minutes * 60;
 
     let out = "";
     if (hours) out += hours + " h ";

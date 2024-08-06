@@ -48,8 +48,7 @@ const mainPaperCss = css`
 
 export type handleStartQueueingType = (queue: QueueState) => Promise<void>;
 
-type Props = {};
-export default function FindGame(props: Props) {
+export default function FindGame() {
     const [queuing, setQueuing] = React.useState<QueueState | null>(null);
     const [showQueuing, setShowQueuing] = React.useState(false);
     const [selectedFriend, setSelectedFriend] = React.useState<Username | null>(null);
@@ -99,7 +98,7 @@ export default function FindGame(props: Props) {
             if (ev.code === 1000) return; // Normal closure
             setError("Connection closed - CODE: " + ev.code);
         };
-        createWs.onerror = (err) => {
+        createWs.onerror = () => {
             setError("Error connecting to server");
         };
 
@@ -143,7 +142,7 @@ export default function FindGame(props: Props) {
                     time_control: queue.timeControl,
                 },
             });
-            res.data.game_id && joinGame(res.data.game_id);
+            if (res.data.game_id) joinGame(res.data.game_id);
         } catch (err) {
             ErrorQueueClass.handleError(err);
         }
@@ -177,7 +176,7 @@ export default function FindGame(props: Props) {
         sendWSMessage(JSON.stringify({ type: "stop_queuing" }));
     };
     const handleStopQueuing = (callStopQueueingAPI: boolean = true) => {
-        callStopQueueingAPI && stopQueuingAPI();
+        if (callStopQueueingAPI) stopQueuingAPI();
         setShowQueuing(false);
     };
     const handleStoppedQueuing = () => {

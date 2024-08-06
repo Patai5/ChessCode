@@ -1,5 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
+import { css } from "@emotion/react";
 import React from "react";
 import { IconType } from "react-icons/lib";
 import Tooltip from "./Tooltip";
@@ -91,7 +91,7 @@ export default function IconButton(props: Props) {
     };
 
     const fontSizeCss = css`
-        font-size: ${props.fontSize ? props.fontSize : "1.5"}em};
+        font-size: ${props.fontSize ? props.fontSize : "1.5"}em;
     `;
 
     const iconCss = [IconCss, fontSizeCss];

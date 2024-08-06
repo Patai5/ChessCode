@@ -1,4 +1,4 @@
-import { Position, NonLegalPosition, Move, Board, CastleSide } from "./board";
+import { Board, CastleSide, Move, NonLegalPosition, Position } from "./board";
 import { getOppositeColor, isPositionInPositions } from "./utils";
 
 export enum Color {
@@ -16,7 +16,7 @@ export enum PiecesTypes {
 }
 
 type PieceTypeShort = "p" | "n" | "b" | "r" | "q" | "k";
-export class Piece {
+export abstract class Piece {
     constructor(color: Color, position: Position, value: number, type: PiecesTypes) {
         this.color = color;
         this.position = position;
@@ -33,9 +33,7 @@ export class Piece {
     /**
      * Returns a list of valid moves for this piece, given the current board state.
      */
-    getValidMoves(board: Board): Move[] {
-        return [];
-    }
+    abstract getValidMoves(board: Board): Move[];
 
     /**
      * Exclude any moves from the `moves` parameter that would result in the player's king getting checked.
@@ -52,9 +50,7 @@ export class Piece {
      * Returns a list of squares attacked by this piece, given the current board state.
      * - This can also include non-legal positions to move to. However those are still considered attacked.
      */
-    getAttackedSquares(board: Board): (Position | NonLegalPosition)[] {
-        return [];
-    }
+    abstract getAttackedSquares(board: Board): (Position | NonLegalPosition)[];
 
     /**
      * Returns a boolean indicating whether the piece is of the right color to play.
