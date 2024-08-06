@@ -265,7 +265,7 @@ export class Board {
         const king = this.kings[this.colorToPlay];
         this.move(move);
 
-        let isCheck = isPositionInPositions(king.position, this.getAttackedSquares(this.colorToPlay));
+        const isCheck = isPositionInPositions(king.position, this.getAttackedSquares(this.colorToPlay));
 
         this.undoMove();
         return isCheck;

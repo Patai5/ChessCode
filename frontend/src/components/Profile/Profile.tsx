@@ -32,8 +32,7 @@ const ProfileCss = css`
     color: white;
 `;
 
-type Props = {};
-export default function Profile(props: Props) {
+export default function Profile() {
     const [profileData, setProfileData] = React.useState<ProfileAPIResponse | null>(null);
     const params = useParams();
     const username: string = params.username!;

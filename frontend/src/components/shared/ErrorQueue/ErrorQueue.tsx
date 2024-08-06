@@ -19,16 +19,32 @@ export class ErrorQueueClass {
         ErrorQueueClass.ErrorQueue.shift();
     }
 
-    /** Gets the error message from an axios error and returns it */
+    /**
+     * Gets the error message from an axios error and returns it
+     */
     static getAxiosErrorMessage = (error: AxiosError) => {
-        if (error.response) {
-            const data = error.response.data as any;
-            const errorMessage = data["detail"] || data["error"];
+        const { response } = error;
 
-            return `${error.response.statusText}: ${errorMessage}`;
-        } else {
-            return `${error.name}: ${error.message}`;
-        }
+        if (!response) return `${error.name}: ${error.message}`;
+
+        const customErrorMessage = this.maybeGetCustomErrorResponse(response.data);
+        const errorMessage = customErrorMessage || "unknown error";
+
+        return `${response.statusText}: ${errorMessage}`;
+    };
+
+    /**
+     * Gets the custom error response message from the response data
+     * @returns null if no custom error response message is found
+     */
+    static maybeGetCustomErrorResponse = (responseData: unknown): string | null => {
+        const isObject = responseData instanceof Object;
+        if (!isObject) return null;
+
+        const detail = "detail" in responseData && typeof responseData["detail"] === "string" && responseData["detail"];
+        const hasError = "error" in responseData && typeof responseData["error"] === "string" && responseData["error"];
+
+        return detail || hasError || null;
     };
 
     /** Gets the error message from an error and returns it */
@@ -50,8 +66,7 @@ export class ErrorQueueClass {
     };
 }
 
-type Props = {};
-export default function ErrorQueue(props: Props) {
+export default function ErrorQueue() {
     const [error, setError] = React.useState<false | ErrorType>(false);
 
     React.useEffect(() => {

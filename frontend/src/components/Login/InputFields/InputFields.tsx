@@ -1,6 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import React from "react";
-import { css, jsx } from "@emotion/react";
+import { css } from "@emotion/react";
 import { LoginFormType } from "../Login";
 import InputField from "./InputField/InputField";
 

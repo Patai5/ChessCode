@@ -7,5 +7,5 @@ type AppContextType = {
 
 export const AppContext = React.createContext<AppContextType>({
     username: null,
-    setUsername: (username: string) => {},
+    setUsername: () => {},
 });

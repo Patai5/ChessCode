@@ -98,5 +98,6 @@ const TimeControlPicker = React.forwardRef((props: Props, ref: React.Ref<TimeCon
 
     return <Paper customCss={timeControlsPaperCss}>{...buttonPickers}</Paper>;
 });
+TimeControlPicker.displayName = "TimeControlPicker";
 
 export default TimeControlPicker;

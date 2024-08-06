@@ -35,7 +35,8 @@ export default function MessageBox(props: Props) {
             firstRender.current = false;
             return;
         }
-        props.show ? setShow(true) : handleClose();
+        if (props.show) setShow(true);
+        else handleClose();
     }, [props.show]);
 
     const handleClose = React.useCallback(async () => {

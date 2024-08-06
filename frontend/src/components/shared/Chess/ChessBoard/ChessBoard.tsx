@@ -151,7 +151,7 @@ function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
             updateSquaresProps(updatedChessboard, selectPiecePosition, {
                 promotionPiece: { piece: promotionPiece, color: piece.color },
             });
-            piece.color === Color.White ? selectPiecePosition.rank-- : selectPiecePosition.rank++;
+            selectPiecePosition.rank += piece.color === Color.White ? -1 : 1;
         }
 
         setChessboard(updatedChessboard);

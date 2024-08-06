@@ -1,5 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import { css, jsx } from "@emotion/react";
+import { css } from "@emotion/react";
 import React from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import ResponseText from "./ResponseText/ResponseText";

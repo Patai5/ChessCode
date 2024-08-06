@@ -144,7 +144,7 @@ export default function Login(props: Props) {
             // Sets the requestStatus to the right status so that the animation can be handled once it is finished
             requestStatus = status;
             // If the animation is already finished then handle the animation here
-            animationFinished && handleAnimation(status);
+            if (animationFinished) handleAnimation(status);
         };
 
         // Sets the logging in animation
