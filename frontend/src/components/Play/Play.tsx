@@ -1,23 +1,23 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
+import { PlayersProps as PlayersAPI } from "components/shared/Chess/ActionBar/ActionBar";
+import Chess, { PlayersProps } from "components/shared/Chess/Chess";
+import { RefType } from "components/shared/Chess/ChessBoard/ChessBoard";
+import { Move, MoveInfo, MoveName } from "components/shared/Chess/ChessBoard/ChessLogic/board";
+import { Color } from "components/shared/Chess/ChessBoard/ChessLogic/pieces";
+import { GameResult } from "components/shared/Chess/ResultsDisplay/ResultsDisplay";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
+import Loading from "components/shared/Loading";
 import UserMenu from "components/shared/UserMenu/UserMenu";
 import { AppContext } from "hooks/appContext";
 import React from "react";
 import { useParams } from "react-router-dom";
+import { validateId } from "utils/chess";
 import { getWSUri } from "utils/websockets";
-import { PlayerProps as PlayerAPI } from "./Chess/ActionBar/ActionBar";
-import Chess, { PlayersProps } from "./Chess/Chess";
-import { RefType } from "./Chess/ChessBoard/ChessBoard";
-import { Move, MoveInfo, MoveName } from "./Chess/ChessBoard/ChessLogic/board";
-import { Color } from "./Chess/ChessBoard/ChessLogic/pieces";
-import { GameResult } from "./Chess/ResultsDisplay/ResultsDisplay";
-import Connecting from "./Connecting/Connecting";
 
 const ColorName = { white: Color.White, black: Color.Black };
-type PlayersAPI = { [color in keyof typeof ColorName]: PlayerAPI };
 interface JoinAPIResponse {
-    players: PlayersAPI;
+    players: PlayersProps;
     moves: MoveName[];
     offer_draw: boolean;
     game_started: boolean;
@@ -69,13 +69,10 @@ export default function Play() {
         setConnectingState(ConnectingState.Error);
     };
 
-    const validateId = () => {
-        if (!id) {
-            setError("No game ID provided");
-            return false;
-        }
-        if (!id.match(/^[a-zA-Z0-9]{8}$/)) {
-            setError("Invalid game ID");
+    const handleGameIdValidation = (): boolean => {
+        const isValidId = validateId(id);
+        if (isValidId !== true) {
+            setError(isValidId);
             return false;
         }
         return true;
@@ -198,7 +195,7 @@ export default function Play() {
     };
 
     React.useEffect(() => {
-        if (!validateId()) return;
+        if (!handleGameIdValidation()) return;
         if (ws.current) return;
 
         const createWs = new WebSocket(getWSUri() + "/api/play/" + id);
@@ -223,26 +220,29 @@ export default function Play() {
         };
     }, []);
 
+    const chessProps = {
+        color: color,
+        players: players,
+        gameStarted: gameStarted,
+        gameResult: gameResult,
+        broadcastMove: broadcastMove,
+        actions: {
+            playActions: {
+                highlightDraw: highlightDrawButton,
+                resign: handleResign,
+                offerDraw: handleOfferDraw,
+            },
+        },
+        isReplay: false,
+        ref: chessboardRef,
+    };
+
     return (
         <>
             <UserMenu />
             <div css={playCss}>
-                {connectingState === ConnectingState.Connecting && <Connecting />}
-                {connectingState === ConnectingState.Connected && players && (
-                    <Chess
-                        color={color}
-                        players={players}
-                        gameStarted={gameStarted}
-                        gameResult={gameResult}
-                        broadcastMove={broadcastMove}
-                        actions={{
-                            highlightDraw: highlightDrawButton,
-                            resign: handleResign,
-                            offerDraw: handleOfferDraw,
-                        }}
-                        ref={chessboardRef}
-                    />
-                )}
+                {connectingState === ConnectingState.Connecting && <Loading displayText="Connecting" />}
+                {connectingState === ConnectingState.Connected && <Chess {...chessProps} />}
             </div>
         </>
     );

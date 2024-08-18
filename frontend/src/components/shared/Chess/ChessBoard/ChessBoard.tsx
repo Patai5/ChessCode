@@ -1,9 +1,9 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import React from "react";
-import { CastlingFiles, Move, MoveInfo, Position } from "./ChessLogic/board";
+import { Move, MoveInfo, Position } from "./ChessLogic/board";
 import Chess from "./ChessLogic/chess";
-import { Color, Piece, Pieces, PromotionPieces, PromotionPieceType } from "./ChessLogic/pieces";
+import { Color, Piece, Pieces, PromotionPieceType, PromotionPieces } from "./ChessLogic/pieces";
 import { isPositionInMoves } from "./ChessLogic/utils";
 import Square, { AnyProps as squareAnyProps, Props as squareProps } from "./Square/Square";
 
@@ -28,12 +28,13 @@ interface PromotionSquare {
 
 export interface RefType {
     clientMakeMove: (move: Move, promotionPiece: PromotionPieceType | null) => void;
+    clientUndoMove: () => void;
 }
 
 type Props = {
     color: Color;
     isEnabled: boolean;
-    broadcastMove: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
+    broadcastMove?: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
     updateColorToPlay: (color: Color) => void;
 };
 function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
@@ -45,7 +46,7 @@ function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
     const chess = React.useRef(new Chess()).current;
 
     React.useImperativeHandle(forwardedRef, () => {
-        return { clientMakeMove };
+        return { clientMakeMove, clientUndoMove };
     });
 
     React.useEffect(() => {
@@ -117,45 +118,20 @@ function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
         setChessboard(updatedChessboard);
     };
 
-    const handleUpdateCastling = (chessboard: chessboardElement, moveInfo: MoveInfo) => {
-        if (!moveInfo.castleSide) return;
-
-        const rookFromPosition = moveInfo.piece.position.copy();
-        const rookToPosition = moveInfo.piece.position.copy();
-        rookFromPosition.file = CastlingFiles[moveInfo.castleSide].rookFrom;
-        rookToPosition.file = CastlingFiles[moveInfo.castleSide].rookTo;
-
-        updateSquaresProps(chessboard, rookFromPosition, { piece: null });
-        updateSquaresProps(chessboard, rookToPosition, { piece: chess.board.getPiece(rookToPosition) });
-    };
-
     const updateMoveIndicator = (chessboard: chessboardElement, moveInfo: MoveInfo) => {
-        const lastMove = chess.board.moves.slice(-2)[0];
-        for (const position of [lastMove.move.from, lastMove.move.to]) {
-            updateSquaresProps(chessboard, position, { isLastMove: false });
-        }
-
         for (const position of [moveInfo.move.from, moveInfo.move.to]) {
             updateSquaresProps(chessboard, position, { isLastMove: true });
         }
     };
 
-    const handleUpdateMove = (moveInfo: MoveInfo) => {
+    const handleUpdateMove = (moveInfo: MoveInfo | null) => {
         const updatedChessboard = [...chessboard];
-        // Remove the captured piece
-        if (moveInfo.capturedPiece) {
-            updateSquaresProps(chessboard, moveInfo.capturedPiece.position, { piece: null });
-        }
-        // Update the piece's position
-        updateSquaresProps(chessboard, moveInfo.move.from, { piece: null, isSelected: false });
-        if (moveInfo.promotionPiece) {
-            updateSquaresProps(chessboard, moveInfo.move.to, { piece: chess.board.getPiece(moveInfo.move.to) });
-        } else {
-            updateSquaresProps(chessboard, moveInfo.move.to, { piece: moveInfo.piece });
+
+        for (const { position, piece } of chess.positionGenerator()) {
+            updateSquaresProps(chessboard, position, { piece: piece, isLastMove: false });
         }
 
-        handleUpdateCastling(chessboard, moveInfo);
-        updateMoveIndicator(chessboard, moveInfo);
+        if (moveInfo) updateMoveIndicator(chessboard, moveInfo);
 
         setChessboard(updatedChessboard);
     };
@@ -210,7 +186,7 @@ function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
 
     const makeMove = (move: Move, promotionPiece: PromotionPieceType | null = null) => {
         const moveInfo = clientMakeMove(move, promotionPiece);
-        props.broadcastMove(moveInfo, promotionPiece);
+        props.broadcastMove!(moveInfo, promotionPiece);
     };
 
     const clientMakeMove = (move: Move, promotionPiece: PromotionPieceType | null = null) => {
@@ -221,6 +197,13 @@ function ChessBoard(props: Props, forwardedRef: React.Ref<RefType>) {
         props.updateColorToPlay(chess.board.colorToPlay);
 
         return moveInfo;
+    };
+
+    const clientUndoMove = () => {
+        const moveInfo = chess.undoMove();
+        handleUpdateMove(moveInfo);
+
+        props.updateColorToPlay(chess.board.colorToPlay);
     };
 
     const handleHoveringOver = (position: Position | null) => {

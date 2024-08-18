@@ -86,31 +86,49 @@ export type Props = {
 };
 export type AnyProps = Partial<Pick<Props, keyof Props>>;
 export default function Square(props: Props) {
-    const { clientX, clientY, updatePosition } = useMousePosition(!props.isSelected);
+    const {
+        piece,
+        position,
+        color,
+        isSelected,
+        isValidMove,
+        isLastMove,
+        setSelectedPiece,
+        hoveringOver,
+        setHoveringOver,
+        setMovedTo,
+        promotionPiece,
+        setPromotionPiece,
+    } = props;
+
+    const { clientX, clientY, updatePosition } = useMousePosition(!isSelected);
 
     const handleHoveringStop = () => {
-        props.setSelectedPiece(null);
+        setSelectedPiece(null);
     };
+
     /** Sets the piece as the selected and hovering piece */
     const handleMouseDown = (e: React.MouseEvent) => {
-        props.setPromotionPiece(props.position);
+        setPromotionPiece(position);
 
         updatePosition(e);
-        props.setSelectedPiece(props.piece);
+        setSelectedPiece(piece);
         document.addEventListener("mouseup", handleHoveringStop, { once: true });
     };
+
     const handleMouseUp = () => {
-        if (props.isValidMove) props.setMovedTo(props.position);
+        if (isValidMove) setMovedTo(position);
     };
 
     const handleMouseOver = () => {
-        props.setHoveringOver(props.position);
-    };
-    const handleMouseLeave = () => {
-        props.setHoveringOver(null);
+        setHoveringOver(position);
     };
 
-    const squareStyles = props.color === Color.White ? lightSquareCss : darkSquareCss;
+    const handleMouseLeave = () => {
+        setHoveringOver(null);
+    };
+
+    const squareStyles = color === Color.White ? lightSquareCss : darkSquareCss;
 
     // Can't use emotion's css prop because of performance issues with adding new style to the Head on every mouse move
     const hoveringPieceCss: CSS.Properties = {
@@ -126,19 +144,20 @@ export default function Square(props: Props) {
             css={[
                 squareCss,
                 squareStyles.background,
-                props.isLastMove && squareStyles.lastMove,
-                props.isValidMove && squareStyles.validMove,
-                props.hoveringOver && squareStyles.hoveringOver,
-                props.promotionPiece && squareStyles.promotionSelect,
+                isLastMove && squareStyles.lastMove,
+                isValidMove && squareStyles.validMove,
+                hoveringOver && squareStyles.hoveringOver,
+                promotionPiece && squareStyles.promotionSelect,
             ]}
             onMouseEnter={handleMouseOver}
             onMouseLeave={handleMouseLeave}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
+            data-testid={`square-${position.rank}-${position.file} piece-${piece?.type || "empty"}`}
         >
-            <div css={pieceCss} style={props.isSelected ? hoveringPieceCss : {}}>
-                {(props.promotionPiece && <PieceIcon pieceColorType={props.promotionPiece} />) ||
-                    (props.piece && <PieceIcon piece={props.piece} />)}
+            <div css={pieceCss} style={isSelected ? hoveringPieceCss : {}}>
+                {(promotionPiece && <PieceIcon pieceColorType={promotionPiece} />) ||
+                    (piece && <PieceIcon piece={piece} />)}
             </div>
         </div>
     );

@@ -2,7 +2,7 @@
 import { css } from "@emotion/react";
 import React from "react";
 import ActionBar, { PlayerProps } from "./ActionBar/ActionBar";
-import { Actions } from "./ActionBar/QuickActions/QuickActions";
+import { ActionsType } from "./ActionBar/QuickActions/QuickActions";
 import ChessBoard, { RefType } from "./ChessBoard/ChessBoard";
 import { MoveInfo } from "./ChessBoard/ChessLogic/board";
 import { Color, PromotionPieceType } from "./ChessBoard/ChessLogic/pieces";
@@ -20,15 +20,17 @@ export type PlayersProps = {
     [key in Color]: PlayerProps;
 };
 
-type Props = {
+export type ChessProps = {
     color: Color;
-    players: PlayersProps;
+    players: PlayersProps | null;
     gameStarted: boolean;
     gameResult: GameResult | null;
-    broadcastMove: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
-    actions: Actions;
+    actions: ActionsType;
+    broadcastMove?: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
+    isReplay: boolean;
 };
-function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
+
+function Chess(props: ChessProps, forwardedRef: React.ForwardedRef<RefType>) {
     const [colorToPlay, setColorToPlay] = React.useState<Color>(Color.White);
     const pauseGame = !props.gameStarted || !!props.gameResult;
 
@@ -36,22 +38,28 @@ function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
         <>
             <ResultsDisplay result={props.gameResult ? props.gameResult : undefined} show={!!props.gameResult} />
             <div css={ChessCss}>
-                <ActionBar
-                    player={props.players[getOppositeColor(props.color)]}
-                    timerPaused={props.color === colorToPlay || pauseGame}
-                />
+                {props.players && (
+                    <ActionBar
+                        player={props.players[getOppositeColor(props.color)]}
+                        isReplay={props.isReplay}
+                        timerPaused={props.color === colorToPlay || pauseGame}
+                    />
+                )}
                 <ChessBoard
                     color={props.color}
-                    isEnabled={!pauseGame}
+                    isEnabled={props.isReplay ? false : !pauseGame}
                     broadcastMove={props.broadcastMove}
                     updateColorToPlay={setColorToPlay}
                     ref={forwardedRef}
                 />
-                <ActionBar
-                    player={props.players[props.color]}
-                    actions={props.actions}
-                    timerPaused={props.color !== colorToPlay || pauseGame}
-                />
+                {props.players && (
+                    <ActionBar
+                        player={props.players[props.color]}
+                        actions={props.actions}
+                        isReplay={props.isReplay}
+                        timerPaused={props.color !== colorToPlay || pauseGame}
+                    />
+                )}
             </div>
         </>
     );

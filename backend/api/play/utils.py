@@ -1,14 +1,20 @@
+from django.contrib.auth import get_user_model
 from django.db.models import Q
 
+from ..friends.friends import getFriendStatus
 from .models import COLORS, TERMINATIONS, Game, Move
 
+User = get_user_model()
 
-def game_to_dict(game: Game, include_moves: bool = True):
+
+def game_to_dict(game: Game, include_moves: bool = True, friend_status_from_user: User | None = None):
     """Returns a dictionary representation of the given game."""
     return {
         "game_id": game.game_id,
-        "player_white": game.player_white.username,
-        "player_black": game.player_black.username,
+        "players": {
+            "white": player_status_dict(game.player_white, friend_status_from_user),
+            "black": player_status_dict(game.player_black, friend_status_from_user),
+        },
         "termination": TERMINATIONS.get(game.termination).name.lower(),
         "winner_color": COLORS.get(game.winner_color),
         **(
@@ -19,6 +25,18 @@ def game_to_dict(game: Game, include_moves: bool = True):
         "time_control": game.time_control,
         "date": game.date,
     }
+
+
+def player_status_dict(player: User, friend_status_from_user: User | None = None):
+    """Returns a dictionary representation of the given player."""
+    friendDict = {"username": player.username}
+
+    if friend_status_from_user:
+        status = getFriendStatus(friend_status_from_user, player)
+        if status:
+            friendDict["status"] = status.value
+
+    return friendDict
 
 
 def get_player_games_json(username: str, page: int, limit: int, include_moves: bool = True):

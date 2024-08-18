@@ -9,6 +9,7 @@ import Home from "./Home/Home";
 import Login from "./Login/Login";
 import Play from "./Play/Play";
 import Profile from "./Profile/Profile";
+import { ReplayGame } from "./ReplayGame/ReplayGame";
 import ErrorQueue, { ErrorQueueClass } from "./shared/ErrorQueue/ErrorQueue";
 
 const globalCss = css`
@@ -71,6 +72,7 @@ export default function app() {
                 <Route path="/friends/:username" element={<Friends />} />
                 <Route path="/friends" element={<Friends />} />
                 <Route path="/play/:id" element={<Play />} />
+                <Route path="/replay_game/:id" element={<ReplayGame />} />
                 <Route path="/" element={<Home />} />
             </Routes>
         </AppContext.Provider>
