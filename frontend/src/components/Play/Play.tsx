@@ -7,13 +7,13 @@ import { Move, MoveInfo, MoveName } from "components/shared/Chess/ChessBoard/Che
 import { Color } from "components/shared/Chess/ChessBoard/ChessLogic/pieces";
 import { GameResult } from "components/shared/Chess/ResultsDisplay/ResultsDisplay";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
+import Loading from "components/shared/Loading";
 import UserMenu from "components/shared/UserMenu/UserMenu";
 import { AppContext } from "hooks/appContext";
 import React from "react";
 import { useParams } from "react-router-dom";
 import { validateId } from "utils/chess";
 import { getWSUri } from "utils/websockets";
-import Connecting from "./Connecting/Connecting";
 
 const ColorName = { white: Color.White, black: Color.Black };
 interface JoinAPIResponse {
@@ -241,7 +241,7 @@ export default function Play() {
         <>
             <UserMenu />
             <div css={playCss}>
-                {connectingState === ConnectingState.Connecting && <Connecting />}
+                {connectingState === ConnectingState.Connecting && <Loading displayText="Connecting" />}
                 {connectingState === ConnectingState.Connected && <Chess {...chessProps} />}
             </div>
         </>

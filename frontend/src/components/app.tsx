@@ -9,7 +9,7 @@ import Home from "./Home/Home";
 import Login from "./Login/Login";
 import Play from "./Play/Play";
 import Profile from "./Profile/Profile";
-import ReplayGame from "./ReplayGame/ReplayGame";
+import { ReplayGame } from "./ReplayGame/ReplayGame";
 import ErrorQueue, { ErrorQueueClass } from "./shared/ErrorQueue/ErrorQueue";
 
 const globalCss = css`

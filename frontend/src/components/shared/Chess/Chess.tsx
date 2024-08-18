@@ -20,7 +20,7 @@ export type PlayersProps = {
     [key in Color]: PlayerProps;
 };
 
-type Props = {
+export type ChessProps = {
     color: Color;
     players: PlayersProps | null;
     gameStarted: boolean;
@@ -29,7 +29,8 @@ type Props = {
     broadcastMove?: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
     isReplay: boolean;
 };
-function Chess(props: Props, forwardedRef: React.Ref<RefType>) {
+
+function Chess(props: ChessProps, forwardedRef: React.ForwardedRef<RefType>) {
     const [colorToPlay, setColorToPlay] = React.useState<Color>(Color.White);
     const pauseGame = !props.gameStarted || !!props.gameResult;
 
