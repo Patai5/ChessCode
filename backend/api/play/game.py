@@ -41,26 +41,6 @@ class Game:
         self.start_reset_abort_timer()
 
     @property
-    def game_mode(self) -> GameMode:
-        return self._game_mode
-
-    @game_mode.setter
-    def game_mode(self, value: GameMode) -> None:
-        assert isinstance(value, GameMode), "Game mode must be a GameMode object"
-
-        self._game_mode = value
-
-    @property
-    def time_control(self) -> TimeControl:
-        return self._time_control
-
-    @time_control.setter
-    def time_control(self, value: TimeControl) -> None:
-        assert isinstance(value, TimeControl), "Time control must be a TimeControl object"
-
-        self._time_control = value
-
-    @property
     def game_id(self) -> str:
         return self._game_id
 
@@ -70,20 +50,8 @@ class Game:
 
         self._game_id = value
 
-    @property
-    def board(self) -> ChessBoard:
-        return self._board
-
-    @board.setter
-    def board(self, value: ChessBoard) -> None:
-        assert isinstance(value, ChessBoard), "Board must be a ChessBoard object"
-
-        self._board = value
-
     def can_player_join(self, user: User) -> bool:
         """Checks if the player can join the game."""
-        assert isinstance(user, User), "User must be a User object"
-
         if user in self.players.users:
             return True
 
@@ -94,8 +62,6 @@ class Game:
 
     def join_player(self, user: User, api_callback: APICallbackType) -> None:
         """Joins the player into the game."""
-        assert isinstance(user, User), "User must be a User object"
-
         self.players.join_game(user, api_callback)
 
         if self.status == GameStatus.NOT_STARTED:
@@ -176,8 +142,6 @@ class Game:
             - chess.Outcome: If the game is over.
             - None: If the move is legal and the game is not over.
         """
-        assert isinstance(move, chess.Move) or isinstance(move, str), "move must be a chess.Move or str object"
-
         result = self.board.move(move)
         if result == ChessBoard.ILLEGAL_MOVE or self.status != GameStatus.IN_PROGRESS:
             return ChessBoard.ILLEGAL_MOVE
@@ -207,8 +171,6 @@ class Game:
 
     def offer_draw(self, user: User) -> None:
         """Offers a draw to the opponent. If the opponent accepts, the game ends in a draw."""
-        assert isinstance(user, User), "User must be a User object"
-
         offeringPlayer = self.players.by_user(user)
         if offeringPlayer.offers_draw:
             return  # The player has already offered a draw, do nothing
@@ -222,8 +184,6 @@ class Game:
 
     def is_players_turn(self, user: User) -> bool:
         """Checks if it is the user's turn."""
-        assert isinstance(user, User), "User must be a User object"
-
         return self.board.color_to_move == self.players.by_user(user).color
 
     def save_to_db(self, result: CustomOutcome) -> None:
@@ -257,15 +217,7 @@ class Game:
 
 class GameManager:
     def __init__(self) -> None:
-        self.games = {}
-
-    @property
-    def games(self) -> Dict[str, Game]:
-        return self._games
-
-    @games.setter
-    def games(self, value: Dict[str, Game]) -> None:
-        self._games = value
+        self.games: Dict[str, Game] = {}
 
     def get_game(self, game_id: str) -> Game | None:
         assert len(game_id) == 8, "Game ID must be 8 characters long"

@@ -10,30 +10,6 @@ class GameMode:
         self.name = name
         self.time_controls = time_controls
 
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @name.setter
-    def name(self, value: str) -> None:
-        assert isinstance(value, str), "Name must be a string"
-        assert value.isalpha(), "Name must contain only letters"
-
-        self._name = value
-
-    @property
-    def time_controls(self) -> List[TimeControl]:
-        return self._time_controls
-
-    @time_controls.setter
-    def time_controls(self, value: List[TimeControl]) -> None:
-        assert isinstance(value, list), "Time controls must be a list"
-        assert all(
-            isinstance(item, TimeControl) for item in value
-        ), "Time controls must be a list of TimeControl objects"
-
-        self._time_controls = value
-
 
 class TimeControl:
     def __init__(self, time: TimeS):
@@ -47,7 +23,6 @@ class TimeControl:
     @time.setter
     def time(self, value: TimeS) -> None:
         """Time is defined in seconds"""
-        assert isinstance(value, TimeS), "Time must be an integer"
         assert not value < 0, "Time cannot be negative"
 
         self._time = value

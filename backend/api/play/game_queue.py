@@ -10,57 +10,22 @@ class GameQueue:
     def __init__(self, game_mode: GameMode, time_control: TimeControl):
         self.game_mode = game_mode
         self.time_control = time_control
-        self.queue = []
-
-    @property
-    def game_mode(self) -> GameMode:
-        return self._game_mode
-
-    @game_mode.setter
-    def game_mode(self, value: GameMode) -> None:
-        assert isinstance(value, GameMode), "Game mode must be a GameMode object"
-
-        self._game_mode = value
-
-    @property
-    def time_control(self) -> TimeControl:
-        return self._time_control
-
-    @time_control.setter
-    def time_control(self, value: TimeControl) -> None:
-        assert isinstance(value, TimeControl), "Time control must be a TimeControl object"
-
-        self._time_control = value
-
-    @property
-    def queue(self) -> list[User]:
-        return self._queue
-
-    @queue.setter
-    def queue(self, value: list[User]) -> None:
-        assert isinstance(value, list), "Queue must be a list"
-        assert all(isinstance(item, User) for item in value), "Queue must be a list of Users"
-
-        self._queue = value
+        self.queue: list[User] = []
 
     def add_user(self, user: User) -> None:
         """Add a user to the queue. If there is a match, start a game"""
-        assert isinstance(user, User), "User must be a User object"
-        assert user not in self.queue, "User is already in queue"
+        assert not self.is_player_queuing(user), "User is already in queue"
 
         self.queue.append(user)
 
     def remove_user(self, user: User) -> None:
         """Remove a user from the queue"""
-        assert isinstance(user, User), "User must be a User object"
-        assert user in self.queue, "User is not in queue"
+        assert self.is_player_queuing(user), "User is not in queue"
 
         self.queue.remove(user)
 
     def is_player_queuing(self, user: User) -> bool:
         """Returns True if the user is in the queue, False otherwise"""
-        assert isinstance(user, User), "User must be a User object"
-
         return user in self.queue
 
 
@@ -68,41 +33,11 @@ class QueuingPlayer:
     def __init__(self, user: User, game_queue: GameQueue, game_found_callback: Callable[[Game], None] | None = None):
         self.user = user
         self.game_queue = game_queue
+
         self.game_found_callback = game_found_callback
-
-    @property
-    def user(self) -> User:
-        return self._user
-
-    @user.setter
-    def user(self, value: User) -> None:
-        assert isinstance(value, User), "User must be a User object"
-
-        self._user = value
-
-    @property
-    def game_queue(self) -> GameQueue:
-        return self._game_queue
-
-    @game_queue.setter
-    def game_queue(self, value: GameQueue) -> None:
-        assert isinstance(value, GameQueue), "Game queue must be a GameQueue object"
-
-        self._game_queue = value
-
-    @property
-    def game_found_callback(self) -> Callable[[Game], None] | None:
         """Callback function to be called when a game is found. The game ID will be passed as an argument
-
+        
         Notifies the users that a game has been found using websockets"""
-
-        return self._game_found_callback
-
-    @game_found_callback.setter
-    def game_found_callback(self, value: Callable[[Game], None] | None) -> None:
-        assert value is None or callable(value), "Game found callback must be a callable function or None"
-
-        self._game_found_callback = value
 
 
 class GameQueueManager:
@@ -110,31 +45,10 @@ class GameQueueManager:
         self.game_queues = [
             GameQueue(game_mode, time_control) for game_mode in game_modes for time_control in game_mode.time_controls
         ]
-        self.queuing_players = {}
-
-    @property
-    def game_queues(self) -> list[GameQueue]:
-        return self._game_queues
-
-    @game_queues.setter
-    def game_queues(self, value: list[GameQueue]) -> None:
-        assert isinstance(value, list), "Game queues must be a list"
-        assert all(isinstance(item, GameQueue) for item in value), "Game queues must be a list of GameQueue objects"
-
-        self._game_queues = value
-
-    @property
-    def queuing_players(self) -> Dict[User, QueuingPlayer]:
-        return self._queuing_players
-
-    @queuing_players.setter
-    def queuing_players(self, value: Dict[User, QueuingPlayer]) -> None:
-        self._queuing_players = value
+        self.queuing_players: Dict[User, QueuingPlayer] = {}
 
     def add_user(self, user: User, game_queue: GameQueue, gameFoundCallback: Callable[[Game], None]) -> None:
         """Adds a user to a game queue"""
-        assert isinstance(user, User), "User must be a User object"
-        assert isinstance(game_queue, GameQueue), "Game queue must be a GameQueue object"
 
         if self.is_player_queuing(user):
             raise ValueError("User is already in a queue")
@@ -148,7 +62,6 @@ class GameQueueManager:
 
     def remove_user(self, user: User) -> None:
         """Remove a user from a game queue"""
-        assert isinstance(user, User), "User must be a User object"
 
         if not self.is_player_queuing(user):
             raise ValueError("User is not in a queue")
@@ -158,7 +71,6 @@ class GameQueueManager:
 
     def is_player_queuing(self, user: User) -> bool:
         """Returns True if the user is in any queue, False otherwise"""
-        assert isinstance(user, User), "User must be a User object"
 
         return user in self.queuing_players
 
@@ -167,8 +79,6 @@ class GameQueueManager:
         Gets a game queue by `game_mode` (`str`) and `time_control` (`int`) \n
         Returns None if the game queue does not exist
         """
-        assert isinstance(game_mode, str), "Game mode must be a string"
-        assert isinstance(time_control, int), "Time control must be an integer"
 
         for game_queue in self.game_queues:
             if game_queue.game_mode.name.lower() == game_mode.lower() and game_queue.time_control.time == time_control:
@@ -201,10 +111,6 @@ class GroupQueueManager:
 
     def get_create_queue_manager(self, group: Group | None) -> GameQueueManager:
         """Returns a GameQueueManager for the given group. If the group does not exist, it will be created and returned"""
-        assert group is None or isinstance(group, tuple), "Group must be a tuple or None"
-        assert group is None or (
-            all(isinstance(item, str) for item in group)
-        ), "Group must be a tuple of strings or None"
 
         if group is None:
             return self.default
@@ -215,8 +121,6 @@ class GroupQueueManager:
 
     def add_group(self, group: Group) -> GameQueueManager:
         """Adds a group to the group queue manager"""
-        assert isinstance(group, tuple), "Group must be a tuple"
-        assert all(isinstance(item, str) for item in group), "Group must be a tuple of strings"
 
         group = tuple(sorted(group))
 
@@ -229,8 +133,6 @@ class GroupQueueManager:
 
     def remove_group(self, group: Group) -> None:
         """Removes a group from the group queue manager"""
-        assert isinstance(group, tuple), "Group must be a tuple"
-        assert all(isinstance(item, str) for item in group), "Group must be a tuple of strings"
 
         if group not in self.groups:
             raise ValueError("Group does not exist")
@@ -240,7 +142,6 @@ class GroupQueueManager:
     def remove_player(self, user: User) -> None:
         """Removes the player from all queues
         - the algorithm is O(n), which could be improved, but it's not worth it"""
-        assert isinstance(user, User), "User must be a User object"
 
         for group, queue in list(self.groups.items()):
             if user.username in group and queue.is_player_queuing(user):

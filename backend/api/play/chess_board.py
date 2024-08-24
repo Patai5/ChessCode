@@ -13,16 +13,6 @@ class ChessBoard:
         self.color_to_move: chess.Color = chess.WHITE
 
     @property
-    def board(self) -> chess.Board:
-        return self._board
-
-    @board.setter
-    def board(self, value: chess.Board | None) -> None:
-        assert isinstance(value, chess.Board), "board must be a chess.Board object"
-
-        self._board = value
-
-    @property
     def moves(self) -> list[chess.Move]:
         return self.board.move_stack
 
@@ -41,8 +31,6 @@ class ChessBoard:
             - CustomOutcome: If the game is over.
             - None: If the move is legal and the game is not over.
         """
-        assert isinstance(move, chess.Move) or isinstance(move, str), "move must be a chess.Move or str object"
-
         if isinstance(move, str):
             move = chess.Move.from_uci(move)
 

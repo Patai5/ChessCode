@@ -17,7 +17,6 @@ def error(websocket: WebsocketConsumer, message: str | ReturnDict[str, Any], cod
     """
     Sends an error message if provided, if an error code is provided, the connection will be closed with that code.
     """
-    assert code is None or isinstance(code, int), "code must be an integer"
 
     websocket.send(text_data=json.dumps({"type": "error", "message": message}))
 
