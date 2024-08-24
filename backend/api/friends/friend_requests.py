@@ -1,23 +1,22 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
+from users.models import User
 
 from .models import FriendRequest, Friendship
 
-User = get_user_model()
 
-
-def getFriendRequests(user: User) -> list[User]:
+def getFriendRequests(user: User | AnonymousUser) -> list[User]:
     """Returns a list of users that have sent friend requests to the user"""
     requests = FriendRequest.objects.filter(toUser=user)
     return [request.fromUser for request in requests]
 
 
-def getFriendRequestsSent(user: User) -> list[User]:
+def getFriendRequestsSent(user: User | AnonymousUser) -> list[User]:
     """Returns a list of users that the user has sent friend requests to"""
     requests = FriendRequest.objects.filter(fromUser=user)
     return [request.toUser for request in requests]
 
 
-def getFriendRequest(fromUser: User, toUser: User) -> FriendRequest | None:
+def getFriendRequest(fromUser: User | AnonymousUser, toUser: User | AnonymousUser) -> FriendRequest | None:
     """Returns the friend request if it exists, otherwise None"""
     friendRequest = FriendRequest.objects.filter(fromUser=fromUser, toUser=toUser)
     if friendRequest.exists():
@@ -25,7 +24,7 @@ def getFriendRequest(fromUser: User, toUser: User) -> FriendRequest | None:
     return None
 
 
-def sendFriendRequest(fromUser: User, toUser: User) -> None:
+def sendFriendRequest(fromUser: User | AnonymousUser, toUser: User) -> None:
     """Sends a friend request from fromUser to toUser"""
     oppositeRequest = getFriendRequest(toUser, fromUser)
     if oppositeRequest:

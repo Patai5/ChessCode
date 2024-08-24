@@ -1,12 +1,10 @@
 from enum import Enum
 
-from django.contrib.auth import get_user_model
 from django.db.models import Q
+from users.models import User
 
 from . import friend_requests
 from .models import Friendship
-
-User = get_user_model()
 
 
 def getFriends(user: User) -> list[User]:
@@ -30,10 +28,10 @@ class FriendStatus(Enum):
     friendRequestReceived = "friend_request_received"
 
 
-def getFriendStatus(fromUser: User, toUser: User) -> FriendStatus | None:
-    """Returns the status of the friendship between user1 and user2, None if both users are the same user"""
+def getFriendStatus(fromUser: User, toUser: User) -> FriendStatus:
+    """Returns the status of the friendship between user1 and user2, raises an error if both users are the same user"""
     if fromUser == toUser:
-        return None
+        raise ValueError("User cannot be friends with itself")
 
     if getFriendship(fromUser, toUser):
         return FriendStatus.friends

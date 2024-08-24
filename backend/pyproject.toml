@@ -1,2 +1,13 @@
 [build-system]
 requires = ["setuptools", "wheel"]
+
+[tool.black]
+line-length = 120
+include = '(api|backend|users)\/.*\.pyi?$'
+
+[tool.mypy]
+strict = true
+plugins = ["mypy_django_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "backend.settings"

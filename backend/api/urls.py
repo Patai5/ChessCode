@@ -1,4 +1,4 @@
-from channels.routing import URLRouter
+from channels.routing import URLRouter  # type: ignore
 from django.urls import include, path, re_path
 
 from . import consumers as c

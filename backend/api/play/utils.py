@@ -1,21 +1,25 @@
-from django.contrib.auth import get_user_model
+from typing import Any
+
 from django.db.models import Q
+from users.models import User
 
 from ..friends.friends import getFriendStatus
-from .models import COLORS, TERMINATIONS, Game, Move
-
-User = get_user_model()
+from .models import COLORS, TERMINATIONS, Game, GameTerminations, Move
 
 
-def game_to_dict(game: Game, include_moves: bool = True, friend_status_from_user: User | None = None):
+def game_to_dict(game: Game, include_moves: bool = True, friend_status_from_user: User | None = None) -> dict[str, Any]:
     """Returns a dictionary representation of the given game."""
+    gameTermination = TERMINATIONS.get(GameTerminations(game.termination))
+    if gameTermination is None:
+        raise ValueError(f"Invalid game termination: {game.termination}")
+
     return {
         "game_id": game.game_id,
         "players": {
             "white": player_status_dict(game.player_white, friend_status_from_user),
             "black": player_status_dict(game.player_black, friend_status_from_user),
         },
-        "termination": TERMINATIONS.get(game.termination).name.lower(),
+        "termination": gameTermination.name.lower(),
         "winner_color": COLORS.get(game.winner_color),
         **(
             {"moves": [move.move for move in Move.objects.filter(game=game.game_id).order_by("order")]}
@@ -27,19 +31,19 @@ def game_to_dict(game: Game, include_moves: bool = True, friend_status_from_user
     }
 
 
-def player_status_dict(player: User, friend_status_from_user: User | None = None):
+def player_status_dict(player: User | None, friend_status_from_user: User | None = None) -> dict[str, Any]:
     """Returns a dictionary representation of the given player."""
-    friendDict = {"username": player.username}
+    friendDict = {"username": player.username if player else None}
 
     if friend_status_from_user:
-        status = getFriendStatus(friend_status_from_user, player)
+        status = getFriendStatus(friend_status_from_user, player) if player else None
         if status:
             friendDict["status"] = status.value
 
     return friendDict
 
 
-def get_player_games_json(username: str, page: int, limit: int, include_moves: bool = True):
+def get_player_games_json(username: str, page: int, limit: int, include_moves: bool = True) -> list[dict[str, Any]]:
     """Returns a list of games played by the player with the given username."""
     games = Game.objects.filter(
         Q(player_white__username=username) | Q(player_black__username=username),

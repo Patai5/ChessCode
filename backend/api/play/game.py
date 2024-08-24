@@ -1,19 +1,18 @@
 import enum
 import random
 import threading
-from typing import Dict, Iterable
+from typing import Dict
 
 import chess
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
+from users.models import User
 
 from ..utils import genUniqueID
-from .chess_board import CHESS_COLOR_NAMES, ChessBoard, CustomTermination
+from .chess_board import CHESS_COLOR_NAMES, ChessBoard, CustomOutcome, CustomTermination
 from .game_modes import GameMode, TimeControl
 from .models import Game as GameModel
 from .models import GameTerminations, Move
-from .players import APICallbackType, Player, Players, TimeS, UnknownPlayer
-
-User = get_user_model()
+from .players import APICallbackType, Player, Players, TimeS
 
 
 class GameStatus(enum.Enum):
@@ -28,7 +27,7 @@ class Game:
         players: Players,
         game_mode: GameMode,
         time_control: TimeControl,
-        game_id: str | None,
+        game_id: str,
         is_link_game: bool,
     ):
         self.players = players
@@ -46,7 +45,7 @@ class Game:
         return self._game_mode
 
     @game_mode.setter
-    def game_mode(self, value: GameMode):
+    def game_mode(self, value: GameMode) -> None:
         assert isinstance(value, GameMode), "Game mode must be a GameMode object"
 
         self._game_mode = value
@@ -56,19 +55,18 @@ class Game:
         return self._time_control
 
     @time_control.setter
-    def time_control(self, value: TimeControl):
+    def time_control(self, value: TimeControl) -> None:
         assert isinstance(value, TimeControl), "Time control must be a TimeControl object"
 
         self._time_control = value
 
     @property
-    def game_id(self) -> str | None:
+    def game_id(self) -> str:
         return self._game_id
 
     @game_id.setter
-    def game_id(self, value: str | None):
-        assert value is None or isinstance(value, str), "Game ID must be a string"
-        assert value is None or len(value) == 8, "Game ID must be 8 characters long"
+    def game_id(self, value: str) -> None:
+        assert len(value) == 8, "Game ID must be 8 characters long"
 
         self._game_id = value
 
@@ -77,7 +75,7 @@ class Game:
         return self._board
 
     @board.setter
-    def board(self, value: ChessBoard):
+    def board(self, value: ChessBoard) -> None:
         assert isinstance(value, ChessBoard), "Board must be a ChessBoard object"
 
         self._board = value
@@ -89,12 +87,12 @@ class Game:
         if user in self.players.users:
             return True
 
-        if any(isinstance(player, UnknownPlayer) for player in self.players.users):
+        if any(isinstance(player, AnonymousUser) for player in self.players.users):
             return True
 
         return False
 
-    def join_player(self, user: User, api_callback: APICallbackType):
+    def join_player(self, user: User, api_callback: APICallbackType) -> None:
         """Joins the player into the game."""
         assert isinstance(user, User), "User must be a User object"
 
@@ -104,7 +102,7 @@ class Game:
             if all(player.joined for player in self.players.players):
                 self.start()
 
-    def start(self):
+    def start(self) -> None:
         """Starts the game."""
         self.status = GameStatus.IN_PROGRESS
         self.update_player_timers()
@@ -113,18 +111,15 @@ class Game:
         for player in self.players.players:
             player.api_callback("game_started", {"game_started": True})
 
-    def callback_game_result(self, result: chess.Outcome):
+    def callback_game_result(self, result: chess.Outcome) -> None:
         """Calls the API callbacks with the game result."""
-        assert isinstance(result, chess.Outcome), "Result must be a chess.Outcome object"
 
-        winningColor = CHESS_COLOR_NAMES[result.winner] if result.winner != None else "draw"
+        winningColor = CHESS_COLOR_NAMES[result.winner] if not result.winner is None else "draw"
         for player in self.players.players:
             player.api_callback("game_result", [result.termination.name.lower(), winningColor])
 
-    def callback_move(self, user: User, move: chess.Move | str):
+    def callback_move(self, user: User, move: chess.Move | str) -> None:
         """Calls the API callbacks with the move."""
-        assert isinstance(user, User), "User must be a User object"
-        assert isinstance(move, chess.Move) or isinstance(move, str), "move must be a chess.Move or str object"
 
         if isinstance(move, chess.Move):
             move = move.uci()
@@ -133,15 +128,15 @@ class Game:
             if player.user != user:
                 player.api_callback("move", move)
 
-    def start_abort_timer(self, abortAfterTime: TimeS):
+    def start_abort_timer(self, abortAfterTime: TimeS) -> None:
         """Start the abort timer that aborts the game."""
         self.abortTimer = threading.Timer(
             abortAfterTime,
-            lambda: self.finish(chess.Outcome(CustomTermination.ABORTED, None)),
+            lambda: self.finish(CustomOutcome(CustomTermination.ABORTED, None)),
         )
         self.abortTimer.start()
 
-    def start_reset_abort_timer(self):
+    def start_reset_abort_timer(self) -> None:
         """Starts and resets the abort timer. Aborts for the first two moves of the game if the moves were not player in time."""
         abortNotJoined: TimeS = 10
         abortNotJoinedLinkGame: TimeS = 300
@@ -169,7 +164,7 @@ class Game:
         """Returns a list of all moves made in the game in UCI notation."""
         return [move.uci() for move in self.board.moves]
 
-    def move(self, user: User, move: chess.Move | str) -> ChessBoard.ILLEGAL_MOVE | chess.Outcome | None:
+    def move(self, user: User, move: chess.Move | str) -> ChessBoard.ILLEGAL_MOVE_TYPE | chess.Outcome | None:
         """
         Moves a piece on the board.
 
@@ -184,7 +179,7 @@ class Game:
         assert isinstance(move, chess.Move) or isinstance(move, str), "move must be a chess.Move or str object"
 
         result = self.board.move(move)
-        if result is ChessBoard.ILLEGAL_MOVE or self.status != GameStatus.IN_PROGRESS:
+        if result == ChessBoard.ILLEGAL_MOVE or self.status != GameStatus.IN_PROGRESS:
             return ChessBoard.ILLEGAL_MOVE
 
         self.start_reset_abort_timer()
@@ -193,18 +188,16 @@ class Game:
         self.players.remove_draw_offers()
 
         self.callback_move(user, move)
-        if isinstance(result, chess.Outcome):
+        if isinstance(result, CustomOutcome):
             self.finish(result)
         return result
 
-    def ran_out_of_time(self, user: User):
+    def ran_out_of_time(self) -> None:
         """Handles the case when a player runs out of time."""
-        assert isinstance(user, User), "User must be a User object"
-
-        gameOutcome = chess.Outcome(CustomTermination.TIMEOUT, not self.board.color_to_move)
+        gameOutcome = CustomOutcome(CustomTermination.TIMEOUT, not self.board.color_to_move)
         self.finish(gameOutcome)
 
-    def update_player_timers(self):
+    def update_player_timers(self) -> None:
         """Updates the player timers."""
         for player in self.players.players:
             if player.color == self.board.color_to_move:
@@ -212,7 +205,7 @@ class Game:
             else:
                 player.stop_timer()
 
-    def offer_draw(self, user: User):
+    def offer_draw(self, user: User) -> None:
         """Offers a draw to the opponent. If the opponent accepts, the game ends in a draw."""
         assert isinstance(user, User), "User must be a User object"
 
@@ -222,7 +215,7 @@ class Game:
         offeringPlayer.offers_draw = True
 
         if self.players.is_draw_agreement:
-            self.finish(chess.Outcome(CustomTermination.AGREEMENT, None))
+            self.finish(CustomOutcome(CustomTermination.AGREEMENT, None))
         else:
             opponent = self.players.get_opponent(user)
             opponent.api_callback("offer_draw")
@@ -233,7 +226,7 @@ class Game:
 
         return self.board.color_to_move == self.players.by_user(user).color
 
-    def save_to_db(self, result: chess.Outcome):
+    def save_to_db(self, result: CustomOutcome) -> None:
         """Saves the game to the database."""
         game = GameModel(
             player_white=self.players.by_color(chess.WHITE).user,
@@ -247,7 +240,7 @@ class Game:
             [Move(game=game, order=order, move=move) for order, move in enumerate(self.get_moves_list())]
         )
 
-    def finish(self, result: chess.Outcome):
+    def finish(self, result: CustomOutcome) -> None:
         """Finishes the game and saves it to the database.
         - Does not save games with termination of `ABORTED`."""
         self.status = GameStatus.FINISHED
@@ -263,7 +256,7 @@ class Game:
 
 
 class GameManager:
-    def __init__(self):
+    def __init__(self) -> None:
         self.games = {}
 
     @property
@@ -271,17 +264,15 @@ class GameManager:
         return self._games
 
     @games.setter
-    def games(self, value: Dict[str, Game]):
+    def games(self, value: Dict[str, Game]) -> None:
         self._games = value
 
     def get_game(self, game_id: str) -> Game | None:
-        assert isinstance(game_id, str), "Game ID must be a string"
         assert len(game_id) == 8, "Game ID must be 8 characters long"
 
         return self.games.get(game_id)
 
-    def remove_game(self, game_id: str):
-        assert isinstance(game_id, str), "Game ID must be a string"
+    def remove_game(self, game_id: str) -> None:
         assert len(game_id) == 8, "Game ID must be 8 characters long"
 
         if self.get_game(game_id) is not None:
@@ -289,27 +280,19 @@ class GameManager:
 
     def start_game(
         self,
-        players: Iterable[User | UnknownPlayer],
+        players: tuple[User | AnonymousUser, User | AnonymousUser],
         game_mode: GameMode,
         time_control: TimeControl,
         link_game: bool = False,
     ) -> Game:
-        assert isinstance(players, Iterable), "Players must be a iterable"
-        assert len(players) == 2, "Players must be a tuple of exactly two players"
-        assert all(
-            isinstance(item, (User, UnknownPlayer)) for item in players
-        ), "Players must be a iterable of Users or UnknownPlayers"
-        assert isinstance(game_mode, GameMode), "Game mode must be a GameMode object"
-        assert isinstance(time_control, TimeControl), "Time control must be a TimeControl object"
-
         game_id = genUniqueID(self.games)
 
         colors = [chess.WHITE, chess.BLACK]
         random.shuffle(colors)
 
-        players = Players([Player(user, color, time_control.time) for user, color in zip(players, colors)])
+        gamePlayers = Players([Player(user, color, time_control.time) for user, color in zip(players, colors)])
 
-        game = Game(players, game_mode, time_control, game_id, link_game)
+        game = Game(gamePlayers, game_mode, time_control, game_id, link_game)
         self.games[game_id] = game
         return game
 

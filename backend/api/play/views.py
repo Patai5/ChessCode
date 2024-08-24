@@ -1,3 +1,4 @@
+from django.contrib.auth.models import AnonymousUser
 from django.http import JsonResponse
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -11,29 +12,27 @@ from .utils import game_to_dict, get_player_games_json
 
 
 class CreateLink(APIView):
-    def get(self, request: Request):
-        serializer = s.EnqueueSerializer(data=request.query_params)
+    def get(self, request: Request) -> JsonResponse:
+        serializer = s.EnqueueSerializer(data=request.data)
         if not serializer.is_valid():
             return JsonResponse({"error": serializer.errors}, status=400)
 
-        game_mode = serializer.validated_data["game_mode"]
-        time_control = serializer.validated_data["time_control"]
+        game_mode = serializer.data["game_mode"]
+        time_control: int = serializer.validated_data["time_control"]
 
         queue_manager = GROUP_QUEUE_MANAGER.default
         gameQueue = queue_manager.get_game_queue(game_mode, time_control)
         if not gameQueue:
             return JsonResponse({"error": "Invalid game mode or time control"}, status=400)
 
-        players = [request.user, None]
-        game = ALL_ACTIVE_GAMES_MANAGER.start_game(
-            players, gameQueue.game_mode, gameQueue.time_control, link_game=True
-        )
+        players = (request.user, AnonymousUser())
+        game = ALL_ACTIVE_GAMES_MANAGER.start_game(players, gameQueue.game_mode, gameQueue.time_control, link_game=True)
 
         return JsonResponse({"game_id": game.game_id})
 
 
 class GameAPI(APIView):
-    def get(self, request: Request, game_id: int):
+    def get(self, request: Request, game_id: int) -> JsonResponse:
         try:
             game = Game.objects.get(game_id=game_id)
         except Game.DoesNotExist:
@@ -46,7 +45,7 @@ class GameAPI(APIView):
 
 
 class PlayerGames(APIView):
-    def get(self, request: Request, username: str):
+    def get(self, request: Request, username: str) -> JsonResponse:
         limit = string_to_int_range(request.query_params.get("limit"), default=10, min=1, max=100)
         page = string_to_int_range(request.query_params.get("page"), default=1, min=1)
 

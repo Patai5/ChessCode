@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
+from rest_framework.request import Request
 from rest_framework.views import APIView
 
 from . import serializers as s
@@ -8,7 +9,7 @@ User = get_user_model()
 
 
 class UserExists(APIView):
-    def get(self, request):
+    def get(self, request: Request) -> JsonResponse:
         data = {"username": request.query_params.get("username")}
         serializer = s.Username(data=data)
         if not serializer.is_valid():

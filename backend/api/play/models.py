@@ -1,10 +1,10 @@
+from __future__ import annotations
+
 import chess
-from django.contrib.auth import get_user_model
 from django.db import models
+from users.models import User
 
 from .chess_board import CustomTermination
-
-User = get_user_model()
 
 
 class GameTerminations(models.IntegerChoices):
@@ -18,7 +18,7 @@ class GameTerminations(models.IntegerChoices):
     AGREEMENT = 7, "AGREEMENT"
 
     @staticmethod
-    def from_chess_termination(termination: chess.Termination):
+    def from_chess_termination(termination: chess.Termination | CustomTermination) -> GameTerminations:
         # Swap the keys and values of TERMINATIONS and get the value of the key
         return {v: k for k, v in TERMINATIONS.items()}[(termination)]
 
@@ -50,10 +50,12 @@ class Game(models.Model):
     time_control = models.PositiveBigIntegerField()
     date = models.DateTimeField(auto_now_add=True)
 
+    objects: models.Manager[Game]
+
     class Meta:
         get_latest_by = ["date"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.game_id)
 
 
@@ -62,9 +64,11 @@ class Move(models.Model):
     order = models.PositiveIntegerField()
     move = models.CharField(max_length=5)
 
+    objects: models.Manager[Move]
+
     class Meta:
         get_latest_by = ("game", "order")
         unique_together = ("game", "order")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.game} - {self.order} - {self.move}"
