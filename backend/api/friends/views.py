@@ -1,27 +1,35 @@
-from django.contrib.auth import get_user_model
+from typing import Any, Callable
+
 from django.http import JsonResponse
 from rest_framework.request import Request
 from rest_framework.views import APIView
+from users.models import User
 
 from . import friend_requests, friends
 from .friends import FriendStatus
 
-User = get_user_model()
+
+class AuthenticatedUserRequest(Request):
+    user: User
 
 
 class FriendsList(APIView):
-    def get(self, request: Request, username: str):
-        user = User.objects.filter(username=username)
-        if not user.exists():
+    def get(self, request: Request, username: str) -> JsonResponse:
+        user = User.objects.filter(username=username).first()
+        if user is None:
             return JsonResponse({"error": "User does not exist"}, status=404)
-        user = user.first()
 
         userFriends = friends.getFriends(user)
         return JsonResponse({"friends": [friend.username for friend in userFriends]})
 
 
-def userAuthenticated(func: callable) -> JsonResponse:
-    def wrapper(self, request: Request, *args, **kwargs):
+def userAuthenticated(
+    func: JsonResponse | Callable[..., JsonResponse | None]
+) -> JsonResponse | Callable[..., JsonResponse | None]:
+    if isinstance(func, JsonResponse):
+        return func
+
+    def wrapper(self: APIView, request: Request, *args: Any, **kwargs: Any) -> JsonResponse | None:
         if not request.user.is_authenticated:
             return JsonResponse({"error": "You must be logged in"}, status=401)
 
@@ -30,8 +38,13 @@ def userAuthenticated(func: callable) -> JsonResponse:
     return wrapper
 
 
-def parseUsernameFromRequest(func: callable) -> JsonResponse:
-    def wrapper(self, request: Request):
+def parseUsernameFromRequest(
+    func: JsonResponse | Callable[..., JsonResponse | None]
+) -> JsonResponse | Callable[..., JsonResponse | None]:
+    if isinstance(func, JsonResponse):
+        return func
+
+    def wrapper(self: APIView, request: Request) -> JsonResponse | None:
         username = request.query_params.get("username")
         if not username:
             return JsonResponse({"error": "Username not provided"}, status=400)
@@ -41,15 +54,25 @@ def parseUsernameFromRequest(func: callable) -> JsonResponse:
     return wrapper
 
 
-def parseUsernameFromUrl(func: callable) -> JsonResponse:
-    def wrapper(self, request: Request, username: str):
+def parseUsernameFromUrl(
+    func: JsonResponse | Callable[..., JsonResponse | None]
+) -> JsonResponse | Callable[..., JsonResponse | None]:
+    if isinstance(func, JsonResponse):
+        return func
+
+    def wrapper(self: APIView, request: Request, username: str) -> JsonResponse | None:
         return func(self, request, username)
 
     return wrapper
 
 
-def validateUsername(func: callable) -> JsonResponse:
-    def wrapper(self, request: Request, username: str):
+def validateUsername(
+    func: JsonResponse | Callable[..., JsonResponse | None]
+) -> JsonResponse | Callable[..., JsonResponse | None]:
+    if isinstance(func, JsonResponse):
+        return func
+
+    def wrapper(self: APIView, request: Request, username: str) -> JsonResponse | None:
         user = User.objects.filter(username=username)
         if not user.exists():
             return JsonResponse({"error": "User does not exist"}, status=404)
@@ -59,8 +82,13 @@ def validateUsername(func: callable) -> JsonResponse:
     return wrapper
 
 
-def validateNotYourself(func: callable) -> JsonResponse:
-    def wrapper(self, request: Request, user: User):
+def validateNotYourself(
+    func: JsonResponse | Callable[..., JsonResponse | None]
+) -> JsonResponse | Callable[..., JsonResponse | None]:
+    if isinstance(func, JsonResponse):
+        return func
+
+    def wrapper(self: APIView, request: Request, user: User) -> JsonResponse | None:
         if request.user == user:
             return JsonResponse({"error": "Cannot be friends with yourself"}, status=400)
 
@@ -73,8 +101,12 @@ class FriendsWithStatusesList(APIView):
     @userAuthenticated
     @parseUsernameFromUrl
     @validateUsername
-    def get(self, request: Request, username: str):
-        userFriends = friends.getFriendsWithStatuses(request.user, username)
+    def get(self, request: AuthenticatedUserRequest, username: str) -> JsonResponse:
+        user = User.objects.filter(username=username).first()
+        if user is None:
+            return JsonResponse({"error": "User does not exist"}, status=404)
+
+        userFriends = friends.getFriendsWithStatuses(request.user, user)
         return JsonResponse(
             {
                 "friends": {
@@ -90,14 +122,14 @@ class Friend(APIView):
     @parseUsernameFromRequest
     @validateUsername
     @validateNotYourself
-    def get(self, request: Request, user: User):
+    def get(self, request: AuthenticatedUserRequest, user: User) -> JsonResponse:
         return JsonResponse({"success": friends.getFriendStatus(request.user, user).value})
 
     @userAuthenticated
     @parseUsernameFromRequest
     @validateUsername
     @validateNotYourself
-    def delete(self, request: Request, user: User):
+    def delete(self, request: AuthenticatedUserRequest, user: User) -> JsonResponse:
         friendship = friends.getFriendship(request.user, user)
         if not friendship:
             return JsonResponse({"error": "You are not friends with this user"}, status=400)
@@ -106,17 +138,7 @@ class Friend(APIView):
         return JsonResponse({"success": True})
 
 
-def validateNotFriendsWithUser(func: callable) -> JsonResponse:
-    def wrapper(self, request: Request, user: User):
-        if friends.getFriendship(request.user, user):
-            return JsonResponse({"error": "You are already friends"}, status=400)
-
-        return func(self, request, user)
-
-    return wrapper
-
-
-def friendRequestValid(func: callable) -> JsonResponse:
+def friendRequestValid(func: Callable[..., JsonResponse | None]) -> JsonResponse | Callable[..., JsonResponse | None]:
     """Validates that:
     - user is authenticated
     - username is provided
@@ -128,8 +150,10 @@ def friendRequestValid(func: callable) -> JsonResponse:
     @parseUsernameFromRequest
     @validateUsername
     @validateNotYourself
-    @validateNotFriendsWithUser
-    def wrapper(self, request: Request, user: User):
+    def wrapper(self: APIView, request: AuthenticatedUserRequest, user: User) -> JsonResponse | None:
+        if friends.getFriendship(request.user, user):
+            return JsonResponse({"error": "You are already friends"}, status=400)
+
         return func(self, request, user)
 
     return wrapper
@@ -137,21 +161,21 @@ def friendRequestValid(func: callable) -> JsonResponse:
 
 class FriendRequests(APIView):
     @userAuthenticated
-    def get(self, request: Request):
+    def get(self, request: Request) -> JsonResponse:
         users = friend_requests.getFriendRequests(request.user)
         return JsonResponse({"friend_requests": [user.username for user in users]})
 
 
 class FriendRequestsSent(APIView):
     @userAuthenticated
-    def get(self, request: Request):
+    def get(self, request: Request) -> JsonResponse:
         users = friend_requests.getFriendRequestsSent(request.user)
         return JsonResponse({"friend_requests": [user.username for user in users]})
 
 
 class FriendRequest(APIView):
     @friendRequestValid
-    def post(self, request: Request, user: User):
+    def post(self, request: Request, user: User) -> JsonResponse:
         if friend_requests.getFriendRequest(request.user, user):
             return JsonResponse({"error": "Friend request already sent"}, status=400)
 
@@ -159,7 +183,7 @@ class FriendRequest(APIView):
         return JsonResponse({"success": True})
 
     @friendRequestValid
-    def delete(self, request: Request, user: User):
+    def delete(self, request: Request, user: User) -> JsonResponse:
         friendRequest = friend_requests.getFriendRequest(request.user, user)
         if not friendRequest:
             return JsonResponse({"error": "Friend request does not exist"}, status=404)
@@ -170,7 +194,7 @@ class FriendRequest(APIView):
 
 class DeclineFriendRequest:
     @friendRequestValid
-    def post(self, request: Request, user: User):
+    def post(self, request: Request, user: User) -> JsonResponse:
         friendRequest = friend_requests.getFriendRequest(user, request.user)
         if not friendRequest:
             return JsonResponse({"error": "Friend request does not exist"}, status=404)

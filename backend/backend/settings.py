@@ -26,9 +26,6 @@ SECRET_KEY = "django-insecure-h!7dm_(iwk(s-02es4-)=t3-%z_)vuxug-ak9-)#(u&9*^1n@o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
-
 REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "login": "1/sec",

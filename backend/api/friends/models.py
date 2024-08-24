@@ -1,7 +1,9 @@
-from django.contrib.auth import get_user_model
-from django.db import models
+from __future__ import annotations
 
-User = get_user_model()
+import typing
+
+from django.db import models
+from users.models import User
 
 
 class Friendship(models.Model):
@@ -9,18 +11,20 @@ class Friendship(models.Model):
     user1 = models.ForeignKey(User, related_name="user1", on_delete=models.CASCADE)
     user2 = models.ForeignKey(User, related_name="user2", on_delete=models.CASCADE)
 
+    objects: models.Manager[Friendship]
+
     class Meta:
         unique_together = ("user1", "user2")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.user1.username} - {self.user2.username}"
 
-    def get_friend(self, user):
+    def get_friend(self, user: User) -> User:
         """Returns the other user in the friendship"""
         if self.user1 == user:
-            return self.user2
+            return typing.cast(User, self.user2)
         else:
-            return self.user1
+            return typing.cast(User, self.user1)
 
 
 class FriendRequest(models.Model):
@@ -29,8 +33,10 @@ class FriendRequest(models.Model):
     toUser = models.ForeignKey(User, related_name="toUser", on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
 
+    objects: models.Manager[FriendRequest]
+
     class Meta:
         unique_together = ("fromUser", "toUser")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.fromUser.username} -> {self.toUser.username}"

@@ -1,34 +1,35 @@
 from __future__ import annotations
 
 import enum
-from typing import TypeVar
+import typing
+from typing import Literal
 
 import chess
 
 
 class ChessBoard:
-    def __init__(self):
+    def __init__(self) -> None:
         self.board = chess.Board()
-        self.color_to_move = chess.WHITE
+        self.color_to_move: chess.Color = chess.WHITE
 
     @property
     def board(self) -> chess.Board:
         return self._board
 
-    @property
-    def moves(self) -> list[chess.Move]:
-        return self.board.move_stack
-
     @board.setter
-    def board(self, value: chess.Board):
+    def board(self, value: chess.Board | None) -> None:
         assert isinstance(value, chess.Board), "board must be a chess.Board object"
 
         self._board = value
 
-    def switch_color_to_move(self):
+    @property
+    def moves(self) -> list[chess.Move]:
+        return self.board.move_stack
+
+    def switch_color_to_move(self) -> None:
         self.color_to_move = chess.WHITE if self.color_to_move == chess.BLACK else chess.BLACK
 
-    def move(self, move: chess.Move | str) -> ChessBoard.ILLEGAL_MOVE | chess.Outcome | None:
+    def move(self, move: chess.Move | str) -> ChessBoard.ILLEGAL_MOVE_TYPE | CustomOutcome | None:
         """
         Moves a piece on the board.
 
@@ -37,7 +38,7 @@ class ChessBoard:
 
         Returns:
             - ILLEGAL_MOVE: If the move is illegal.
-            - chess.Outcome: If the game is over.
+            - CustomOutcome: If the game is over.
             - None: If the move is legal and the game is not over.
         """
         assert isinstance(move, chess.Move) or isinstance(move, str), "move must be a chess.Move or str object"
@@ -51,9 +52,10 @@ class ChessBoard:
         self.board.push(move)
         self.switch_color_to_move()
 
-        return self.board.outcome(claim_draw=True)
+        return typing.cast(CustomOutcome, self.board.outcome(claim_draw=True))
 
-    ILLEGAL_MOVE = TypeVar("ILLEGAL_MOVE")
+    ILLEGAL_MOVE_TYPE = Literal["ILLEGAL_MOVE"]
+    ILLEGAL_MOVE: ChessBoard.ILLEGAL_MOVE_TYPE = "ILLEGAL_MOVE"
 
 
 CHESS_COLOR_NAMES = {
@@ -72,3 +74,10 @@ class CustomTermination(enum.Enum):
     RESIGNATION = enum.auto()
     AGREEMENT = enum.auto()
     ABORTED = enum.auto()
+
+
+class CustomOutcome(chess.Outcome):
+    def __init__(self, termination: chess.Termination | CustomTermination, winner: chess.Color | None):
+        super().__init__(termination, winner)  # type: ignore
+
+    termination: CustomTermination | chess.Termination  # type: ignore

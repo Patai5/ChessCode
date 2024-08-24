@@ -1,24 +1,21 @@
 import json
 import re
-from typing import Any
+from typing import Any, Callable
 
-import chess
-from channels.generic.websocket import WebsocketConsumer
-from django.contrib.auth import get_user_model
+from channels.generic.websocket import WebsocketConsumer  # type: ignore
+from users.models import User
 
 from ..consumers import error
 from . import serializers as s
-from .chess_board import ChessBoard, CustomTermination, get_opposite_color
+from .chess_board import ChessBoard, CustomOutcome, CustomTermination, get_opposite_color
 from .game import ALL_ACTIVE_GAMES_MANAGER, Game, GameStatus
 from .game_queue import GROUP_QUEUE_MANAGER, GameQueueManager, Group
 
-User = get_user_model()
 
-
-def authenticated_user(func):
+def authenticated_user(func: Callable[..., Any]) -> Callable[..., Any]:
     """Only allow authenticated users to access the websocket"""
 
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self: "QueueConsumer", *args: Any, **kwargs: Any) -> Any:
         if not self.user.is_authenticated:
             return error(self, message="User is not authenticated", code=4001)
         return func(self, *args, **kwargs)
@@ -26,13 +23,13 @@ def authenticated_user(func):
     return wrapper
 
 
-class QueueConsumer(WebsocketConsumer):
-    def connect(self):
+class QueueConsumer(WebsocketConsumer):  # type: ignore
+    def connect(self) -> None:
         self.user = self.scope["user"]
         self.accept()
 
     @authenticated_user
-    def receive(self, text_data):
+    def receive(self, text_data: Any) -> None:
         json_data = json.loads(text_data)
         if "type" not in json_data:
             return error(self, message="Request type is missing")
@@ -48,10 +45,10 @@ class QueueConsumer(WebsocketConsumer):
         queue_manager = GROUP_QUEUE_MANAGER.get_create_queue_manager(group)
 
         if not queue_manager:
-            return error(self, message="Invalid group")
+            error(self, message="Invalid group")
         return queue_manager
 
-    def enqueue(self, json_data: dict):
+    def enqueue(self, json_data: Any) -> None:
         serializer = s.EnqueueSerializer(data=json_data)
         if not serializer.is_valid():
             return error(self, message=serializer.errors)
@@ -72,27 +69,27 @@ class QueueConsumer(WebsocketConsumer):
 
         queue_manager.add_user(self.user, gameQueue, self.game_found)
 
-    def stop_queuing(self):
+    def stop_queuing(self) -> None:
         GROUP_QUEUE_MANAGER.remove_player(self.user)
 
-    def game_found(self, game: Game):
+    def game_found(self, game: Game) -> None:
         self.send(json.dumps({"type": "game_found", "game_id": game.game_id}))
 
-    def disconnect(self, code):
+    def disconnect(self, code: int) -> None:
         GROUP_QUEUE_MANAGER.remove_player(self.user)
         self.close(code=code)
 
 
-class GameConsumer(WebsocketConsumer):
+class GameConsumer(WebsocketConsumer):  # type: ignore
     game: Game
     user: User
 
-    def connect(self):
+    def connect(self) -> None:
         self.user = self.scope["user"]
         self.accept()
 
     @authenticated_user
-    def receive(self, text_data):
+    def receive(self, text_data: str) -> None:
         json_data = json.loads(text_data)
         if "type" not in json_data:
             return error(self, message="Request type is missing")
@@ -109,7 +106,7 @@ class GameConsumer(WebsocketConsumer):
         else:
             error(self, message="Invalid request type")
 
-    def join(self, json_data: dict):
+    def join(self, json_data: Any) -> None:
         if "game_id" not in json_data:
             return error(self, message="Game ID is missing")
 
@@ -121,9 +118,10 @@ class GameConsumer(WebsocketConsumer):
         if re.search(r"[^a-zA-Z0-9]", game_id):
             return error(self, message="Invalid game ID, must only contain alphanumeric characters")
 
-        self.game = ALL_ACTIVE_GAMES_MANAGER.get_game(game_id)
-        if self.game is None:
+        maybeGame = ALL_ACTIVE_GAMES_MANAGER.get_game(game_id)
+        if maybeGame is None:
             return error(self, message="There is no active game with the provided Game ID")
+        self.game = maybeGame
 
         if not self.game.can_player_join(self.user):
             return error(self, message="User is not playing in this game")
@@ -141,7 +139,7 @@ class GameConsumer(WebsocketConsumer):
             )
         )
 
-    def move(self, json_data: dict):
+    def move(self, json_data: Any) -> None:
         if "move" not in json_data:
             return error(self, message="Move is missing")
 
@@ -153,20 +151,20 @@ class GameConsumer(WebsocketConsumer):
             return error(self, message="It is not your turn")
 
         moveResult = self.game.move(self.user, move)
-        if moveResult is ChessBoard.ILLEGAL_MOVE:
+        if moveResult == ChessBoard.ILLEGAL_MOVE:
             return error(self, message="Illegal move")
-        if moveResult is chess.Outcome:
+        if isinstance(moveResult, CustomOutcome):
             self.send(json.dumps({"type": "outcome", "outcome": moveResult.result()}))
 
-    def resign(self):
+    def resign(self) -> None:
         user_color = self.game.players.by_user(self.user).color
         winning_color = get_opposite_color(user_color)
-        self.game.finish(chess.Outcome(winner=winning_color, termination=CustomTermination.RESIGNATION))
+        self.game.finish(CustomOutcome(winner=winning_color, termination=CustomTermination.RESIGNATION))
 
-    def offer_draw(self):
+    def offer_draw(self) -> None:
         self.game.offer_draw(self.user)
 
-    def callback_game_state(self, type: str, changed: Any = None):
+    def callback_game_state(self, type: str, changed: Any = None) -> None:
         assert type in ["game_started", "move", "game_result", "out_of_time", "offer_draw"], "Invalid type"
 
         if type == "game_started":
@@ -179,5 +177,5 @@ class GameConsumer(WebsocketConsumer):
         elif type == "offer_draw":
             self.send(json.dumps({"type": "offer_draw"}))
 
-    def disconnect(self, code: int = None):
+    def disconnect(self, code: int | None = None) -> None:
         self.close(code=code)

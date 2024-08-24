@@ -1,7 +1,8 @@
 import uuid
+from typing import Any
 
 
-def genUniqueID(collisionMap: dict = {}) -> str:
+def genUniqueID(collisionMap: dict[str, Any] = {}) -> str:
     """
     Generates a unique ID
 
@@ -16,17 +17,18 @@ def genUniqueID(collisionMap: dict = {}) -> str:
             return uid
 
 
-def string_to_int_range(value: str | None, default: int, min: int = None, max: int = None):
+def string_to_int_range(value: str | None, default: int, min: int | None, max: int | None = None) -> int:
     """
     Converts a string to an integer and checks if it is within the specified range
     """
-    if not isinstance(value, int):
-        if value and value.isdigit():
-            value = int(value)
-        else:
-            value = default
-    if min and value < min:
-        value = min
-    elif max and value > max:
-        value = max
-    return value
+    numberValue = default
+    if value and value.isdigit():
+        numberValue = int(value)
+
+    if min and numberValue < min:
+        return min
+
+    if max and numberValue > max:
+        return max
+
+    return numberValue
