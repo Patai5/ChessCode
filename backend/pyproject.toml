@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 
 [tool.black]
 line-length = 120
-include = '(api|backend|users)\/.*\.pyi?$'
+include = '^\/(api|backend|users)\/.*\.pyi?$'
 
 [tool.mypy]
 strict = true
