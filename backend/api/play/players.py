@@ -1,10 +1,9 @@
 import threading
 import time
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, Literal
 
 import chess
-from django.contrib.auth.models import AnonymousUser
-from users.models import User
+from users.models import AnonymousSessionUser, User
 
 from ..friends.friends import getFriendStatus
 from .chess_board import CHESS_COLOR_NAMES, get_opposite_color
@@ -13,15 +12,20 @@ TimeS = float
 TimeMs = int
 APICallbackType = Callable[[str, Any], None]
 
+UnknownPlayerType = Literal["UnknownPlayer"]
+UnknownPlayer: UnknownPlayerType = "UnknownPlayer"
+
+GameUser = User | AnonymousSessionUser
+
 
 class Player:
     def __init__(
         self,
-        user: User | AnonymousUser,
+        user: GameUser | UnknownPlayerType,
         color: chess.Color,
         time: TimeS,
     ):
-        self.user: User | AnonymousUser = user
+        self.user = user
         self.color = color
         self.time = time
 
@@ -77,7 +81,7 @@ class Player:
 
 
 class Players:
-    userPlayers: dict[User | AnonymousUser, Player]
+    userPlayers: dict[GameUser | UnknownPlayerType, Player]
 
     def __init__(self, players: list[Player]):
         self.userPlayers = {player.user: player for player in players}
@@ -87,7 +91,7 @@ class Players:
         return self.userPlayers.values()
 
     @property
-    def users(self) -> Iterable[User | AnonymousUser]:
+    def users(self) -> Iterable[GameUser | UnknownPlayerType]:
         return self.userPlayers.keys()
 
     @property
@@ -99,14 +103,14 @@ class Players:
         for player in self.players:
             player.offers_draw = False
 
-    def join_game(self, user: User, callback: APICallbackType) -> None:
+    def join_game(self, user: GameUser, callback: APICallbackType) -> None:
         """Joins the given user to the game. Replaces the UnknownPlayer if it exists"""
-        if user not in self.userPlayers and AnonymousUser() in self.userPlayers:
-            self.userPlayers[user] = self.userPlayers.pop(AnonymousUser())
+        if user not in self.userPlayers and UnknownPlayer in self.userPlayers:
+            self.userPlayers[user] = self.userPlayers.pop(UnknownPlayer)
 
         self.by_user(user).join_game(callback)
 
-    def get_opponent(self, user: User) -> Player:
+    def get_opponent(self, user: GameUser) -> Player:
         """Gets the Player object for the opponent of the given user"""
         return self.by_color(get_opposite_color(self.by_user(user).color))
 
@@ -117,24 +121,24 @@ class Players:
         playerIndex = 0 if color == players[0].color else 1
         return players[playerIndex]
 
-    def by_user(self, user: User) -> Player:
+    def by_user(self, user: GameUser) -> Player:
         """Gets the Player object for the given user"""
         return self.userPlayers[user]
 
-    def to_json_dict(self, friend: User | None = None) -> dict[str, dict[str, Any]]:
+    def to_json_dict(self, user: GameUser | None = None) -> dict[str, dict[str, Any]]:
         """Converts the Players object to a JSON serializable dict
         - If `friend` parameter is not None, the friend status of the users will be added to the opponent"""
         friendStatus = {}
-        if friend is not None and friend in self.userPlayers:
-            opponent = self.get_opponent(friend).user
+        if isinstance(user, User) and user in self.userPlayers:
+            opponent = self.get_opponent(user).user
             if isinstance(opponent, User):
-                friendStatus = {"opponent": getFriendStatus(friend, opponent).value}
+                friendStatus = {"opponent": getFriendStatus(user, opponent).value}
 
         return {
             CHESS_COLOR_NAMES[player.color]: {
-                "username": user.username if isinstance(user, User) else None,
+                "username": colorUser.username if isinstance(colorUser, User) else None,
                 "time": player.get_current_time(),
                 **(friendStatus),
             }
-            for user, player in self.userPlayers.items()
+            for colorUser, player in self.userPlayers.items()
         }

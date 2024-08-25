@@ -1,10 +1,24 @@
 from typing import Any
 
+from django.contrib.sessions.backends.base import SessionBase
 from django.db.models import Q
-from users.models import User
+from users.models import AnonymousSessionUser, User
 
 from ..friends.friends import getFriendStatus
 from .models import COLORS, TERMINATIONS, Game, GameTerminations, Move
+
+
+def handleGetAnonymousSessionUser(session: SessionBase) -> AnonymousSessionUser:
+    """Returns the session key of the given session. If the session key does not exist, creates a new one."""
+    hasSessionKey = session.session_key
+    if not hasSessionKey:
+        session.create()
+
+    sessionKey = session.session_key
+    if not sessionKey:
+        raise ValueError("Session key is missing")
+
+    return AnonymousSessionUser(sessionKey)
 
 
 def game_to_dict(game: Game, include_moves: bool = True, friend_status_from_user: User | None = None) -> dict[str, Any]:

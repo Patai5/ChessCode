@@ -1,34 +1,32 @@
 import json
 import re
-from typing import Any, Callable
+from typing import Any
 
 from channels.generic.websocket import WebsocketConsumer  # type: ignore
-from users.models import User
+from users.models import AnonymousSessionUser, User
 
 from ..consumers import error
 from . import serializers as s
 from .chess_board import ChessBoard, CustomOutcome, CustomTermination, get_opposite_color
 from .game import ALL_ACTIVE_GAMES_MANAGER, Game, GameStatus
 from .game_queue import GROUP_QUEUE_MANAGER, GameQueueManager, Group
-
-
-def authenticated_user(func: Callable[..., Any]) -> Callable[..., Any]:
-    """Only allow authenticated users to access the websocket"""
-
-    def wrapper(self: "QueueConsumer", *args: Any, **kwargs: Any) -> Any:
-        if not self.user.is_authenticated:
-            return error(self, message="User is not authenticated", code=4001)
-        return func(self, *args, **kwargs)
-
-    return wrapper
+from .utils import handleGetAnonymousSessionUser
 
 
 class QueueConsumer(WebsocketConsumer):  # type: ignore
+    user: User | AnonymousSessionUser
+
     def connect(self) -> None:
-        self.user = self.scope["user"]
+        isLoggedIn = self.scope["user"].is_authenticated
+        if isLoggedIn:
+            self.user: User = self.scope["user"]
+            self.accept()
+            return
+
+        self.user = handleGetAnonymousSessionUser(self.scope["session"])
+        print(self.user)
         self.accept()
 
-    @authenticated_user
     def receive(self, text_data: Any) -> None:
         json_data = json.loads(text_data)
         if "type" not in json_data:
@@ -82,13 +80,14 @@ class QueueConsumer(WebsocketConsumer):  # type: ignore
 
 class GameConsumer(WebsocketConsumer):  # type: ignore
     game: Game
-    user: User
+    user: User | AnonymousSessionUser
 
     def connect(self) -> None:
-        self.user = self.scope["user"]
+        isLoggedIn = self.scope["user"].is_authenticated
+        self.user = self.scope["user"] if isLoggedIn else handleGetAnonymousSessionUser(self.scope["session"])
+
         self.accept()
 
-    @authenticated_user
     def receive(self, text_data: str) -> None:
         json_data = json.loads(text_data)
         if "type" not in json_data:

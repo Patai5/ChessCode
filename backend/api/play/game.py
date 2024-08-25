@@ -4,15 +4,13 @@ import threading
 from typing import Dict
 
 import chess
-from django.contrib.auth.models import AnonymousUser
-from users.models import User
 
 from ..utils import genUniqueID
 from .chess_board import CHESS_COLOR_NAMES, ChessBoard, CustomOutcome, CustomTermination
 from .game_modes import GameMode, TimeControl
 from .models import Game as GameModel
 from .models import GameTerminations, Move
-from .players import APICallbackType, Player, Players, TimeS
+from .players import APICallbackType, GameUser, Player, Players, TimeS, UnknownPlayer, UnknownPlayerType
 
 
 class GameStatus(enum.Enum):
@@ -50,17 +48,15 @@ class Game:
 
         self._game_id = value
 
-    def can_player_join(self, user: User) -> bool:
+    def can_player_join(self, user: GameUser) -> bool:
         """Checks if the player can join the game."""
         if user in self.players.users:
             return True
 
-        if any(isinstance(player, AnonymousUser) for player in self.players.users):
-            return True
+        hasUnknownPlayer = any(player is UnknownPlayer for player in self.players.users)
+        return hasUnknownPlayer
 
-        return False
-
-    def join_player(self, user: User, api_callback: APICallbackType) -> None:
+    def join_player(self, user: GameUser, api_callback: APICallbackType) -> None:
         """Joins the player into the game."""
         self.players.join_game(user, api_callback)
 
@@ -84,7 +80,7 @@ class Game:
         for player in self.players.players:
             player.api_callback("game_result", [result.termination.name.lower(), winningColor])
 
-    def callback_move(self, user: User, move: chess.Move | str) -> None:
+    def callback_move(self, user: GameUser, move: chess.Move | str) -> None:
         """Calls the API callbacks with the move."""
 
         if isinstance(move, chess.Move):
@@ -130,7 +126,7 @@ class Game:
         """Returns a list of all moves made in the game in UCI notation."""
         return [move.uci() for move in self.board.moves]
 
-    def move(self, user: User, move: chess.Move | str) -> ChessBoard.ILLEGAL_MOVE_TYPE | chess.Outcome | None:
+    def move(self, user: GameUser, move: chess.Move | str) -> ChessBoard.ILLEGAL_MOVE_TYPE | chess.Outcome | None:
         """
         Moves a piece on the board.
 
@@ -169,7 +165,7 @@ class Game:
             else:
                 player.stop_timer()
 
-    def offer_draw(self, user: User) -> None:
+    def offer_draw(self, user: GameUser) -> None:
         """Offers a draw to the opponent. If the opponent accepts, the game ends in a draw."""
         offeringPlayer = self.players.by_user(user)
         if offeringPlayer.offers_draw:
@@ -182,15 +178,18 @@ class Game:
             opponent = self.players.get_opponent(user)
             opponent.api_callback("offer_draw")
 
-    def is_players_turn(self, user: User) -> bool:
+    def is_players_turn(self, user: GameUser) -> bool:
         """Checks if it is the user's turn."""
         return self.board.color_to_move == self.players.by_user(user).color
 
     def save_to_db(self, result: CustomOutcome) -> None:
         """Saves the game to the database."""
+        white = self.players.by_color(chess.WHITE).user
+        black = self.players.by_color(chess.BLACK).user
+
         game = GameModel(
-            player_white=self.players.by_color(chess.WHITE).user,
-            player_black=self.players.by_color(chess.BLACK).user,
+            player_white=white if white is not UnknownPlayer else None,
+            player_black=black if black is not UnknownPlayer else None,
             termination=GameTerminations.from_chess_termination(result.termination),
             winner_color=result.winner,
             time_control=self.time_control.time,
@@ -232,7 +231,7 @@ class GameManager:
 
     def start_game(
         self,
-        players: tuple[User | AnonymousUser, User | AnonymousUser],
+        players: tuple[GameUser, GameUser | UnknownPlayerType],
         game_mode: GameMode,
         time_control: TimeControl,
         link_game: bool = False,

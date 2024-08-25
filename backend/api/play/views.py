@@ -1,19 +1,20 @@
-from django.contrib.auth.models import AnonymousUser
 from django.http import JsonResponse
 from rest_framework.request import Request
 from rest_framework.views import APIView
+from users.models import User
 
+from ..play.players import UnknownPlayer
 from ..utils import string_to_int_range
 from . import serializers as s
 from .game import ALL_ACTIVE_GAMES_MANAGER
 from .game_queue import GROUP_QUEUE_MANAGER
 from .models import Game
-from .utils import game_to_dict, get_player_games_json
+from .utils import game_to_dict, get_player_games_json, handleGetAnonymousSessionUser
 
 
 class CreateLink(APIView):
     def get(self, request: Request) -> JsonResponse:
-        serializer = s.EnqueueSerializer(data=request.data)
+        serializer = s.EnqueueSerializer(data=request.GET)
         if not serializer.is_valid():
             return JsonResponse({"error": serializer.errors}, status=400)
 
@@ -25,7 +26,10 @@ class CreateLink(APIView):
         if not gameQueue:
             return JsonResponse({"error": "Invalid game mode or time control"}, status=400)
 
-        players = (request.user, AnonymousUser())
+        maybeRequestUser = request.user if isinstance(request.user, User) else None
+        user = maybeRequestUser or handleGetAnonymousSessionUser(request.session)
+
+        players = (user, UnknownPlayer)
         game = ALL_ACTIVE_GAMES_MANAGER.start_game(players, gameQueue.game_mode, gameQueue.time_control, link_game=True)
 
         return JsonResponse({"game_id": game.game_id})

@@ -1,36 +1,37 @@
 from typing import Callable, Dict, Tuple
 
-from users.models import User
-
 from .game import ALL_ACTIVE_GAMES_MANAGER, Game
 from .game_modes import ACTIVE_GAME_MODES, GameMode, TimeControl
+from .players import GameUser
 
 
 class GameQueue:
     def __init__(self, game_mode: GameMode, time_control: TimeControl):
         self.game_mode = game_mode
         self.time_control = time_control
-        self.queue: list[User] = []
+        self.queue: list[GameUser] = []
 
-    def add_user(self, user: User) -> None:
+    def add_user(self, user: GameUser) -> None:
         """Add a user to the queue. If there is a match, start a game"""
         assert not self.is_player_queuing(user), "User is already in queue"
 
         self.queue.append(user)
 
-    def remove_user(self, user: User) -> None:
+    def remove_user(self, user: GameUser) -> None:
         """Remove a user from the queue"""
         assert self.is_player_queuing(user), "User is not in queue"
 
         self.queue.remove(user)
 
-    def is_player_queuing(self, user: User) -> bool:
+    def is_player_queuing(self, user: GameUser) -> bool:
         """Returns True if the user is in the queue, False otherwise"""
         return user in self.queue
 
 
 class QueuingPlayer:
-    def __init__(self, user: User, game_queue: GameQueue, game_found_callback: Callable[[Game], None] | None = None):
+    def __init__(
+        self, user: GameUser, game_queue: GameQueue, game_found_callback: Callable[[Game], None] | None = None
+    ):
         self.user = user
         self.game_queue = game_queue
 
@@ -45,9 +46,9 @@ class GameQueueManager:
         self.game_queues = [
             GameQueue(game_mode, time_control) for game_mode in game_modes for time_control in game_mode.time_controls
         ]
-        self.queuing_players: Dict[User, QueuingPlayer] = {}
+        self.queuing_players: Dict[GameUser, QueuingPlayer] = {}
 
-    def add_user(self, user: User, game_queue: GameQueue, gameFoundCallback: Callable[[Game], None]) -> None:
+    def add_user(self, user: GameUser, game_queue: GameQueue, gameFoundCallback: Callable[[Game], None]) -> None:
         """Adds a user to a game queue"""
 
         if self.is_player_queuing(user):
@@ -60,7 +61,7 @@ class GameQueueManager:
         if len(game_queue.queue) >= 2:
             self.start_game((game_queue.queue[0], game_queue.queue[1]), game_queue)
 
-    def remove_user(self, user: User) -> None:
+    def remove_user(self, user: GameUser) -> None:
         """Remove a user from a game queue"""
 
         if not self.is_player_queuing(user):
@@ -69,7 +70,7 @@ class GameQueueManager:
         self.queuing_players[user].game_queue.remove_user(user)
         del self.queuing_players[user]
 
-    def is_player_queuing(self, user: User) -> bool:
+    def is_player_queuing(self, user: GameUser) -> bool:
         """Returns True if the user is in any queue, False otherwise"""
 
         return user in self.queuing_players
@@ -87,7 +88,7 @@ class GameQueueManager:
         # Game queue does not exist
         return None
 
-    def start_game(self, players: Tuple[User, User], game_queue: GameQueue) -> None:
+    def start_game(self, players: Tuple[GameUser, GameUser], game_queue: GameQueue) -> None:
         """Start a game between two players, removing them from the queue"""
         if all(player not in game_queue.queue for player in players):
             raise ValueError("Players are not in the queue")
@@ -139,12 +140,12 @@ class GroupQueueManager:
 
         del self.groups[group]
 
-    def remove_player(self, user: User) -> None:
+    def remove_player(self, user: GameUser) -> None:
         """Removes the player from all queues
         - the algorithm is O(n), which could be improved, but it's not worth it"""
 
         for group, queue in list(self.groups.items()):
-            if user.username in group and queue.is_player_queuing(user):
+            if queue.is_player_queuing(user):
                 queue.remove_user(user)
                 if len(queue.queuing_players) == 0:
                     self.remove_group(group)
