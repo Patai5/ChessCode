@@ -7,11 +7,9 @@ import { AppContext } from "hooks/appContext";
 import React from "react";
 import { FaUsers } from "react-icons/fa";
 import { useParams } from "react-router-dom";
-import { Statuses as FriendStatus } from "types/friendStatuses";
-import Friend from "./Friend/Friend";
+import { Friends } from "types/friendStatuses";
+import FriendsTable from "./FriendsTable/FriendsTable";
 
-type Username = string;
-type Friends = { [key: Username]: FriendStatus };
 interface FriendsAPIResponse {
     friends: Friends;
 }
@@ -29,14 +27,7 @@ const FriendsContainerCss = css`
 
     color: white;
 `;
-const FriendsCss = css`
-    display: flex;
-    flex-direction: column;
-    gap: 0.5em;
-    margin: 0.4em;
-    padding: 0.8em;
-    box-shadow: 0 0.1em 0.1em rgba(0, 0, 0, 0.25);
-`;
+
 const TitleContainerCss = css`
     display: flex;
     flex-direction: row;
@@ -56,6 +47,13 @@ const TitleCss = css`
     font-size: 2em;
     font-family: "Lexend Deca", sans-serif;
     font-weight: 600;
+`;
+const NoFriendsTextCss = css`
+    font-family: "Lexend Deca", sans-serif;
+    font-weight: 500;
+    text-align: center;
+    margin: 1em 0;
+    opacity: 0.8;
 `;
 
 export default function Friends() {
@@ -85,18 +83,19 @@ export default function Friends() {
         if (username) fetchFriends();
     }, [username]);
 
+    const NoFriendsText = isSelfView
+        ? "No friends yet 😢 Find some in game!"
+        : `${username} has no friends yet 😢 Send them an invite!`;
+
+    const hasAnyFriends = friends && Object.keys(friends).length > 0;
+
     return (
         <Paper customCss={FriendsContainerCss}>
             <div css={TitleContainerCss}>
                 <FaUsers css={FriendsIconCss} />
                 <h1 css={TitleCss}>{isSelfView ? "Your friends" : `${username}'s friends`}</h1>
             </div>
-            <Paper customCss={FriendsCss} elevation={4}>
-                {friends &&
-                    Object.entries(friends).map(([username, friendStatus]) => (
-                        <Friend username={username} friendStatus={friendStatus} key={username} />
-                    ))}
-            </Paper>
+            {hasAnyFriends ? <FriendsTable friends={friends} /> : <p css={NoFriendsTextCss}>{NoFriendsText}</p>}
         </Paper>
     );
 }

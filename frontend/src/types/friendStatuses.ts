@@ -1,8 +1,12 @@
 import { IconType } from "react-icons";
 import { FaUserCheck, FaUserPlus, FaUserSlash, FaUserTimes } from "react-icons/fa";
 
+export type Friends = { [username: string]: Statuses };
+
 export type Statuses = "friends" | "not_friends" | "friend_request_sent" | "friend_request_received";
+
 export type Status = { text: string; endpoint: string; method: string; next: Statuses; icon: IconType };
+
 export const FriendStatus: { [key in Statuses]: Status } = {
     friends: {
         text: "Remove friend",
