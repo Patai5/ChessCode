@@ -24,7 +24,7 @@ class FriendsList(APIView):
 
 
 def userAuthenticated(
-    func: JsonResponse | Callable[..., JsonResponse | None]
+    func: JsonResponse | Callable[..., JsonResponse | None],
 ) -> JsonResponse | Callable[..., JsonResponse | None]:
     if isinstance(func, JsonResponse):
         return func
@@ -39,7 +39,7 @@ def userAuthenticated(
 
 
 def parseUsernameFromRequest(
-    func: JsonResponse | Callable[..., JsonResponse | None]
+    func: JsonResponse | Callable[..., JsonResponse | None],
 ) -> JsonResponse | Callable[..., JsonResponse | None]:
     if isinstance(func, JsonResponse):
         return func
@@ -55,7 +55,7 @@ def parseUsernameFromRequest(
 
 
 def parseUsernameFromUrl(
-    func: JsonResponse | Callable[..., JsonResponse | None]
+    func: JsonResponse | Callable[..., JsonResponse | None],
 ) -> JsonResponse | Callable[..., JsonResponse | None]:
     if isinstance(func, JsonResponse):
         return func
@@ -67,7 +67,7 @@ def parseUsernameFromUrl(
 
 
 def validateUsername(
-    func: JsonResponse | Callable[..., JsonResponse | None]
+    func: JsonResponse | Callable[..., JsonResponse | None],
 ) -> JsonResponse | Callable[..., JsonResponse | None]:
     if isinstance(func, JsonResponse):
         return func
@@ -83,7 +83,7 @@ def validateUsername(
 
 
 def validateNotYourself(
-    func: JsonResponse | Callable[..., JsonResponse | None]
+    func: JsonResponse | Callable[..., JsonResponse | None],
 ) -> JsonResponse | Callable[..., JsonResponse | None]:
     if isinstance(func, JsonResponse):
         return func
