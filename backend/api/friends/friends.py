@@ -43,7 +43,22 @@ def getFriendStatus(fromUser: User, toUser: User) -> FriendStatus:
         return FriendStatus.notFriends
 
 
-def getFriendsWithStatuses(fromUser: User, user: User) -> list[tuple[User, FriendStatus | None]]:
-    """Returns a list of users that are friends with the user, along with their statuses"""
+def getFriendsWithStatuses(user: User, referenceStatusUser: User) -> list[tuple[User, FriendStatus | None]]:
+    """
+    Returns a list of users that are friends with the given user
+    - Gets the friendship status of each user in relation to the given reference user.
+    """
+
     friends = getFriends(user)
-    return [(friend, getFriendStatus(fromUser, friend)) for friend in friends]
+
+    friendsWithStatuses: list[tuple[User, FriendStatus | None]] = []
+    for friend in friends:
+        isFriendSameUser = friend == referenceStatusUser
+        if isFriendSameUser:
+            friendsWithStatuses.append((friend, None))
+            continue
+
+        status = getFriendStatus(fromUser=referenceStatusUser, toUser=friend)
+        friendsWithStatuses.append((friend, status))
+
+    return friendsWithStatuses

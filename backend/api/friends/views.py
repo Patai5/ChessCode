@@ -106,7 +106,7 @@ class FriendsWithStatusesList(APIView):
         if user is None:
             return JsonResponse({"error": "User does not exist"}, status=404)
 
-        userFriends = friends.getFriendsWithStatuses(request.user, user)
+        userFriends = friends.getFriendsWithStatuses(user, request.user)
         return JsonResponse(
             {
                 "friends": {
