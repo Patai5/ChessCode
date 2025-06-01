@@ -32,7 +32,7 @@ interface GameStartedAPIResponse {
     players: PlayersAPI;
 }
 
-type GameResultAPIResponse = GameResult
+type GameResultAPIResponse = GameResult;
 
 const playCss = css`
     display: flex;
@@ -177,7 +177,7 @@ export default function Play() {
             JSON.stringify({
                 type: "join",
                 game_id: id,
-            })
+            }),
         );
     };
 
@@ -240,6 +240,7 @@ export default function Play() {
     return (
         <>
             <UserMenu />
+
             <div css={playCss}>
                 {connectingState === ConnectingState.Connecting && <Loading displayText="Connecting" />}
                 {connectingState === ConnectingState.Connected && <Chess {...chessProps} />}

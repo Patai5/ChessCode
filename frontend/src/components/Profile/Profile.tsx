@@ -3,6 +3,7 @@ import { css } from "@emotion/react";
 import axios from "axios";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import Paper from "components/shared/Paper";
+import UserMenu from "components/shared/UserMenu/UserMenu";
 import React from "react";
 import { useParams } from "react-router-dom";
 import { Statuses } from "types/friendStatuses";
@@ -61,10 +62,17 @@ export default function Profile() {
     };
 
     return (
-        <Paper customCss={ProfileCss} white={true} elevation={1}>
-            <ProfileHeader data={profileHeaderData} />
-            <UserInteractions friendStatus={(profileData && profileData.friend_status) || null} username={username} />
-            <RecentGames games={profileData && profileData.games} username={username} />
-        </Paper>
+        <>
+            <UserMenu />
+
+            <Paper customCss={ProfileCss} white={true} elevation={1}>
+                <ProfileHeader data={profileHeaderData} />
+                <UserInteractions
+                    friendStatus={(profileData && profileData.friend_status) || null}
+                    username={username}
+                />
+                <RecentGames games={profileData && profileData.games} username={username} />
+            </Paper>
+        </>
     );
 }

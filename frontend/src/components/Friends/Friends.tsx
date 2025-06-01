@@ -3,6 +3,7 @@ import { css } from "@emotion/react";
 import axios from "axios";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import Paper from "components/shared/Paper";
+import UserMenu from "components/shared/UserMenu/UserMenu";
 import { AppContext } from "hooks/appContext";
 import React from "react";
 import { FaUsers } from "react-icons/fa";
@@ -90,12 +91,16 @@ export default function Friends() {
     const hasAnyFriends = friends && Object.keys(friends).length > 0;
 
     return (
-        <Paper customCss={FriendsContainerCss}>
-            <div css={TitleContainerCss}>
-                <FaUsers css={FriendsIconCss} />
-                <h1 css={TitleCss}>{isSelfView ? "Your friends" : `${username}'s friends`}</h1>
-            </div>
-            {hasAnyFriends ? <FriendsTable friends={friends} /> : <p css={NoFriendsTextCss}>{NoFriendsText}</p>}
-        </Paper>
+        <>
+            <UserMenu />
+
+            <Paper customCss={FriendsContainerCss}>
+                <div css={TitleContainerCss}>
+                    <FaUsers css={FriendsIconCss} />
+                    <h1 css={TitleCss}>{isSelfView ? "Your friends" : `${username}'s friends`}</h1>
+                </div>
+                {hasAnyFriends ? <FriendsTable friends={friends} /> : <p css={NoFriendsTextCss}>{NoFriendsText}</p>}
+            </Paper>
+        </>
     );
 }
