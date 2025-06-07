@@ -13,10 +13,11 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 
 from channels.auth import AuthMiddlewareStack  # type: ignore
 from channels.routing import ProtocolTypeRouter, URLRouter  # type: ignore
+from channels.sessions import CookieMiddleware  # type: ignore
 from django.core.asgi import get_asgi_application
 
 
-def get_websocket_application():
+def get_websocket_application() -> CookieMiddleware:
     # import here to delay until apps are loaded
     from api.urls import websocket_urlpatterns
 
