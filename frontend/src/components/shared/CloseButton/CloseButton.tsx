@@ -13,9 +13,8 @@ const CloseButtonCss = css`
     background: #822a8d;
 `;
 
-export type Username = string;
-
 type Props = { onClick: () => void };
+
 export default function CloseButton(props: Props) {
     return <MdClose css={CloseButtonCss} onClick={props.onClick} />;
 }

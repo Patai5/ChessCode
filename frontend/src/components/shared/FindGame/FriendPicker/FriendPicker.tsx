@@ -1,12 +1,12 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import axios from "axios";
+import CloseButton from "components/shared/CloseButton/CloseButton";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import TransparentPopup from "components/shared/TransparentPopup/TransparentPopup";
 import { AppContext } from "hooks/appContext";
 import React from "react";
 import useKeypress from "utils/useKeypress";
-import CloseButton from "./CloseButton/CloseButton";
 import FriendSearch from "./FriendSearch/FriendSearch";
 import { Username } from "./Friends/Friend/Friend";
 import Friends, { Usernames } from "./Friends/Friends";

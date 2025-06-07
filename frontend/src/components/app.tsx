@@ -18,6 +18,12 @@ const globalCss = css`
         background-color: #121212;
         margin: 0;
     }
+
+    #root {
+        display: flex;
+        height: 100%;
+        flex-direction: column;
+    }
 `;
 
 export default function app() {

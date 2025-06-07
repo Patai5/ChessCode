@@ -8,12 +8,14 @@ import GradientButtonPicker, {
 import Paper from "components/shared/Paper";
 import React from "react";
 import { secToTime } from "utils/utils";
-import { handleStartQueueingType } from "../FindGame";
+import { HandleStartQueueingType } from "../FindGame";
 
 const timeControlsPaperCss = css`
     display: flex;
     flex-direction: column;
     gap: 0.45em;
+    width: 100%;
+    box-sizing: border-box;
 `;
 
 export interface TimeControlPickerMethods {
@@ -47,7 +49,7 @@ const defaultGameModes: GameModes = {
     Rapid: { name: "Rapid", timeControls: [600, 1200, 1800], backgroundColors: ["#B84200", "#8B0086"] },
 };
 
-type Props = { setQueuing: handleStartQueueingType; enabled: boolean };
+type Props = { setQueuing: HandleStartQueueingType; enabled: boolean };
 const TimeControlPicker = React.forwardRef((props: Props, ref: React.Ref<TimeControlPickerMethods>) => {
     const getTimeControlItemsButtonProps = (gameMode: GameMode): Button[] => {
         return gameMode.timeControls.map((timeControl) => ({

@@ -3,7 +3,7 @@ import { css } from "@emotion/react";
 import React from "react";
 import useKeypress from "utils/useKeypress";
 import { sleep } from "utils/utils";
-import TransparentPopup, { animationLength } from "../TransparentPopup/TransparentPopup";
+import TransparentPopup, { POPUP_ANIMATION_TIME_MS } from "../TransparentPopup/TransparentPopup";
 import ActionButton, { ButtonProps } from "./ActionButton/ActionButton";
 import Content, { Content as ContentProps } from "./Content/Content";
 
@@ -46,7 +46,7 @@ export default function MessageBox(props: Props) {
         }
         setShow(false);
 
-        await sleep(animationLength);
+        await sleep(POPUP_ANIMATION_TIME_MS);
         if (props.cancelHandlers && props.cancelHandlers.onClosedCallback) {
             props.cancelHandlers.onClosedCallback();
         }

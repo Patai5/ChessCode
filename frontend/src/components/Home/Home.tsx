@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
+import FindGame from "components/shared/FindGame/FindGame";
 import UserMenu from "components/shared/UserMenu/UserMenu";
-import FindGame from "./FindGame/FindGame";
 
 export default function Home() {
     return (

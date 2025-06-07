@@ -1,8 +1,9 @@
 /** @jsxImportSource @emotion/react */
-import { SerializedStyles, css } from "@emotion/react";
+import { css, SerializedStyles } from "@emotion/react";
+import { ClosedAnimationCss, getSmoothPopupTransitionContainerCss, OpenAnimationCss } from "css/smoothPopupTransition";
 import React from "react";
 
-export const animationLength = 250;
+export const POPUP_ANIMATION_TIME_MS = 250;
 
 const PopupCss = css`
     color: white;
@@ -13,18 +14,7 @@ const PopupCss = css`
     pointer-events: auto;
     z-index: 1;
 
-    transition: transform ${animationLength}ms ease-in-out;
-    transition-property: opacity, transform;
-    opacity: 0;
-    transform: scale(0);
-`;
-const OpenAnimationCss = css`
-    opacity: 1;
-    transform: scale(1);
-`;
-const ClosedAnimationCss = css`
-    opacity: 0;
-    transform: scale(0);
+    ${getSmoothPopupTransitionContainerCss(POPUP_ANIMATION_TIME_MS)}
 `;
 
 const CenteringContainerCss = css`
