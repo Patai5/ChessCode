@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+    app:
+        image: chesscode-image
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: chesscode-container
+        ports:
+            - "8000:8000"
+        volumes:
+            - chesscode-volume:/backend/db
+
+volumes:
+    chesscode-volume:
+        driver: local
