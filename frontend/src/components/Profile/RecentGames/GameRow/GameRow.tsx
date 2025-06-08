@@ -21,8 +21,13 @@ export default function GameRow(props: Props) {
     const [userHovered, setUserHovered] = React.useState(false);
     const navigate = useNavigate();
 
-    const handleUserOnClick = () => {
+    const handleUserOnClick = (event: React.MouseEvent) => {
+        event.stopPropagation();
         navigate(`/profile/${opponent.username}`);
+    };
+
+    const handleGameOnClick = () => {
+        navigate(`/replay_game/${game.game_id}`);
     };
 
     const displayResultLong = width > 800;
@@ -39,7 +44,7 @@ export default function GameRow(props: Props) {
     const dateString = formatDateString(props.game.date);
 
     return (
-        <tr css={[CSS.GAME_ROW, !userHovered && CSS.HOVER_ENABLED]}>
+        <tr css={[CSS.GAME_ROW, !userHovered && CSS.HOVER_ENABLED]} onClick={handleGameOnClick}>
             <td
                 css={CSS.USERNAME}
                 onClick={handleUserOnClick}
