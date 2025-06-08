@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
 from django.contrib.sessions.backends.base import SessionBase
 from django.db.models import Q
@@ -6,6 +6,11 @@ from users.models import AnonymousSessionUser, User
 
 from ..friends.friends import getFriendStatus
 from .models import COLORS, TERMINATIONS, Game, GameTerminations, Move
+
+
+class PlayerStatusDict(TypedDict):
+    username: str | None
+    status: NotRequired[str]
 
 
 def handleGetAnonymousSessionUser(session: SessionBase) -> AnonymousSessionUser:
@@ -45,14 +50,24 @@ def game_to_dict(game: Game, include_moves: bool = True, friend_status_from_user
     }
 
 
-def player_status_dict(player: User | None, friend_status_from_user: User | None = None) -> dict[str, Any]:
+def player_status_dict(player: User | None, friend_status_from_user: User | None = None) -> PlayerStatusDict:
     """Returns a dictionary representation of the given player."""
-    friendDict = {"username": player.username if player else None}
+    friendDict: PlayerStatusDict = {"username": player.username if player else None}
 
-    if friend_status_from_user:
-        status = getFriendStatus(friend_status_from_user, player) if player else None
-        if status:
-            friendDict["status"] = status.value
+    canGetStatus = player and friend_status_from_user
+    if not canGetStatus:
+        return friendDict
+
+    print("player", player, "friend_status_from_user", friend_status_from_user)
+    isPlayerHimself = player == friend_status_from_user
+    if isPlayerHimself:
+        return friendDict
+
+    # mypy type assertion
+    assert player and friend_status_from_user
+
+    status = getFriendStatus(friend_status_from_user, player)
+    friendDict["status"] = status.value
 
     return friendDict
 
