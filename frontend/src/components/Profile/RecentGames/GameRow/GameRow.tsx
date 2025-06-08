@@ -1,90 +1,55 @@
 /** @jsxImportSource @emotion/react */
-import { css } from "@emotion/react";
-import type { GameWinner } from "components/shared/Chess/ResultsDisplay/ResultsDisplay";
-import { GameTermination } from "components/shared/Chess/ResultsDisplay/ResultsDisplay";
+import { GAME_TERMINATION_EXPLANATION } from "components/constants";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { GAME_WINNER, GameApiResponse, GameWinner } from "types/api/game";
+import { GAME_OUTCOME, GameOutcome, PlayerColor, PlayerInfo } from "types/game";
 import { formatDateString, secToTime } from "utils/utils";
+import { CSS } from "./css";
 
-const GameRowCss = css`
-    background-color: #3d3d3d;
-    cursor: pointer;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+const GAME_OUTCOME_TEXT = {
+    [GAME_OUTCOME.WON]: "Won",
+    [GAME_OUTCOME.LOST]: "Lost",
+    [GAME_OUTCOME.DRAW]: "Draw",
+} as const;
 
-    td {
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 0.5em;
-    }
-`;
-const HoverEnabledCss = css`
-    :hover {
-        background-color: #4d4d4d;
-        td {
-            border-right: 1px solid rgba(255, 255, 255, 0);
-        }
-    }
-`;
-const UsernameCss = css`
-    :hover {
-        text-decoration: underline;
-        background-color: #4d4d4d;
-    }
-`;
-const WinnerColorsCss = {
-    Won: css`
-        color: #00ff00;
-    `,
-    Lost: css`
-        color: #ff0000;
-    `,
-    Draw: css`
-        color: #b0b0b0;
-    `,
-};
+type Props = { game: GameApiResponse; username: string; width: number };
 
-export interface Game {
-    game_id: number;
-    player_white: string;
-    player_black: string;
-    termination: keyof typeof GameTermination;
-    winner_color: keyof typeof GameWinner;
-    time_control: number;
-    date: string;
-}
-
-type Props = { game: Game; username: string; width: number };
 export default function GameRow(props: Props) {
+    const { game, username, width } = props;
+
     const [userHovered, setUserHovered] = React.useState(false);
     const navigate = useNavigate();
 
     const handleUserOnClick = () => {
-        navigate(`/profile/${opponentUsername}`);
+        navigate(`/profile/${opponent.username}`);
     };
 
-    const displayResultLong = props.width > 800;
-    const userColor = props.game.player_white === props.username ? "white" : "black";
-    const opponentUsername = userColor === "white" ? props.game.player_black : props.game.player_white;
+    const displayResultLong = width > 800;
 
-    const wonLost =
-        props.game.winner_color === "draw" ? "Draw" : props.game.winner_color === userColor ? "Won" : "Lost";
-    const resultText = GameTermination[props.game.termination];
+    const { player, opponent } = getPlayerInfos(game.players, username);
+
+    const gameOutcome = getGameOutcome(game.winner_color, player.color);
+    const gameOutcomeText = GAME_OUTCOME_TEXT[gameOutcome];
+    const gameOutcomeTextCss = CSS.WINNER_COLORS[gameOutcome];
+
+    const resultText = GAME_TERMINATION_EXPLANATION[game.termination];
 
     const timeControl = secToTime(props.game.time_control);
-
     const dateString = formatDateString(props.game.date);
 
     return (
-        <tr css={[GameRowCss, !userHovered && HoverEnabledCss]}>
+        <tr css={[CSS.GAME_ROW, !userHovered && CSS.HOVER_ENABLED]}>
             <td
-                css={UsernameCss}
+                css={CSS.USERNAME}
                 onClick={handleUserOnClick}
                 onMouseEnter={() => setUserHovered(true)}
                 onMouseLeave={() => setUserHovered(false)}
             >
-                {opponentUsername}
+                {opponent.username}
             </td>
             <td>
-                <span css={WinnerColorsCss[wonLost]}>{wonLost}</span>
+                <span css={gameOutcomeTextCss}>{gameOutcomeText}</span>
                 {displayResultLong && ` ${resultText}`}
             </td>
             <td>{timeControl}</td>
@@ -92,3 +57,37 @@ export default function GameRow(props: Props) {
         </tr>
     );
 }
+
+/**
+ * Gets the game outcome - whether the player won, lost, or drew the game.
+ */
+const getGameOutcome = (winnerColor: GameWinner, playerColor: PlayerColor): GameOutcome => {
+    const isDraw = winnerColor === GAME_WINNER.DRAW;
+    if (isDraw) return GAME_OUTCOME.DRAW;
+
+    const playerWon = winnerColor === playerColor;
+    return playerWon ? GAME_OUTCOME.WON : GAME_OUTCOME.LOST;
+};
+
+/**
+ * Gets the player infos matching their username to their color, returns both player and opponent.
+ */
+const getPlayerInfos = (
+    players: GameApiResponse["players"],
+    username: string,
+): { player: PlayerInfo; opponent: PlayerInfo } => {
+    const isPlayerWhite = players.white.username === username;
+    const playerColor = isPlayerWhite ? GAME_WINNER.WHITE : GAME_WINNER.BLACK;
+    const player = getPlayerInfo(players, playerColor);
+
+    const opponentColor = playerColor === GAME_WINNER.WHITE ? GAME_WINNER.BLACK : GAME_WINNER.WHITE;
+    const opponent = getPlayerInfo(players, opponentColor);
+
+    return { player, opponent };
+};
+
+const getPlayerInfo = (players: GameApiResponse["players"], playerColor: PlayerColor): PlayerInfo => {
+    const { username } = players[playerColor];
+
+    return { username, color: playerColor };
+};

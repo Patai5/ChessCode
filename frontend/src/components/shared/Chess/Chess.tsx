@@ -1,13 +1,14 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import React from "react";
+import { GameResultApiResponse } from "types/api/gameResult";
 import ActionBar, { PlayerProps } from "./ActionBar/ActionBar";
 import { ActionsType } from "./ActionBar/QuickActions/QuickActions";
 import ChessBoard, { RefType } from "./ChessBoard/ChessBoard";
 import { MoveInfo } from "./ChessBoard/ChessLogic/board";
 import { Color, PromotionPieceType } from "./ChessBoard/ChessLogic/pieces";
 import { getOppositeColor } from "./ChessBoard/ChessLogic/utils";
-import ResultsDisplay, { GameResult } from "./ResultsDisplay/ResultsDisplay";
+import ResultsDisplay from "./ResultsDisplay/ResultsDisplay";
 
 const ChessCss = css`
     display: flex;
@@ -24,7 +25,7 @@ export type ChessProps = {
     color: Color;
     players: PlayersProps | null;
     gameStarted: boolean;
-    gameResult: GameResult | null;
+    gameResult: GameResultApiResponse | null;
     actions: ActionsType;
     broadcastMove?: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
     isReplay: boolean;

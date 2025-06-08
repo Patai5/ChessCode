@@ -1,34 +1,15 @@
 /** @jsxImportSource @emotion/react */
+import { GAME_TERMINATION_EXPLANATION, GAME_WINNER_TITLE } from "components/constants";
 import MessageBox, { PopupContent } from "components/shared/MessageBox/MessageBox";
 import { FaTrophy } from "react-icons/fa";
+import { GameResultApiResponse } from "types/api/gameResult";
 
-export const GameWinner = {
-    white: "White has Won!",
-    black: "Black has Won!",
-    draw: "It's a Draw!",
-};
-export const GameTermination = {
-    checkmate: "by checkmate",
-    stalemate: "by stalemate",
-    insufficient_material: "by insufficient material",
-    fifty_moves: "by fifty moves rule",
-    threefold_repetition: "by threefold repetition",
-    timeout: "on time",
-    resignation: "by resignation",
-    agreement: "by mutual agreement",
-    aborted: "Game aborted",
-};
-export type GameResult = {
-    winner: keyof typeof GameWinner;
-    termination: keyof typeof GameTermination;
-};
-
-type Props = { result?: GameResult; show: boolean };
+type Props = { result?: GameResultApiResponse; show: boolean };
 export default function ResultsDisplay(props: Props) {
     const popupContent: PopupContent = {
         icon: FaTrophy,
-        title: props.result ? GameWinner[props.result.winner] : "",
-        description: props.result ? GameTermination[props.result.termination] : "",
+        title: props.result ? GAME_WINNER_TITLE[props.result.winner] : "",
+        description: props.result ? GAME_TERMINATION_EXPLANATION[props.result.termination] : "",
         buttons: [{ label: "GG!", closeWindow: true }],
     };
 

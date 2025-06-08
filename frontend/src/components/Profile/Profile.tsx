@@ -6,20 +6,10 @@ import Paper from "components/shared/Paper";
 import UserMenu from "components/shared/UserMenu/UserMenu";
 import React from "react";
 import { useParams } from "react-router-dom";
-import { Statuses } from "types/friendStatuses";
+import { ProfileApiResponse } from "types/api/profile";
 import ProfileHeader, { ProfileDataProps } from "./ProfileHeader/ProfileHeader";
-import { Game } from "./RecentGames/GameRow/GameRow";
 import RecentGames from "./RecentGames/RecentGames";
 import UserInteractions from "./UserInteractions/UserInteractions";
-
-interface ProfileAPIResponse {
-    date_joined: string;
-    games: Game[];
-    total_games: number;
-    total_friends: number;
-    friend_status?: Statuses;
-    friend_requests?: number;
-}
 
 const ProfileCss = css`
     display: flex;
@@ -34,7 +24,7 @@ const ProfileCss = css`
 `;
 
 export default function Profile() {
-    const [profileData, setProfileData] = React.useState<ProfileAPIResponse | null>(null);
+    const [profileData, setProfileData] = React.useState<ProfileApiResponse | null>(null);
     const params = useParams();
     const username: string = params.username!;
 

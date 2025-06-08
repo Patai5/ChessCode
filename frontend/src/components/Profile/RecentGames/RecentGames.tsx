@@ -2,7 +2,8 @@
 import { css } from "@emotion/react";
 import Paper from "components/shared/Paper";
 import useWindowSize from "hooks/useWindowSize";
-import GameRow, { Game } from "./GameRow/GameRow";
+import { GameApiResponse } from "types/api/game";
+import GameRow from "./GameRow/GameRow";
 import HeaderRow from "./HeaderRow/HeaderRow";
 
 const TitleCss = css`
@@ -41,7 +42,7 @@ const GamesTableCss = css`
     }
 `;
 
-type Props = { games: Game[] | null; username: string };
+type Props = { games: GameApiResponse[] | null; username: string };
 export default function RecentGames(props: Props) {
     const size = useWindowSize();
     if (size.width === undefined) return null;

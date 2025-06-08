@@ -5,13 +5,13 @@ import Chess, { PlayersProps } from "components/shared/Chess/Chess";
 import { RefType } from "components/shared/Chess/ChessBoard/ChessBoard";
 import { Move, MoveInfo, MoveName } from "components/shared/Chess/ChessBoard/ChessLogic/board";
 import { Color } from "components/shared/Chess/ChessBoard/ChessLogic/pieces";
-import { GameResult } from "components/shared/Chess/ResultsDisplay/ResultsDisplay";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import Loading from "components/shared/Loading";
 import UserMenu from "components/shared/UserMenu/UserMenu";
 import { AppContext } from "hooks/appContext";
 import React from "react";
 import { useParams } from "react-router-dom";
+import { GameResultApiResponse } from "types/api/gameResult";
 import { validateId } from "utils/chess";
 import { getWSUri } from "utils/websockets";
 
@@ -32,8 +32,6 @@ interface GameStartedAPIResponse {
     players: PlayersAPI;
 }
 
-type GameResultAPIResponse = GameResult;
-
 const playCss = css`
     display: flex;
     justify-content: center;
@@ -50,7 +48,7 @@ const enum ConnectingState {
 export default function Play() {
     const [connectingState, setConnectingState] = React.useState(ConnectingState.Connecting);
     const [color, setColor] = React.useState<Color>(Color.White);
-    const [gameResult, setGameResult] = React.useState<GameResult | null>(null);
+    const [gameResult, setGameResult] = React.useState<GameResultApiResponse | null>(null);
     const [highlightDrawButton, setHighlightDrawButton] = React.useState(false);
     const [gameStarted, setGameStarted] = React.useState(true);
     const [players, setPlayers] = React.useState<PlayersProps | null>(null);
@@ -144,7 +142,7 @@ export default function Play() {
         updateMove(data.move);
     };
 
-    const handleGameResult = (data: GameResultAPIResponse) => {
+    const handleGameResult = (data: GameResultApiResponse) => {
         setHighlightDrawButton(false);
         setGameResult({
             winner: data.winner,

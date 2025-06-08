@@ -3,11 +3,11 @@ import { PlayersProps } from "components/shared/Chess/ActionBar/ActionBar";
 import { RefType } from "components/shared/Chess/ChessBoard/ChessBoard";
 import { MoveName } from "components/shared/Chess/ChessBoard/ChessLogic/board";
 import { Color } from "components/shared/Chess/ChessBoard/ChessLogic/pieces";
-import { GameResult } from "components/shared/Chess/ResultsDisplay/ResultsDisplay";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import { AppContext } from "hooks/appContext";
 import React from "react";
 import { useParams } from "react-router-dom";
+import { GameResultApiResponse } from "types/api/gameResult";
 import { ReplayGameAPIResponse } from "types/api/replayGame";
 import { validateId } from "utils/chess";
 import { useReplayGameActions } from "./useReplayGameActions";
@@ -17,7 +17,7 @@ const REPLAY_GAME_API_ENDPOINT = "/api/play/game/";
 export type ReplayGameState = {
     playedMoves: MoveName[];
     players: PlayersProps;
-    gameResult: GameResult;
+    gameResult: GameResultApiResponse;
     color: Color;
 };
 
