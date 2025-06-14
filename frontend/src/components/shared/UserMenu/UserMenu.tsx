@@ -5,7 +5,7 @@ import Dropdown, { DropdownItems } from "components/shared/Dropdown/Dropdown";
 import ProfilePicture from "components/shared/ProfilePicture";
 import { AppContext } from "hooks/appContext";
 import React from "react";
-import { FaSignInAlt, FaSignOutAlt, FaUser, FaUserFriends } from "react-icons/fa";
+import { FaSignInAlt, FaSignOutAlt, FaTrophy, FaUser, FaUserFriends } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import getCSRF from "utils/getCSRF";
 
@@ -52,6 +52,7 @@ export default function UserMenu() {
         items: [
             { icon: FaUser, text: "Profile", onClick: () => navigate("/profile/" + clientUsername) },
             { icon: FaUserFriends, text: "Friends", onClick: () => navigate("/friends") },
+            { icon: FaTrophy, text: "Play", onClick: () => navigate("/") },
             { icon: FaSignOutAlt, text: "Sign out", onClick: signOut },
         ],
         dropdownCss: DropdownCss,
@@ -63,7 +64,7 @@ export default function UserMenu() {
 
     return (
         <div css={MenuCss}>
-            <Dropdown dropdownItems={dropdownItems} customCss={UserMenuCss} isActive={true}/>
+            <Dropdown dropdownItems={dropdownItems} customCss={UserMenuCss} isActive={true} />
         </div>
     );
 }
