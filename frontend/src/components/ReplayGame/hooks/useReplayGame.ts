@@ -1,8 +1,8 @@
 import axios from "axios";
 import { PlayersProps } from "components/shared/Chess/ActionBar/ActionBar";
-import { RefType } from "components/shared/Chess/ChessBoard/ChessBoard";
 import { MoveName } from "components/shared/Chess/ChessBoard/ChessLogic/board";
 import { Color } from "components/shared/Chess/ChessBoard/ChessLogic/pieces";
+import { useChessBoardState } from "components/shared/Chess/useChessBoardState/useChessBoardState";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import { AppContext } from "hooks/appContext";
 import React from "react";
@@ -26,7 +26,6 @@ export type ReplayGameState = {
  */
 export const useReplayGame = () => {
     const [replayGameState, setReplayGameState] = React.useState<ReplayGameState | null>(null);
-    const chessboardRef = React.useRef<RefType>(null);
     const { username } = React.useContext(AppContext);
     const { id: gameId } = useParams();
 
@@ -81,7 +80,12 @@ export const useReplayGame = () => {
         setReplayGameState(state);
     };
 
-    const actions = useReplayGameActions({ replayGameState, chessboardRef });
+    const chessBoardStateHandlers = useChessBoardState({
+        color: replayGameState?.color ?? Color.White,
+        isEnabled: false,
+    });
 
-    return { replayGameState, chessboardRef, actions };
+    const actions = useReplayGameActions({ replayGameState, ...chessBoardStateHandlers });
+
+    return { replayGameState, actions, chessBoardStateHandlers };
 };

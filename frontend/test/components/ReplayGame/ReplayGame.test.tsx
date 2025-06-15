@@ -44,13 +44,22 @@ test("Should display chessboard after game is loaded", async () => {
 });
 
 describe("Should correctly handle action buttons", () => {
+    const expectSquare = (id: string, pieceType: string) => {
+        const square = screen.getByTestId(id, { exact: false });
+        expect(square.getAttribute("data-testid")).includes(`piece-${pieceType}`);
+    };
+
+    const getButtons = () => ({
+        backButton: screen.getByTestId("go-back-button"),
+        forwardButton: screen.getByTestId("go-forward-button"),
+        startButton: screen.getByTestId("go-to-start-button"),
+        endButton: screen.getByTestId("got-to-end-button"),
+    });
+
     test("Should disable and enable them accordingly", async () => {
         await loadGame();
 
-        const backButton = screen.getByTestId("go-back-button");
-        const forwardButton = screen.getByTestId("go-forward-button");
-        const startButton = screen.getByTestId("go-to-start-button");
-        const endButton = screen.getByTestId("got-to-end-button");
+        const { backButton, forwardButton, startButton, endButton } = getButtons();
 
         expect(backButton.ariaDisabled).toBe("true");
         expect(forwardButton.ariaDisabled).toBe("false");
@@ -61,38 +70,52 @@ describe("Should correctly handle action buttons", () => {
     test("Should allow going back and forward", async () => {
         await loadGame();
 
-        const forwardButton = screen.getByTestId("go-forward-button");
-        const backButton = screen.getByTestId("go-back-button");
-        const goToEndButton = screen.getByTestId("got-to-end-button");
+        const { backButton, forwardButton, startButton, endButton } = getButtons();
 
-        const pieceToMove = screen.getByTestId("square-1-4", { exact: false });
-        const pieceToMoveTo = screen.getByTestId("square-3-4", { exact: false });
-
-        expect(pieceToMove.getAttribute("data-testid")).includes("piece-Pawn");
-        expect(pieceToMoveTo.getAttribute("data-testid")).includes("piece-empty");
+        expectSquare("square-1-4", "Pawn");
+        expectSquare("square-3-4", "empty");
 
         await userEvent.click(forwardButton);
-        expect(pieceToMove.getAttribute("data-testid")).includes("piece-empty");
-        expect(pieceToMoveTo.getAttribute("data-testid")).includes("piece-Pawn");
+        expectSquare("square-1-4", "empty");
+        expectSquare("square-3-4", "Pawn");
+
+        await userEvent.click(forwardButton);
+        expectSquare("square-1-4", "empty");
+        expectSquare("square-3-4", "Pawn");
+        expectSquare("square-6-4", "empty");
+        expectSquare("square-4-4", "Pawn");
 
         await userEvent.click(backButton);
-        expect(pieceToMove.getAttribute("data-testid")).includes("piece-Pawn");
-        expect(pieceToMoveTo.getAttribute("data-testid")).includes("piece-empty");
+        expectSquare("square-1-4", "empty");
+        expectSquare("square-3-4", "Pawn");
+        expectSquare("square-6-4", "Pawn");
+        expectSquare("square-4-4", "empty");
 
-        await userEvent.click(goToEndButton);
-        expect(pieceToMove.getAttribute("data-testid")).includes("piece-empty");
+        await userEvent.click(endButton);
+        expectSquare("square-1-4", "empty");
+        expectSquare("square-3-4", "Pawn");
+        expectSquare("square-6-4", "empty");
+        expectSquare("square-4-4", "Pawn");
+        expectSquare("square-1-4", "empty");
+        expectSquare("square-3-4", "Pawn");
+
+        await userEvent.click(startButton);
+        expectSquare("square-1-4", "Pawn");
+        expectSquare("square-3-4", "empty");
+        expectSquare("square-6-4", "Pawn");
+        expectSquare("square-4-4", "empty");
+        expectSquare("square-1-4", "Pawn");
+        expectSquare("square-3-4", "empty");
     });
 
     test("Should toggle the disabled state of the buttons when moving", async () => {
         await loadGame();
 
-        const goToStartButton = screen.getByTestId("go-to-start-button");
-        const forwardButton = screen.getByTestId("go-forward-button");
-        const goToEndButton = screen.getByTestId("got-to-end-button");
+        const { forwardButton, startButton, endButton } = getButtons();
 
-        await userEvent.click(goToEndButton);
-        expect(goToStartButton.ariaDisabled).toBe("false");
+        await userEvent.click(endButton);
+        expect(startButton.ariaDisabled).toBe("false");
         expect(forwardButton.ariaDisabled).toBe("true");
-        expect(goToEndButton.ariaDisabled).toBe("true");
+        expect(endButton.ariaDisabled).toBe("true");
     });
 });

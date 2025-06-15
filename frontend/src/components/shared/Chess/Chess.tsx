@@ -1,14 +1,13 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
-import React from "react";
 import { GameResultApiResponse } from "types/api/gameResult";
 import ActionBar, { PlayerProps } from "./ActionBar/ActionBar";
 import { ActionsType } from "./ActionBar/QuickActions/QuickActions";
-import ChessBoard, { RefType } from "./ChessBoard/ChessBoard";
-import { MoveInfo } from "./ChessBoard/ChessLogic/board";
-import { Color, PromotionPieceType } from "./ChessBoard/ChessLogic/pieces";
+import ChessBoard from "./ChessBoard/ChessBoard";
+import { Color } from "./ChessBoard/ChessLogic/pieces";
 import { getOppositeColor } from "./ChessBoard/ChessLogic/utils";
 import ResultsDisplay from "./ResultsDisplay/ResultsDisplay";
+import { ChessBoardStateHandlersProps } from "./useChessBoardState/useChessBoardState";
 
 const ChessCss = css`
     display: flex;
@@ -27,12 +26,12 @@ export type ChessProps = {
     gameStarted: boolean;
     gameResult: GameResultApiResponse | null;
     actions: ActionsType;
-    broadcastMove?: (move: MoveInfo, promotionPiece: PromotionPieceType | null) => void;
     isReplay: boolean;
+    chessBoardStateHandlers: ChessBoardStateHandlersProps;
 };
 
-function Chess(props: ChessProps, forwardedRef: React.ForwardedRef<RefType>) {
-    const [colorToPlay, setColorToPlay] = React.useState<Color>(Color.White);
+export default function Chess(props: ChessProps) {
+    const { colorToPlay } = props.chessBoardStateHandlers;
     const pauseGame = !props.gameStarted || !!props.gameResult;
 
     return (
@@ -46,13 +45,7 @@ function Chess(props: ChessProps, forwardedRef: React.ForwardedRef<RefType>) {
                         timerPaused={props.color === colorToPlay || pauseGame}
                     />
                 )}
-                <ChessBoard
-                    color={props.color}
-                    isEnabled={props.isReplay ? false : !pauseGame}
-                    broadcastMove={props.broadcastMove}
-                    updateColorToPlay={setColorToPlay}
-                    ref={forwardedRef}
-                />
+                <ChessBoard color={props.color} chessBoardStateHandlers={props.chessBoardStateHandlers} />
                 {props.players && (
                     <ActionBar
                         player={props.players[props.color]}
@@ -65,5 +58,3 @@ function Chess(props: ChessProps, forwardedRef: React.ForwardedRef<RefType>) {
         </>
     );
 }
-
-export default React.forwardRef(Chess);

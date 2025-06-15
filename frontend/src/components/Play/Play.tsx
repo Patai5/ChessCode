@@ -2,9 +2,9 @@
 import { css } from "@emotion/react";
 import { PlayersProps as PlayersAPI } from "components/shared/Chess/ActionBar/ActionBar";
 import Chess, { PlayersProps } from "components/shared/Chess/Chess";
-import { RefType } from "components/shared/Chess/ChessBoard/ChessBoard";
 import { Move, MoveInfo, MoveName } from "components/shared/Chess/ChessBoard/ChessLogic/board";
 import { Color } from "components/shared/Chess/ChessBoard/ChessLogic/pieces";
+import { useChessBoardState } from "components/shared/Chess/useChessBoardState/useChessBoardState";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import Loading from "components/shared/Loading";
 import UserMenu from "components/shared/UserMenu/UserMenu";
@@ -52,10 +52,15 @@ export default function Play() {
     const [highlightDrawButton, setHighlightDrawButton] = React.useState(false);
     const [gameStarted, setGameStarted] = React.useState(true);
     const [players, setPlayers] = React.useState<PlayersProps | null>(null);
-    const ws = React.useRef<WebSocket | null>(null);
-    const chessboardRef = React.useRef<RefType>(null);
+
     const appContext = React.useContext(AppContext);
+
+    const ws = React.useRef<WebSocket | null>(null);
     const clientUsername = React.useRef(appContext.username);
+
+    const chessBoardStateHandlers = useChessBoardState({ color: color, isEnabled: gameStarted });
+    const { handleClientMakeMove } = chessBoardStateHandlers;
+
     const { id } = useParams();
 
     React.useEffect(() => {
@@ -131,9 +136,8 @@ export default function Play() {
     };
 
     const updateMove = (moveName: MoveName) => {
-        if (!chessboardRef.current) return;
         const { move, promotionPiece } = Move.fromName(moveName);
-        chessboardRef.current.clientMakeMove(move, promotionPiece);
+        handleClientMakeMove(move, promotionPiece);
     };
 
     const handleMove = (data: MoveAPIResponse) => {
@@ -232,7 +236,7 @@ export default function Play() {
             },
         },
         isReplay: false,
-        ref: chessboardRef,
+        chessBoardStateHandlers,
     };
 
     return (

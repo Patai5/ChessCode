@@ -1,11 +1,12 @@
-import { RefType } from "components/shared/Chess/ChessBoard/ChessBoard";
 import { Move } from "components/shared/Chess/ChessBoard/ChessLogic/board";
+import { ChessBoardStateHandlersProps } from "components/shared/Chess/useChessBoardState/useChessBoardState";
 import React from "react";
 import { ReplayGameState } from "./useReplayGame";
 
 type Props = {
     replayGameState: ReplayGameState | null;
-    chessboardRef: React.RefObject<RefType>;
+    handleClientMakeMove: ChessBoardStateHandlersProps["handleClientMakeMove"];
+    handleClientUndoMove: ChessBoardStateHandlersProps["handleClientUndoMove"];
 };
 
 /**
@@ -14,7 +15,8 @@ type Props = {
  * - Keeps the reference to the chessboard component, it should be set later in the parent component.
  */
 export const useReplayGameActions = (props: Props) => {
-    const { replayGameState, chessboardRef } = props;
+    const { replayGameState, handleClientMakeMove, handleClientUndoMove } = props;
+
     const [currentMoveIndex, setCurrentMoveIndex] = React.useState(0);
 
     /**
@@ -22,21 +24,18 @@ export const useReplayGameActions = (props: Props) => {
      */
     const updateMoveFromIndex = (moveIndex: number) => {
         if (!replayGameState) return;
-        if (!chessboardRef.current) return;
 
         const moveName = replayGameState.playedMoves[moveIndex];
         const { move, promotionPiece } = Move.fromName(moveName);
 
-        chessboardRef.current.clientMakeMove(move, promotionPiece);
+        handleClientMakeMove(move, promotionPiece);
     };
 
     /**
      * Undoes the last move on the chessboard.
      */
     const undoMove = () => {
-        if (!chessboardRef.current) return;
-
-        chessboardRef.current.clientUndoMove();
+        handleClientUndoMove();
     };
 
     const totalPlayedMoves = replayGameState?.playedMoves.length || 0;
@@ -67,7 +66,7 @@ export const useReplayGameActions = (props: Props) => {
      * Moves the chessboard to the start of the game.
      */
     const goToStart = () => {
-        Array.from({ length: currentMoveIndex }).forEach(() => undoMove());
+        Array.from({ length: currentMoveIndex }).forEach(undoMove);
         setCurrentMoveIndex(0);
     };
 

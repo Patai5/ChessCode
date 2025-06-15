@@ -24,12 +24,17 @@ export const IconButton = (props: IconButtonProps) => {
 
     const [isHovered, setIsHover] = React.useState(false);
     const [isPressed, setIsPressed] = React.useState(false);
+    const [pressedTimeout, setPressedTimeout] = React.useState<NodeJS.Timeout | null>(null);
 
     const handleOnClick = () => {
-        if (!isEnabled || isPressed) return;
+        if (!isEnabled) return;
 
         setIsPressed(true);
-        setTimeout(() => setIsPressed(false), 750);
+
+        if (pressedTimeout) clearTimeout(pressedTimeout);
+        const timeout = setTimeout(() => setIsPressed(false), 750);
+        setPressedTimeout(timeout);
+
         onClick();
     };
 

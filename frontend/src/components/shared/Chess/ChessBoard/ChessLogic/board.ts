@@ -27,7 +27,7 @@ export class MoveInfo {
         capturedPiece: Piece | null = null,
         castleSide: CastleSide | null,
         castlingRights: CastlingRights,
-        promotionPiece: InstanceType<PromotionPieceType> | null = null
+        promotionPiece: InstanceType<PromotionPieceType> | null = null,
     ) {
         this.move = move;
         this.piece = piece;
@@ -83,6 +83,10 @@ export class Board {
     getPiece = (position: Position): Piece | null => {
         if (position.isInvalid()) return null;
         return this.getPosition(position);
+    };
+
+    getPieces = (): Piece[] => {
+        return this.board.filter((piece): piece is Piece => piece !== null);
     };
 
     getPosition = (position: Position): Piece | null => {
@@ -160,7 +164,7 @@ export class Board {
 
     move = (move: Move, promotionPiece: PromotionPieceType | null = null): MoveInfo => {
         const pieceFrom = this.getPiece(move.from);
-        if (!pieceFrom) throw new Error("No piece at from position");
+        if (!pieceFrom) throw new Error(`No piece at from position: ${move.from.toName()}`);
 
         let capturePiece = this.handleEnPassant(pieceFrom, move);
         if (!capturePiece) capturePiece = this.getPiece(move.to);

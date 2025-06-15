@@ -16,14 +16,14 @@ const replayCss = css`
  * Displays a replay of a finished game. Allows the user to move back and forth through the game.
  */
 export const ReplayGame = () => {
-    const { replayGameState, chessboardRef, actions } = useReplayGame();
+    const { replayGameState, actions, chessBoardStateHandlers } = useReplayGame();
 
     const chessProps = replayGameState && {
         ...replayGameState,
+        chessBoardStateHandlers,
         isReplay: true,
         gameStarted: true,
         actions: { replayActions: actions },
-        ref: chessboardRef,
     };
 
     return (

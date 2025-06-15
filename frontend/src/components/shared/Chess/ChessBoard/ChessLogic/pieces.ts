@@ -321,8 +321,3 @@ export type PieceType = (typeof Pieces)[keyof typeof Pieces];
 export const PromotionPieces = [Pieces.Queen, Pieces.Rook, Pieces.Bishop, Pieces.Knight];
 export type PromotionPieceType = (typeof PromotionPieces)[number];
 export const PromotionPiecesShort = { q: Pieces.Queen, r: Pieces.Rook, b: Pieces.Bishop, n: Pieces.Knight };
-
-export interface PieceColorType {
-    piece: PieceType;
-    color: Color;
-}
