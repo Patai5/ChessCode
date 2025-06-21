@@ -47,14 +47,18 @@ export const selectPromotion = (
     chessBoardState: ChessBoardState,
     options: MoveOptions & { selectedPosition: Position },
 ) => {
+    const { chess } = options;
+
     const { inProgressPromotionMove } = chessBoardState;
     if (!inProgressPromotionMove) return chessBoardState;
 
     const maybePromotionPiece = maybeGetPromotionPiece(chessBoardState, options);
     if (!maybePromotionPiece) return { ...chessBoardState, inProgressPromotionMove: null };
 
-    const makeMoveOptions = { ...options, move: inProgressPromotionMove, promotionPiece: maybePromotionPiece };
-    const updatedBoardState = makeMove(chessBoardState, makeMoveOptions).chessBoardState;
+    const moveInfo = chess.move(inProgressPromotionMove, maybePromotionPiece);
+    const makeMoveOptions = { ...options, moveInfo, promotionPiece: maybePromotionPiece };
+
+    const updatedBoardState = makeMove(chessBoardState, makeMoveOptions);
 
     return { ...updatedBoardState, inProgressPromotionMove: null };
 };

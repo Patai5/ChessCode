@@ -74,10 +74,17 @@ export const useChessBoardState = (props: Props): ChessBoardStateHandlersProps =
         setChessBoardState((boardState) => selectPiece(boardState, options));
     };
 
+    /**
+     * Handles the client-side making a move.
+     * - The actual move on the chess instance has to be performed outside the set state, as otherwise we would be
+     *      risking calling it multiple times due to how React batches state updates.
+     */
     const handleClientMakeMove = (move: Move, promotionPiece: PromotionPieceType | null) => {
+        const moveInfo = chess.move(move, promotionPiece);
+        const options = { isEnabled, color, moveInfo, chess, promotionPiece, setColorToPlay };
+
         setChessBoardState((chessBoardState) => {
-            const options = { isEnabled, color, move, chess, promotionPiece, setColorToPlay };
-            return makeMove(chessBoardState, options).chessBoardState;
+            return makeMove(chessBoardState, options);
         });
     };
 
