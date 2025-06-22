@@ -26,6 +26,9 @@ const shouldUpdateSelectedPiece = (options: SelectPieceOptions): boolean => {
 
     if (!isEnabled) return false;
 
-    const isColorToPlay = piece?.color === color;
+    const deselectPiece = !piece;
+    if (deselectPiece) return true;
+
+    const isColorToPlay = piece.color === color;
     return isColorToPlay;
 };
