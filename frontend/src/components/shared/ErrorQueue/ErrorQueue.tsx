@@ -7,6 +7,8 @@ export class ErrorQueueClass {
     private static ErrorQueue: ErrorType[] = [];
     public static setErrorFnCallback: (error: ErrorType) => void = () => {};
     public static addError(error: ErrorType) {
+        console.error("WebSocket error:", error);
+
         ErrorQueueClass.ErrorQueue.push(error);
 
         if (ErrorQueueClass.ErrorQueue.length > 1) return;

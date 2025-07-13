@@ -43,3 +43,7 @@ export function getBaseUri() {
 export function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+export function typedEntries<T extends object>(obj: T): Array<[keyof T, T[keyof T]]> {
+    return Object.entries(obj) as Array<[keyof T, T[keyof T]]>;
+}
