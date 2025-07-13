@@ -1,6 +1,6 @@
 import React from "react";
 
-type AppContextType = {
+export type AppContextType = {
     username: string | null;
     setUsername: (username: string | null) => void;
 };
