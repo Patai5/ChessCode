@@ -1,5 +1,5 @@
-from attr import dataclass
 from django.contrib.auth.models import AbstractUser
+from django.db import models
 
 
 class User(AbstractUser):
@@ -7,6 +7,5 @@ class User(AbstractUser):
         db_table = "auth_user"
 
 
-@dataclass(frozen=True)
-class AnonymousSessionUser:
-    session_key: str
+class AnonymousSessionUser(models.Model):
+    session_key = models.CharField(primary_key=True, max_length=255)
