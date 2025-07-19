@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from typing import Any
+
 import chess
 from django.db import models
-from users.models import User
+from users.models import AnonymousSessionUser, User
 
 from .chess_board import CustomTermination
 
@@ -41,10 +43,31 @@ COLORS = {
 }
 
 
+class Player(models.Model):
+    """
+    Abstraction class for the Player.
+    - Either has to be a regular logged-in user or an anonymous user.
+    """
+
+    user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+    anonymousUser = models.ForeignKey(AnonymousSessionUser, null=True, on_delete=models.CASCADE)
+
+    def clean(self) -> None:
+        userObjects = [self.user, self.anonymousUser]
+        isValid = sum(item is not None for item in userObjects) == 1
+
+        if not isValid:
+            raise ValueError("Exactly one of user or anonymousUser must be set.")
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.clean()
+        super().save(*args, **kwargs)
+
+
 class Game(models.Model):
     game_id = models.AutoField(primary_key=True)
-    player_white = models.ForeignKey(User, related_name="player_white", on_delete=models.SET_NULL, null=True)
-    player_black = models.ForeignKey(User, related_name="player_black", on_delete=models.SET_NULL, null=True)
+    player_white = models.ForeignKey(Player, related_name="player_white", on_delete=models.SET_NULL, null=True)
+    player_black = models.ForeignKey(Player, related_name="player_black", on_delete=models.SET_NULL, null=True)
     termination = models.IntegerField(choices=GameTerminations.choices)
     winner_color = models.BooleanField(null=True)
     time_control = models.PositiveBigIntegerField()

@@ -4,12 +4,14 @@ import threading
 from typing import Dict
 
 import chess
+from users.models import AnonymousSessionUser
 
 from ..utils import genUniqueID
 from .chess_board import CHESS_COLOR_NAMES, ChessBoard, CustomOutcome, CustomTermination
 from .game_modes import GameMode, TimeControl
 from .models import Game as GameModel
 from .models import GameTerminations, Move
+from .models import Player as PlayerModel
 from .players import APICallbackType, GameUser, Player, Players, TimeS, UnknownPlayer, UnknownPlayerType
 
 
@@ -184,12 +186,11 @@ class Game:
 
     def save_to_db(self, result: CustomOutcome) -> None:
         """Saves the game to the database."""
-        white = self.players.by_color(chess.WHITE).user
-        black = self.players.by_color(chess.BLACK).user
+        whitePlayer, blackPlayer = self.get_player_models()
 
         game = GameModel(
-            player_white=white if white is not UnknownPlayer else None,
-            player_black=black if black is not UnknownPlayer else None,
+            player_white=whitePlayer,
+            player_black=blackPlayer,
             termination=GameTerminations.from_chess_termination(result.termination),
             winner_color=result.winner,
             time_control=self.time_control.time,
@@ -198,6 +199,35 @@ class Game:
         Move.objects.bulk_create(
             [Move(game=game, order=order, move=move) for order, move in enumerate(self.get_moves_list())]
         )
+
+    def get_player_models(self) -> tuple[PlayerModel | None, PlayerModel | None]:
+        """
+        Gets the PlayerModel objects of the game's players.
+        - Returns `None` if the player is an UnknownPlayer.
+        """
+        whitePlayer = self.players.by_color(chess.WHITE)
+        blackPlayer = self.players.by_color(chess.BLACK)
+
+        return (
+            self.get_player_model(whitePlayer.user),
+            self.get_player_model(blackPlayer.user),
+        )
+
+    def get_player_model(self, user: GameUser | UnknownPlayerType) -> PlayerModel | None:
+        """Gets the PlayerModel object of the user, or None if the user is UnknownPlayer."""
+        isUnknownPlayer = user is UnknownPlayer
+        if isUnknownPlayer:
+            return None
+
+        isAnonymousUser = isinstance(user, AnonymousSessionUser)
+
+        playerModel = PlayerModel(
+            user=user if not isAnonymousUser else None,
+            anonymousUser=user if isAnonymousUser else None,
+        )
+        playerModel.save()
+
+        return playerModel
 
     def finish(self, result: CustomOutcome) -> None:
         """Finishes the game and saves it to the database.
