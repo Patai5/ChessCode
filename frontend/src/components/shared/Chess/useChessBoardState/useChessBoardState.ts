@@ -22,6 +22,7 @@ export type ChessBoardStateHandlersProps = {
     chess: Chess;
     colorToPlay: Color;
     setColorToPlay: (color: Color) => void;
+    setBroadcastMove: (broadcastMove: ((move: MoveInfo) => void) | null) => void;
     handleClientMakeMove: (move: Move, promotionPiece: PromotionPieceType | null) => void;
     handleClientUndoMove: () => void;
     handleHoveringOver: (position: Position) => void;
@@ -40,6 +41,7 @@ export const useChessBoardState = (props: Props): ChessBoardStateHandlersProps =
     const { color, isEnabled } = props;
 
     const [colorToPlay, setColorToPlay] = React.useState<Color>(color);
+    const broadcastMove = React.useRef<((move: MoveInfo) => void) | null>(null);
     const chess = React.useRef(new Chess()).current;
 
     const [chessBoardState, setChessBoardState] = React.useState<ChessBoardState>({
@@ -56,7 +58,9 @@ export const useChessBoardState = (props: Props): ChessBoardStateHandlersProps =
     };
 
     const handleMovedTo = (moveTo: Position) => {
-        const options = { moveTo, chess, isEnabled, color, setColorToPlay };
+        if (!broadcastMove.current) throw new Error("broadcastMove function is required for broadcasting moves");
+
+        const options = { moveTo, chess, isEnabled, color, setColorToPlay, broadcastMove: broadcastMove.current };
         setChessBoardState((chessBoardState) => handleMoveTo(chessBoardState, options));
     };
 
@@ -95,11 +99,16 @@ export const useChessBoardState = (props: Props): ChessBoardStateHandlersProps =
         setColorToPlay(chess.board.colorToPlay);
     };
 
+    const setBroadcastMove = (newBroadcastMove: (move: MoveInfo) => void) => {
+        broadcastMove.current = newBroadcastMove;
+    };
+
     return {
         chessBoardState,
         chess,
         colorToPlay,
         setColorToPlay,
+        setBroadcastMove,
         handleClientMakeMove,
         handleClientUndoMove,
         handleMaybeGetPromotionPiece,

@@ -27,6 +27,8 @@ export class MockWebSocket {
 
     static readyState = MockWebSocket.CONNECTING;
 
+    static messages: string[] = [];
+
     triggerOpen() {
         MockWebSocket.readyState = MockWebSocket.OPEN;
         MockWebSocket.singletonOnopen?.();
@@ -52,5 +54,7 @@ export class MockWebSocket {
         }, 10);
     }
 
-    send() {}
+    send(message: string) {
+        MockWebSocket.messages.push(message);
+    }
 }

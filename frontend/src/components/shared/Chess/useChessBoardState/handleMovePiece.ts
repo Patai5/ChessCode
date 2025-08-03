@@ -12,7 +12,7 @@ export type MoveOptions = Omit<SelectPieceOptions, "piece"> & {
 
 export const handleMoveTo = (
     chessBoardState: ChessBoardState,
-    options: MoveOptions & { moveTo: Position },
+    options: MoveOptions & Required<Pick<MoveOptions, "broadcastMove">> & { moveTo: Position },
 ): ChessBoardState => {
     const { moveTo, chess } = options;
     const { selectedPiece } = chessBoardState;

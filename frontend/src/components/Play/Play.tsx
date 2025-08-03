@@ -25,20 +25,20 @@ export default function Play() {
     const [gameStarted, setGameStarted] = React.useState(true);
 
     const chessBoardStateHandlers = useChessBoardState({ color, isEnabled: gameStarted });
-    const { handleClientMakeMove } = chessBoardStateHandlers;
+    const { handleClientMakeMove, setBroadcastMove } = chessBoardStateHandlers;
 
     const { id: gameId } = useParams();
 
     const playGameApi = usePlayApi({ gameId, clientUsername, setColor, setGameStarted, handleClientMakeMove });
     const { connectionState, players, highlightDrawButton, gameResult, broadcastMove, handleResign, handleOfferDraw } =
         playGameApi;
+    setBroadcastMove(broadcastMove);
 
     const chessProps = {
         color: color,
         players: players,
         gameStarted: gameStarted,
         gameResult: gameResult,
-        broadcastMove: broadcastMove,
         actions: {
             playActions: {
                 highlightDraw: highlightDrawButton,
