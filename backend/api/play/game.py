@@ -12,7 +12,7 @@ from .game_modes import GameMode, TimeControl
 from .models import Game as GameModel
 from .models import GameTerminations, Move
 from .models import Player as PlayerModel
-from .players import APICallbackType, GameUser, Player, Players, TimeS, UnknownPlayer, UnknownPlayerType
+from .players import APICallbackType, GamePlayer, GameUser, Players, TimeS, UnknownPlayer, UnknownPlayerType
 
 
 class GameStatus(enum.Enum):
@@ -271,7 +271,7 @@ class GameManager:
         colors = [chess.WHITE, chess.BLACK]
         random.shuffle(colors)
 
-        gamePlayers = Players([Player(user, color, time_control.time) for user, color in zip(players, colors)])
+        gamePlayers = Players([GamePlayer(user, color, time_control.time) for user, color in zip(players, colors)])
 
         game = Game(gamePlayers, game_mode, time_control, game_id, link_game)
         self.games[game_id] = game

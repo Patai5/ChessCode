@@ -18,7 +18,7 @@ UnknownPlayer: UnknownPlayerType = "UnknownPlayer"
 GameUser = User | AnonymousSessionUser
 
 
-class Player:
+class GamePlayer:
     def __init__(
         self,
         user: GameUser | UnknownPlayerType,
@@ -81,13 +81,13 @@ class Player:
 
 
 class Players:
-    userPlayers: dict[GameUser | UnknownPlayerType, Player]
+    userPlayers: dict[GameUser | UnknownPlayerType, GamePlayer]
 
-    def __init__(self, players: list[Player]):
+    def __init__(self, players: list[GamePlayer]):
         self.userPlayers = {player.user: player for player in players}
 
     @property
-    def players(self) -> Iterable[Player]:
+    def players(self) -> Iterable[GamePlayer]:
         return self.userPlayers.values()
 
     @property
@@ -110,18 +110,18 @@ class Players:
 
         self.by_user(user).join_game(callback)
 
-    def get_opponent(self, user: GameUser) -> Player:
+    def get_opponent(self, user: GameUser) -> GamePlayer:
         """Gets the Player object for the opponent of the given user"""
         return self.by_color(get_opposite_color(self.by_user(user).color))
 
-    def by_color(self, color: chess.Color) -> Player:
+    def by_color(self, color: chess.Color) -> GamePlayer:
         """Gets the Player object for the given color"""
         players = list(self.players)
 
         playerIndex = 0 if color == players[0].color else 1
         return players[playerIndex]
 
-    def by_user(self, user: GameUser) -> Player:
+    def by_user(self, user: GameUser) -> GamePlayer:
         """Gets the Player object for the given user"""
         return self.userPlayers[user]
 
