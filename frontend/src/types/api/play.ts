@@ -1,6 +1,6 @@
-import { PlayersProps } from "components/shared/Chess/Chess";
 import { MoveName } from "components/shared/Chess/ChessBoard/ChessLogic/board";
 import { GameResultApiResponse } from "./gameResult";
+import { GamePlayersApi } from "./player";
 
 export const PLAY_API_RESPONSE_TYPE = {
     JOIN: "join",
@@ -22,7 +22,7 @@ export type PlayOnMessageApiResponse =
 
 export type JoinApiResponse = {
     type: typeof PLAY_API_RESPONSE_TYPE.JOIN;
-    players: PlayersProps;
+    players: GamePlayersApi;
     moves: MoveName[];
     offer_draw: boolean;
     game_started: boolean;
@@ -30,13 +30,13 @@ export type JoinApiResponse = {
 
 export type GameStartedApiResponse = {
     type: typeof PLAY_API_RESPONSE_TYPE.GAME_STARTED;
-    players: PlayersProps;
+    players: GamePlayersApi;
 };
 
 export type MoveApiResponse = {
     type: typeof PLAY_API_RESPONSE_TYPE.MOVE;
     move: MoveName;
-    players: PlayersProps;
+    players: GamePlayersApi;
 };
 
 export type PlayGameResultApiResponse = GameResultApiResponse & {

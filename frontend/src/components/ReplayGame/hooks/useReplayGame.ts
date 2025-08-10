@@ -1,15 +1,15 @@
 import axios from "axios";
-import { PlayersProps } from "components/shared/Chess/ActionBar/ActionBar";
+import { PlayersProps } from "components/shared/Chess/Chess";
 import { MoveName } from "components/shared/Chess/ChessBoard/ChessLogic/board";
 import { Color } from "components/shared/Chess/ChessBoard/ChessLogic/pieces";
 import { useChessBoardState } from "components/shared/Chess/useChessBoardState/useChessBoardState";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
-import { AppContext } from "hooks/appContext";
 import React from "react";
 import { useParams } from "react-router-dom";
 import { GameResultApiResponse } from "types/api/gameResult";
 import { ReplayGameAPIResponse } from "types/api/replayGame";
 import { validateId } from "utils/chess";
+import { parsePlayerApiResponse } from "utils/players";
 import { useReplayGameActions } from "./useReplayGameActions";
 
 const REPLAY_GAME_API_ENDPOINT = "/api/play/game/";
@@ -26,7 +26,6 @@ export type ReplayGameState = {
  */
 export const useReplayGame = () => {
     const [replayGameState, setReplayGameState] = React.useState<ReplayGameState | null>(null);
-    const { username } = React.useContext(AppContext);
     const { id: gameId } = useParams();
 
     /**
@@ -69,11 +68,15 @@ export const useReplayGame = () => {
     const handleReplayFromApiResponse = (response: ReplayGameAPIResponse) => {
         const { moves, players, termination, winner_color } = response;
 
-        const color = username === players.black.username ? Color.Black : Color.White;
+        const color = players.white.is_current_user ? Color.White : Color.Black;
+        const playersProps = {
+            [Color.White]: parsePlayerApiResponse(players.white),
+            [Color.Black]: parsePlayerApiResponse(players.black),
+        };
 
         const state = {
             playedMoves: moves,
-            players: players,
+            players: playersProps,
             gameResult: { winner: winner_color, termination: termination },
             color,
         };

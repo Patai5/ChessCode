@@ -1,4 +1,3 @@
-import { PlayersProps as PlayersAPI } from "components/shared/Chess/ActionBar/ActionBar";
 import { PlayersProps } from "components/shared/Chess/Chess";
 import { Move, MoveInfo, MoveName } from "components/shared/Chess/ChessBoard/ChessLogic/board";
 import { Color, PromotionPieceType } from "components/shared/Chess/ChessBoard/ChessLogic/pieces";
@@ -16,7 +15,9 @@ import {
     PlayOnMessageApiResponse,
     SendApiMessageData,
 } from "types/api/play";
+import { GamePlayersApi } from "types/api/player";
 import { validateId } from "utils/chess";
+import { parsePlayerApiResponse } from "utils/players";
 import { typedEntries } from "utils/utils";
 import { getWSUri } from "utils/websockets";
 
@@ -30,14 +31,13 @@ export const CONNECTION_STATE = {
 
 type Props = {
     gameId: string | undefined;
-    clientUsername: string | null;
     setColor: (color: Color) => void;
     setGameStarted: (gameStarted: boolean) => void;
     handleClientMakeMove: (move: Move, promotionPiece: PromotionPieceType | null) => void;
 };
 
 export const usePlayApi = (props: Props) => {
-    const { gameId, clientUsername, setColor, setGameStarted, handleClientMakeMove } = props;
+    const { gameId, setColor, setGameStarted, handleClientMakeMove } = props;
 
     const [connectionState, setConnectionState] = React.useState<keyof typeof CONNECTION_STATE>(
         CONNECTION_STATE.CONNECTING,
@@ -90,11 +90,13 @@ export const usePlayApi = (props: Props) => {
         setHighlightDrawButton(true);
     };
 
-    const updatePlayersFromAPI = (playersAPI: PlayersAPI) => {
-        const playersProps = {} as PlayersProps;
-        for (const [color, player] of typedEntries(playersAPI)) {
-            playersProps[ColorName[color]] = { ...player };
-        }
+    const updatePlayersFromAPI = (playersAPI: GamePlayersApi) => {
+        const { white, black } = playersAPI;
+
+        const playersProps = {
+            [Color.White]: parsePlayerApiResponse(white),
+            [Color.Black]: parsePlayerApiResponse(black),
+        };
         setPlayers(playersProps);
     };
 
@@ -117,11 +119,9 @@ export const usePlayApi = (props: Props) => {
     };
 
     const handleJoined = (data: JoinApiResponse) => {
-        if (!clientUsername) return setError("Username is not set");
-
         for (const [color, player] of typedEntries(data.players)) {
-            const isPlayer = player.username === clientUsername;
-            if (isPlayer) setColor(ColorName[color]);
+            const isCurrentUser = player.is_current_user;
+            if (isCurrentUser) setColor(ColorName[color]);
         }
         updatePlayersFromAPI(data.players);
 
@@ -152,7 +152,6 @@ export const usePlayApi = (props: Props) => {
 
     React.useEffect(() => {
         if (!handleGameIdValidation()) return;
-        if (!clientUsername) return;
         if (ws.current) return;
 
         const createWs = new WebSocket(getWSUri() + "/api/play/" + gameId);
@@ -177,7 +176,7 @@ export const usePlayApi = (props: Props) => {
         return () => {
             if (createWs.readyState === createWs.OPEN) createWs.close();
         };
-    }, [clientUsername]);
+    }, []);
 
     const joinGame = () => {
         sendMessage({ type: "join", game_id: gameId });

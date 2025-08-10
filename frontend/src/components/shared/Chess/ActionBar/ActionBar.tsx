@@ -15,8 +15,7 @@ const ActionBarCss = css`
     flex-direction: horizontal;
 `;
 
-export type PlayerProps = { username: string | null; time: TimeMs; friend_status?: Statuses };
-export type PlayersProps = { white: PlayerProps; black: PlayerProps };
+export type PlayerProps = { username: string | null; time: TimeMs; friendStatus?: Statuses };
 
 type Props = { player: PlayerProps; timerPaused: boolean; actions?: ActionsType; isReplay: boolean };
 export default function ActionBar(props: Props) {
@@ -25,7 +24,7 @@ export default function ActionBar(props: Props) {
             <Player
                 username={props.player.username}
                 isOpponent={!props.actions}
-                friendStatus={props.player.friend_status || null}
+                friendStatus={props.player.friendStatus || null}
             />
             {props.actions && <QuickActions actions={props.actions} isReplay={props.isReplay} />}
             {!props.isReplay && <ChessTimer time={props.player.time} paused={props.timerPaused} />}

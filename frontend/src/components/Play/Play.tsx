@@ -5,7 +5,6 @@ import { Color } from "components/shared/Chess/ChessBoard/ChessLogic/pieces";
 import { useChessBoardState } from "components/shared/Chess/useChessBoardState/useChessBoardState";
 import Loading from "components/shared/Loading";
 import UserMenu from "components/shared/UserMenu/UserMenu";
-import { AppContext } from "hooks/appContext";
 import React from "react";
 import { useParams } from "react-router-dom";
 import { CONNECTION_STATE, usePlayApi } from "./usePlayApi";
@@ -18,9 +17,6 @@ const playCss = css`
 `;
 
 export default function Play() {
-    const appContext = React.useContext(AppContext);
-    const { username: clientUsername } = appContext;
-
     const [color, setColor] = React.useState<Color>(Color.White);
     const [gameStarted, setGameStarted] = React.useState(true);
 
@@ -29,7 +25,7 @@ export default function Play() {
 
     const { id: gameId } = useParams();
 
-    const playGameApi = usePlayApi({ gameId, clientUsername, setColor, setGameStarted, handleClientMakeMove });
+    const playGameApi = usePlayApi({ gameId, setColor, setGameStarted, handleClientMakeMove });
     const { connectionState, players, highlightDrawButton, gameResult, broadcastMove, handleResign, handleOfferDraw } =
         playGameApi;
     setBroadcastMove(broadcastMove);
