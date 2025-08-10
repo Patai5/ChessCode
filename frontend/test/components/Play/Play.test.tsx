@@ -1,6 +1,8 @@
+import "@testing-library/jest-dom";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import Play from "components/Play/Play";
 import { AppContext, AppContextType } from "hooks/appContext";
+import { JoinApiResponse } from "types/api/play";
 import { expect, test, vi } from "vitest";
 import { MockWebSocket } from "../../mockWebSocket";
 
@@ -12,7 +14,7 @@ const mockWebsocket = () => {
     return mockedWebSocket;
 };
 
-const loadGame = async () => {
+const loadGame = async ({ mockJoinMessage }: { mockJoinMessage?: JoinApiResponse } = {}) => {
     const websocket = mockWebsocket();
     vi.mock("react-router-dom", async () => ({
         useParams: () => ({ id: "test-game-id" }),
@@ -29,19 +31,18 @@ const loadGame = async () => {
         websocket.triggerOpen();
     });
 
+    const defaultMockJoinMessage: JoinApiResponse = {
+        type: "join",
+        players: {
+            white: { user_type: "registered", username: "Player1", is_current_user: true, time: 60 },
+            black: { user_type: "registered", username: "Player2", is_current_user: false, time: 60 },
+        },
+        moves: [],
+        offer_draw: false,
+        game_started: true,
+    };
     await act(async () => {
-        websocket.triggerMessage(
-            JSON.stringify({
-                type: "join",
-                players: {
-                    white: { username: "Player1", color: "white" },
-                    black: { username: "Player2", color: "black" },
-                },
-                moves: [],
-                offer_draw: false,
-                game_started: true,
-            }),
-        );
+        websocket.triggerMessage(JSON.stringify(mockJoinMessage ?? defaultMockJoinMessage));
     });
 
     await waitFor(() => screen.queryAllByText("Connecting...").length === 0);
@@ -79,4 +80,23 @@ test("Should move pieces and broadcast moves", async () => {
     expect(squareE4.getAttribute("data-testid")).includes(`piece-Pawn`);
 
     expect(MockWebSocket.messages).toContain(JSON.stringify({ type: "move", move: "e2e4" }));
+});
+
+test("Should join anonymous user", async () => {
+    const mockJoinMessage: JoinApiResponse = {
+        type: "join",
+        players: {
+            white: { user_type: "registered", username: "Player1", is_current_user: false, time: 60 },
+            black: { user_type: "anonymous", user_id: 2, is_current_user: true, time: 60 },
+        },
+        moves: [],
+        offer_draw: false,
+        game_started: true,
+    };
+
+    await loadGame({ mockJoinMessage });
+
+    const firstSquare = screen.getAllByTestId(/square/i)[0];
+    expect(firstSquare).toBeTruthy();
+    expect(firstSquare).toHaveAttribute("data-testid", expect.stringContaining("square-7-7"));
 });

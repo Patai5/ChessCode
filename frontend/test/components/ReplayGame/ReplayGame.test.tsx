@@ -8,8 +8,8 @@ import { describe, expect, test, vi } from "vitest";
 const MOCK_API_RESPONSE: ReplayGameAPIResponse = {
     moves: ["e2e4", "e7e5", "d2d4"],
     players: {
-        white: { username: "Player1", time: 0, friend_status: "not_friends" },
-        black: { username: "Player2", time: 0 },
+        white: { user_type: "registered", username: "Player1", time: 0, status: "not_friends" },
+        black: { user_type: "registered", username: "Player2", time: 0, status: "not_friends" },
     },
     termination: "resignation",
     winner_color: "white",
