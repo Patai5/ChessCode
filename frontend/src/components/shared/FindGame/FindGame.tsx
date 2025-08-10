@@ -4,6 +4,13 @@ import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import { GradientButtonPickerMethods } from "components/shared/GradientButtonPicker";
 import { AppContext } from "hooks/appContext";
 import React from "react";
+import {
+    FIND_GAME_API_RESPONSE_TYPE,
+    FindGameApiMessageType,
+    FindGameMessageApiResponse,
+    GameFoundApiResponse,
+} from "types/api/findGame";
+import { ErrorApiResponse } from "types/api/play";
 import { getWSUri } from "utils/websockets";
 import FindGameContainer from "./FindGameContainer/FindGameContainer";
 import { CloseFindGamePopupProps, SharedFindGameProps } from "./FindGameContainer/types";
@@ -39,26 +46,21 @@ export default function FindGame(props: FindGameProps) {
         setShowQueuing(false);
     };
 
-    const handleOnMessage = async (e: MessageEvent) => {
-        const data = JSON.parse(e.data);
-        switch (data.type) {
-            case "game_found":
-                if (!data.game_id) return;
-                joinGame(data.game_id);
-                break;
-            case "error":
-                // If for whatever reason a user is already in a queue, we won't show an error and instead remove him from the queue
-                if (data.message === "User is already in queue") {
-                    stopQueuingAPI();
-                    if (!queuing) return;
-                    startQueuingAPI(queuing);
-                    return;
-                }
-                setError(data.message);
-                break;
-            default:
-                ErrorQueueClass.addError({ errorMessage: `Unknown message type received: ${data.type}` });
+    const handleOnMessage = async (message: MessageEvent) => {
+        const data: FindGameMessageApiResponse = JSON.parse(message.data);
+
+        const ON_MESSAGE_HANDLERS: Record<FindGameApiMessageType, (data: FindGameMessageApiResponse) => void> = {
+            [FIND_GAME_API_RESPONSE_TYPE.GAME_FOUND]: handleGameFound,
+            [FIND_GAME_API_RESPONSE_TYPE.ERROR]: handleErrorResponse,
+        };
+
+        const onMessageHandler = ON_MESSAGE_HANDLERS[data.type];
+        if (!onMessageHandler) {
+            ErrorQueueClass.addError({ errorMessage: `Unknown message type received: ${data.type}` });
+            return;
         }
+
+        onMessageHandler(data);
     };
 
     React.useLayoutEffect(() => {
@@ -99,8 +101,17 @@ export default function FindGame(props: FindGameProps) {
         ws.current.send(message);
     };
 
+    const handleGameFound = (data: GameFoundApiResponse) => {
+        joinGame(data.game_id);
+    };
+
     const joinGame = (gameId: string) => {
         window.location.href = `/play/${gameId}`;
+    };
+
+    const handleErrorResponse = (data: ErrorApiResponse) => {
+        ErrorQueueClass.addError({ errorMessage: data.message });
+        handleStopQueuing();
     };
 
     const startQueuingAPI = (queue: QueueState) => {
