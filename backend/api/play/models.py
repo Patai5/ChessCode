@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import chess
 from django.db import models
@@ -50,8 +50,9 @@ class Player(models.Model):
     - Either has to be a regular logged-in user or an anonymous user.
     """
 
-    user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
-    anonymousUser = models.ForeignKey(AnonymousSessionUser, null=True, on_delete=models.CASCADE
+    user: User | None = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+    anonymousUser: AnonymousSessionUser | None = models.ForeignKey(
+        AnonymousSessionUser, null=True, on_delete=models.CASCADE
     )
 
     objects: models.Manager[Player]
@@ -93,12 +94,16 @@ class Player(models.Model):
 
 
 class Game(models.Model):
-    game_id = models.AutoField(primary_key=True)
-    player_white = models.ForeignKey(Player, related_name="player_white", on_delete=models.SET_NULL, null=True)
-    player_black = models.ForeignKey(Player, related_name="player_black", on_delete=models.SET_NULL, null=True)
-    termination = models.IntegerField(choices=GameTerminations.choices)
-    winner_color = models.BooleanField(null=True)
-    time_control = models.PositiveBigIntegerField()
+    game_id = cast(int, models.AutoField(primary_key=True))
+    player_white: Player | None = models.ForeignKey(
+        Player, related_name="player_white", on_delete=models.SET_NULL, null=True
+    )
+    player_black: Player | None = models.ForeignKey(
+        Player, related_name="player_black", on_delete=models.SET_NULL, null=True
+    )
+    termination = cast(int, models.IntegerField(choices=GameTerminations.choices))
+    winner_color = cast(bool, models.BooleanField(null=True))
+    time_control = cast(int, models.PositiveBigIntegerField())
     date = models.DateTimeField(auto_now_add=True)
 
     objects: models.Manager[Game]

@@ -1,3 +1,5 @@
+from typing import cast
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -8,4 +10,5 @@ class User(AbstractUser):
 
 
 class AnonymousSessionUser(models.Model):
-    session_key = models.CharField(primary_key=True, max_length=255)
+    id = cast(int, models.AutoField(primary_key=True))
+    session_key = models.CharField(max_length=255)

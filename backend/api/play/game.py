@@ -184,7 +184,8 @@ class Game:
 
     def save_to_db(self, result: CustomOutcome) -> None:
         """Saves the game to the database."""
-        whitePlayer, blackPlayer = self.get_player_models()
+        whitePlayer = self.players.by_color(chess.WHITE).player
+        blackPlayer = self.players.by_color(chess.BLACK).player
 
         game = GameModel(
             player_white=whitePlayer,
@@ -197,35 +198,6 @@ class Game:
         Move.objects.bulk_create(
             [Move(game=game, order=order, move=move) for order, move in enumerate(self.get_moves_list())]
         )
-
-    def get_player_models(self) -> tuple[Player | None, Player | None]:
-        """
-        Gets the PlayerModel objects of the game's players.
-        - Returns `None` if the player is an UnknownPlayer.
-        """
-        whitePlayer = self.players.by_color(chess.WHITE)
-        blackPlayer = self.players.by_color(chess.BLACK)
-
-        return (
-            self.get_player_model(whitePlayer.player),
-            self.get_player_model(blackPlayer.player),
-        )
-
-    def get_player_model(self, player: Player | UnknownPlayerType) -> Player | None:
-        """Gets the PlayerModel object of the user, or None if the user is UnknownPlayer."""
-        isUnknownPlayer = player is UnknownPlayer
-        if isUnknownPlayer:
-            return None
-
-        assert not isinstance(player, str)  # mypy type assertion
-
-        playerModel = Player(
-            user=player.user if player.user else None,
-            anonymousUser=player.anonymousUser if player.anonymousUser else None,
-        )
-        playerModel.save()
-
-        return playerModel
 
     def finish(self, result: CustomOutcome) -> None:
         """Finishes the game and saves it to the database.

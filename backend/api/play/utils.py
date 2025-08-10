@@ -1,28 +1,40 @@
-from typing import Any, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict
 
 from django.contrib.sessions.backends.base import SessionBase
-from users.models import AnonymousSessionUser
+from users.models import AnonymousSessionUser, User
 
 from ..friends.friends import getFriendStatus
 from .models import COLORS, TERMINATIONS, Game, GameTerminations, Move, Player
 
 
-class PlayerStatusDict(TypedDict):
-    username: str | None
+class BasePlayerStatusDict(TypedDict):
+    is_current_user: NotRequired[bool]
+
+
+class RegularUserStatusDict(BasePlayerStatusDict):
+    user_type: Literal["registered"]
+    username: str
     status: NotRequired[str]
 
 
-def handleGetAnonymousSessionUser(session: SessionBase) -> AnonymousSessionUser:
-    """Returns the session key of the given session. If the session key does not exist, creates a new one."""
-    hasSessionKey = session.session_key
-    if not hasSessionKey:
-        session.create()
+class AnonymousUserStatusDict(BasePlayerStatusDict):
+    user_type: Literal["anonymous"]
+    user_id: NotRequired[int]
 
+
+PlayerStatusDict = RegularUserStatusDict | AnonymousUserStatusDict
+
+
+def handleGetAnonymousSessionUser(session: SessionBase) -> AnonymousSessionUser:
     sessionKey = session.session_key
     if not sessionKey:
         raise ValueError("Session key is missing")
 
-    return AnonymousSessionUser(sessionKey)
+    existingAnonymousUser = AnonymousSessionUser.objects.filter(session_key=sessionKey).first()
+    if existingAnonymousUser:
+        return existingAnonymousUser
+
+    return AnonymousSessionUser.objects.create(session_key=sessionKey)
 
 
 def game_to_dict(
@@ -54,24 +66,60 @@ def game_to_dict(
 def player_status_dict(
     player: Player | None, relativeUserStatusToPlayer: Player | None = None
 ) -> PlayerStatusDict | None:
-    """Returns a dictionary representation of the given player."""
-    friendDict: PlayerStatusDict = {"username": player.user.username if player and player.user else None}
+    """Returns a dictionary representation of the given player.
+    - Either returns `None` if the player is not given
+    - Or a dictionary of a registered player, or an anonymous player
+    """
+    if not player:
+        return None
 
-    canGetStatus = player and relativeUserStatusToPlayer
+    if player.anonymousUser:
+        return get_anonymous_user_status_dict(player.anonymousUser, relativeUserStatusToPlayer)
+
+    if not player.user:
+        raise ValueError("Player must have a user or anonymousUser set.")
+
+    return get_regular_user_status_dict(player.user, relativeUserStatusToPlayer)
+
+
+def get_anonymous_user_status_dict(
+    anonymousUser: AnonymousSessionUser,
+    relativeUserStatusToPlayer: Player | None,
+) -> AnonymousUserStatusDict:
+    playerStatusDict: AnonymousUserStatusDict = {"user_type": "anonymous", "user_id": anonymousUser.id}
+    if relativeUserStatusToPlayer:
+        playerStatusDict["is_current_user"] = relativeUserStatusToPlayer.anonymousUser == anonymousUser
+
+    return playerStatusDict
+
+
+def get_regular_user_status_dict(
+    user: User,
+    relativeUserStatusToPlayer: Player | None = None,
+) -> RegularUserStatusDict:
+    """Returns a dictionary representation of the given user.
+    - returns `is_current_user` when the `relativeUserStatusToPlayer` is set
+    - return `status` which stands for the friendship relation of the user to the given player
+    """
+    playerStatusDict: RegularUserStatusDict = {"user_type": "registered", "username": user.username}
+
+    if not relativeUserStatusToPlayer:
+        return playerStatusDict
+
+    isPlayerHimself = user == relativeUserStatusToPlayer.user
+    if relativeUserStatusToPlayer:
+        playerStatusDict["is_current_user"] = isPlayerHimself
+
+    canGetStatus = relativeUserStatusToPlayer.user and not isPlayerHimself
     if not canGetStatus:
-        return friendDict
+        return playerStatusDict
 
-    isPlayerHimself = player == relativeUserStatusToPlayer
-    if isPlayerHimself:
-        return friendDict
+    assert relativeUserStatusToPlayer.user  # mypy type assertion
 
-    # mypy type assertion
-    assert player and relativeUserStatusToPlayer
+    status = getFriendStatus(relativeUserStatusToPlayer.user, user)
+    playerStatusDict["status"] = status.value
 
-    status = getFriendStatus(relativeUserStatusToPlayer.user, player.user)
-    friendDict["status"] = status.value
-
-    return friendDict
+    return playerStatusDict
 
 
 def get_player_games_json(player: Player, page: int, limit: int, include_moves: bool = True) -> list[dict[str, Any]]:

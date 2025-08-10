@@ -1,13 +1,12 @@
 import threading
 import time
-from typing import Any, Callable, Iterable, Literal
+from typing import Any, Callable, Iterable, Literal, NotRequired, TypedDict
 
 import chess
 from api.play.models import Player
-from users.models import User
+from api.play.utils import BasePlayerStatusDict, player_status_dict
 
-from ..friends.friends import getFriendStatus
-from .chess_board import CHESS_COLOR_NAMES, get_opposite_color
+from .chess_board import get_opposite_color
 
 TimeS = float
 TimeMs = int
@@ -15,6 +14,22 @@ APICallbackType = Callable[[str, Any], None]
 
 UnknownPlayerType = Literal["UnknownPlayer"]
 UnknownPlayer: UnknownPlayerType = "UnknownPlayer"
+
+
+class PlayerStatusDictUnion(BasePlayerStatusDict):
+    user_type: Literal["registered", "anonymous", "unknown_player"]
+    username: NotRequired[str]
+    user_id: NotRequired[int]
+    status: NotRequired[str]
+
+
+class PlayerSerializedDict(PlayerStatusDictUnion):
+    time: TimeMs
+
+
+class PlayersSerializedDict(TypedDict):
+    white: PlayerSerializedDict
+    black: PlayerSerializedDict
 
 
 class GamePlayer:
@@ -124,20 +139,35 @@ class Players:
         """Gets the Player object for the given player"""
         return self.gamePlayersDict[player]
 
-    def to_json_dict(self, player: Player | None = None) -> dict[str, dict[str, Any]]:
-        """Converts the Players object to a JSON serializable dict
-        - If `friend` parameter is not None, the friend status of the users will be added to the opponent"""
-        friendStatus: dict[str, Any] = {}
-        if isinstance(player, User) and player in self.gamePlayersDict:
-            opponent = self.get_opponent(player)
-            if isinstance(opponent, User):
-                friendStatus = {"opponent": getFriendStatus(player, opponent).value}
+    def to_json_dict(self, relativeUserStatusToPlayer: Player | None = None) -> PlayersSerializedDict:
+        """Converts the Players object to a JSON serializable dict"""
+        whitePlayer = self.by_color(chess.WHITE)
+        blackPlayer = self.by_color(chess.BLACK)
 
         return {
-            CHESS_COLOR_NAMES[player.color]: {
-                "username": colorUser.username if isinstance(colorUser, User) else None,
-                "time": player.get_current_time(),
-                **(friendStatus),
-            }
-            for colorUser, player in self.gamePlayersDict.items()
+            "white": self.get_player_serialized_dict(whitePlayer, relativeUserStatusToPlayer),
+            "black": self.get_player_serialized_dict(blackPlayer, relativeUserStatusToPlayer),
         }
+
+    def get_player_serialized_dict(
+        self, gamePlayer: GamePlayer, relativeUserStatusToPlayer: Player | None
+    ) -> PlayerSerializedDict:
+        """Returns a serialized representation of the given player. Adds remaining game time to each player.
+        - If the player is unknown, returns a dict with user_type "unknown_player"
+        """
+        isUnknownPlayer = gamePlayer.player is UnknownPlayer
+        if isUnknownPlayer:
+            return {"user_type": "unknown_player", "time": gamePlayer.get_current_time()}
+
+        assert not isinstance(gamePlayer.player, str)  # mypy type assertion
+
+        playerStatus = player_status_dict(gamePlayer.player, relativeUserStatusToPlayer=relativeUserStatusToPlayer)
+        if not playerStatus:
+            raise ValueError("Failed to get player status")
+
+        playerDict: PlayerSerializedDict = {
+            **playerStatus,
+            "time": gamePlayer.get_current_time(),
+        }
+
+        return playerDict
