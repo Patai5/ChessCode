@@ -1,11 +1,10 @@
 from typing import Any, NotRequired, TypedDict
 
 from django.contrib.sessions.backends.base import SessionBase
-from django.db.models import Q
-from users.models import AnonymousSessionUser, User
+from users.models import AnonymousSessionUser
 
 from ..friends.friends import getFriendStatus
-from .models import COLORS, TERMINATIONS, Game, GameTerminations, Move
+from .models import COLORS, TERMINATIONS, Game, GameTerminations, Move, Player
 
 
 class PlayerStatusDict(TypedDict):
@@ -26,7 +25,9 @@ def handleGetAnonymousSessionUser(session: SessionBase) -> AnonymousSessionUser:
     return AnonymousSessionUser(sessionKey)
 
 
-def game_to_dict(game: Game, include_moves: bool = True, friend_status_from_user: User | None = None) -> dict[str, Any]:
+def game_to_dict(
+    game: Game, include_moves: bool = True, relativeUserStatusToPlayer: Player | None = None
+) -> dict[str, Any]:
     """Returns a dictionary representation of the given game."""
     gameTermination = TERMINATIONS.get(GameTerminations(game.termination))
     if gameTermination is None:
@@ -35,8 +36,8 @@ def game_to_dict(game: Game, include_moves: bool = True, friend_status_from_user
     return {
         "game_id": game.game_id,
         "players": {
-            "white": player_status_dict(game.player_white, friend_status_from_user),
-            "black": player_status_dict(game.player_black, friend_status_from_user),
+            "white": player_status_dict(game.player_white, relativeUserStatusToPlayer),
+            "black": player_status_dict(game.player_black, relativeUserStatusToPlayer),
         },
         "termination": gameTermination.name.lower(),
         "winner_color": COLORS.get(game.winner_color),
@@ -50,33 +51,31 @@ def game_to_dict(game: Game, include_moves: bool = True, friend_status_from_user
     }
 
 
-def player_status_dict(player: User | None, friend_status_from_user: User | None = None) -> PlayerStatusDict:
+def player_status_dict(
+    player: Player | None, relativeUserStatusToPlayer: Player | None = None
+) -> PlayerStatusDict | None:
     """Returns a dictionary representation of the given player."""
-    friendDict: PlayerStatusDict = {"username": player.username if player else None}
+    friendDict: PlayerStatusDict = {"username": player.user.username if player and player.user else None}
 
-    canGetStatus = player and friend_status_from_user
+    canGetStatus = player and relativeUserStatusToPlayer
     if not canGetStatus:
         return friendDict
 
-    print("player", player, "friend_status_from_user", friend_status_from_user)
-    isPlayerHimself = player == friend_status_from_user
+    isPlayerHimself = player == relativeUserStatusToPlayer
     if isPlayerHimself:
         return friendDict
 
     # mypy type assertion
-    assert player and friend_status_from_user
+    assert player and relativeUserStatusToPlayer
 
-    status = getFriendStatus(friend_status_from_user, player)
+    status = getFriendStatus(relativeUserStatusToPlayer.user, player.user)
     friendDict["status"] = status.value
 
     return friendDict
 
 
-def get_player_games_json(username: str, page: int, limit: int, include_moves: bool = True) -> list[dict[str, Any]]:
+def get_player_games_json(player: Player, page: int, limit: int, include_moves: bool = True) -> list[dict[str, Any]]:
     """Returns a list of games played by the player with the given username."""
-    games = Game.objects.filter(
-        Q(player_white__username=username) | Q(player_black__username=username),
-    ).order_by(
-        "-date"
-    )[limit * (page - 1) : min(limit * page, 2**63)]
+
+    games = Game.getGamesByPlayer(player).order_by("-date")[limit * (page - 1) : min(limit * page, 2**63)]
     return [game_to_dict(game, include_moves) for game in games]

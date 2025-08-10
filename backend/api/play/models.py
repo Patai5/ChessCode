@@ -4,6 +4,7 @@ from typing import Any
 
 import chess
 from django.db import models
+from django.db.models import QuerySet
 from users.models import AnonymousSessionUser, User
 
 from .chess_board import CustomTermination
@@ -50,7 +51,10 @@ class Player(models.Model):
     """
 
     user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
-    anonymousUser = models.ForeignKey(AnonymousSessionUser, null=True, on_delete=models.CASCADE)
+    anonymousUser = models.ForeignKey(AnonymousSessionUser, null=True, on_delete=models.CASCADE
+    )
+
+    objects: models.Manager[Player]
 
     def clean(self) -> None:
         userObjects = [self.user, self.anonymousUser]
@@ -62,6 +66,30 @@ class Player(models.Model):
     def save(self, *args: Any, **kwargs: Any) -> None:
         self.clean()
         super().save(*args, **kwargs)
+
+    @staticmethod
+    def getOrCreatePlayerByUser(user: User | AnonymousSessionUser) -> Player:
+        player = Player.getPlayerByUser(user)
+        if player:
+            return player
+
+        return Player.createAndSaveNewPlayer(user)
+
+    @staticmethod
+    def getPlayerByUser(user: User | AnonymousSessionUser) -> Player | None:
+        if isinstance(user, User):
+            return Player.objects.filter(user=user).first()
+        return Player.objects.filter(anonymousUser=user).first()
+
+    @staticmethod
+    def createAndSaveNewPlayer(user: User | AnonymousSessionUser) -> Player:
+        player = Player(
+            user=user if isinstance(user, User) else None,
+            anonymousUser=user if isinstance(user, AnonymousSessionUser) else None,
+        )
+        player.save()
+
+        return player
 
 
 class Game(models.Model):
@@ -80,6 +108,10 @@ class Game(models.Model):
 
     def __str__(self) -> str:
         return str(self.game_id)
+
+    @staticmethod
+    def getGamesByPlayer(player: Player) -> QuerySet[Game, Game]:
+        return Game.objects.filter(models.Q(player_white=player) | models.Q(player_black=player))
 
 
 class Move(models.Model):

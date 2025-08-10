@@ -4,15 +4,13 @@ import threading
 from typing import Dict
 
 import chess
-from users.models import AnonymousSessionUser
 
 from ..utils import genUniqueID
 from .chess_board import CHESS_COLOR_NAMES, ChessBoard, CustomOutcome, CustomTermination
 from .game_modes import GameMode, TimeControl
 from .models import Game as GameModel
-from .models import GameTerminations, Move
-from .models import Player as PlayerModel
-from .players import APICallbackType, GamePlayer, GameUser, Players, TimeS, UnknownPlayer, UnknownPlayerType
+from .models import GameTerminations, Move, Player
+from .players import APICallbackType, GamePlayer, Players, TimeS, UnknownPlayer, UnknownPlayerType
 
 
 class GameStatus(enum.Enum):
@@ -50,20 +48,20 @@ class Game:
 
         self._game_id = value
 
-    def can_player_join(self, user: GameUser) -> bool:
+    def can_player_join(self, player: Player) -> bool:
         """Checks if the player can join the game."""
-        if user in self.players.users:
+        if player in self.players.players:
             return True
 
-        hasUnknownPlayer = any(player is UnknownPlayer for player in self.players.users)
+        hasUnknownPlayer = any(player is UnknownPlayer for player in self.players.players)
         return hasUnknownPlayer
 
-    def join_player(self, user: GameUser, api_callback: APICallbackType) -> None:
+    def join_player(self, player: Player, api_callback: APICallbackType) -> None:
         """Joins the player into the game."""
-        self.players.join_game(user, api_callback)
+        self.players.join_game(player, api_callback)
 
         if self.status == GameStatus.NOT_STARTED:
-            if all(player.joined for player in self.players.players):
+            if all(player.joined for player in self.players.gamePlayers):
                 self.start()
 
     def start(self) -> None:
@@ -72,25 +70,25 @@ class Game:
         self.update_player_timers()
         self.start_reset_abort_timer()
 
-        for player in self.players.players:
+        for player in self.players.gamePlayers:
             player.api_callback("game_started", {"game_started": True})
 
     def callback_game_result(self, result: chess.Outcome) -> None:
         """Calls the API callbacks with the game result."""
 
         winningColor = CHESS_COLOR_NAMES[result.winner] if not result.winner is None else "draw"
-        for player in self.players.players:
+        for player in self.players.gamePlayers:
             player.api_callback("game_result", [result.termination.name.lower(), winningColor])
 
-    def callback_move(self, user: GameUser, move: chess.Move | str) -> None:
+    def callback_move(self, player: Player, move: chess.Move | str) -> None:
         """Calls the API callbacks with the move."""
 
         if isinstance(move, chess.Move):
             move = move.uci()
 
-        for player in self.players.players:
-            if player.user != user:
-                player.api_callback("move", move)
+        for gamePlayer in self.players.gamePlayers:
+            if gamePlayer.player != player:
+                gamePlayer.api_callback("move", move)
 
     def start_abort_timer(self, abortAfterTime: TimeS) -> None:
         """Start the abort timer that aborts the game."""
@@ -128,7 +126,7 @@ class Game:
         """Returns a list of all moves made in the game in UCI notation."""
         return [move.uci() for move in self.board.moves]
 
-    def move(self, user: GameUser, move: chess.Move | str) -> ChessBoard.ILLEGAL_MOVE_TYPE | chess.Outcome | None:
+    def move(self, player: Player, move: chess.Move | str) -> ChessBoard.ILLEGAL_MOVE_TYPE | chess.Outcome | None:
         """
         Moves a piece on the board.
 
@@ -149,7 +147,7 @@ class Game:
         self.update_player_timers()
         self.players.remove_draw_offers()
 
-        self.callback_move(user, move)
+        self.callback_move(player, move)
         if isinstance(result, CustomOutcome):
             self.finish(result)
         return result
@@ -161,15 +159,15 @@ class Game:
 
     def update_player_timers(self) -> None:
         """Updates the player timers."""
-        for player in self.players.players:
+        for player in self.players.gamePlayers:
             if player.color == self.board.color_to_move:
                 player.start_timer(self.ran_out_of_time)
             else:
                 player.stop_timer()
 
-    def offer_draw(self, user: GameUser) -> None:
+    def offer_draw(self, player: Player) -> None:
         """Offers a draw to the opponent. If the opponent accepts, the game ends in a draw."""
-        offeringPlayer = self.players.by_user(user)
+        offeringPlayer = self.players.by_player(player)
         if offeringPlayer.offers_draw:
             return  # The player has already offered a draw, do nothing
         offeringPlayer.offers_draw = True
@@ -177,12 +175,12 @@ class Game:
         if self.players.is_draw_agreement:
             self.finish(CustomOutcome(CustomTermination.AGREEMENT, None))
         else:
-            opponent = self.players.get_opponent(user)
+            opponent = self.players.get_opponent(player)
             opponent.api_callback("offer_draw")
 
-    def is_players_turn(self, user: GameUser) -> bool:
-        """Checks if it is the user's turn."""
-        return self.board.color_to_move == self.players.by_user(user).color
+    def is_players_turn(self, player: Player) -> bool:
+        """Checks if it is the player's turn."""
+        return self.board.color_to_move == self.players.by_player(player).color
 
     def save_to_db(self, result: CustomOutcome) -> None:
         """Saves the game to the database."""
@@ -200,7 +198,7 @@ class Game:
             [Move(game=game, order=order, move=move) for order, move in enumerate(self.get_moves_list())]
         )
 
-    def get_player_models(self) -> tuple[PlayerModel | None, PlayerModel | None]:
+    def get_player_models(self) -> tuple[Player | None, Player | None]:
         """
         Gets the PlayerModel objects of the game's players.
         - Returns `None` if the player is an UnknownPlayer.
@@ -209,21 +207,21 @@ class Game:
         blackPlayer = self.players.by_color(chess.BLACK)
 
         return (
-            self.get_player_model(whitePlayer.user),
-            self.get_player_model(blackPlayer.user),
+            self.get_player_model(whitePlayer.player),
+            self.get_player_model(blackPlayer.player),
         )
 
-    def get_player_model(self, user: GameUser | UnknownPlayerType) -> PlayerModel | None:
+    def get_player_model(self, player: Player | UnknownPlayerType) -> Player | None:
         """Gets the PlayerModel object of the user, or None if the user is UnknownPlayer."""
-        isUnknownPlayer = user is UnknownPlayer
+        isUnknownPlayer = player is UnknownPlayer
         if isUnknownPlayer:
             return None
 
-        isAnonymousUser = isinstance(user, AnonymousSessionUser)
+        assert not isinstance(player, str)  # mypy type assertion
 
-        playerModel = PlayerModel(
-            user=user if not isAnonymousUser else None,
-            anonymousUser=user if isAnonymousUser else None,
+        playerModel = Player(
+            user=player.user if player.user else None,
+            anonymousUser=player.anonymousUser if player.anonymousUser else None,
         )
         playerModel.save()
 
@@ -233,7 +231,7 @@ class Game:
         """Finishes the game and saves it to the database.
         - Does not save games with termination of `ABORTED`."""
         self.status = GameStatus.FINISHED
-        for player in self.players.players:
+        for player in self.players.gamePlayers:
             player.stop_timer()
 
         self.callback_game_result(result)
@@ -261,7 +259,7 @@ class GameManager:
 
     def start_game(
         self,
-        players: tuple[GameUser, GameUser | UnknownPlayerType],
+        players: tuple[Player, Player | UnknownPlayerType],
         game_mode: GameMode,
         time_control: TimeControl,
         link_game: bool = False,
@@ -271,7 +269,7 @@ class GameManager:
         colors = [chess.WHITE, chess.BLACK]
         random.shuffle(colors)
 
-        gamePlayers = Players([GamePlayer(user, color, time_control.time) for user, color in zip(players, colors)])
+        gamePlayers = Players([GamePlayer(player, color, time_control.time) for player, color in zip(players, colors)])
 
         game = Game(gamePlayers, game_mode, time_control, game_id, link_game)
         self.games[game_id] = game

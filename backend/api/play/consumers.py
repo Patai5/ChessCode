@@ -2,8 +2,8 @@ import json
 import re
 from typing import Any
 
+from api.play.models import Player
 from channels.generic.websocket import WebsocketConsumer  # type: ignore
-from users.models import AnonymousSessionUser, User
 
 from ..consumers import error
 from . import serializers as s
@@ -13,20 +13,19 @@ from .game_queue import GROUP_QUEUE_MANAGER, GameQueueManager, Group
 from .utils import handleGetAnonymousSessionUser
 
 
-class QueueConsumer(WebsocketConsumer):  # type: ignore
-    user: User | AnonymousSessionUser
+class PlayerWebsocketConsumer(WebsocketConsumer):  # type: ignore
+    player: Player
 
     def connect(self) -> None:
         isLoggedIn = self.scope["user"].is_authenticated
-        if isLoggedIn:
-            self.user: User = self.scope["user"]
-            self.accept()
-            return
+        user = self.scope["user"] if isLoggedIn else handleGetAnonymousSessionUser(self.scope["session"])
 
-        self.user = handleGetAnonymousSessionUser(self.scope["session"])
-        print(self.user)
+        self.player = Player.getOrCreatePlayerByUser(user)
+
         self.accept()
 
+
+class QueueConsumer(PlayerWebsocketConsumer):
     def receive(self, text_data: Any) -> None:
         json_data = json.loads(text_data)
         if "type" not in json_data:
@@ -56,8 +55,8 @@ class QueueConsumer(WebsocketConsumer):  # type: ignore
         if not queue_manager:
             return
 
-        if queue_manager.is_player_queuing(self.user):
-            return error(self, message="User is already in queue")
+        if queue_manager.is_player_queuing(self.player):
+            return error(self, message="Player is already in queue")
 
         game_mode = serializer.validated_data["game_mode"]
         time_control = serializer.validated_data["time_control"]
@@ -65,28 +64,21 @@ class QueueConsumer(WebsocketConsumer):  # type: ignore
         if not gameQueue:
             return error(self, message="Invalid game mode or time control")
 
-        queue_manager.add_user(self.user, gameQueue, self.game_found)
+        queue_manager.add_player(self.player, gameQueue, self.game_found)
 
     def stop_queuing(self) -> None:
-        GROUP_QUEUE_MANAGER.remove_player(self.user)
+        GROUP_QUEUE_MANAGER.remove_player(self.player)
 
     def game_found(self, game: Game) -> None:
         self.send(json.dumps({"type": "game_found", "game_id": game.game_id}))
 
     def disconnect(self, code: int) -> None:
-        GROUP_QUEUE_MANAGER.remove_player(self.user)
+        GROUP_QUEUE_MANAGER.remove_player(self.player)
         self.close(code=code)
 
 
-class GameConsumer(WebsocketConsumer):  # type: ignore
+class GameConsumer(PlayerWebsocketConsumer):
     game: Game
-    user: User | AnonymousSessionUser
-
-    def connect(self) -> None:
-        isLoggedIn = self.scope["user"].is_authenticated
-        self.user = self.scope["user"] if isLoggedIn else handleGetAnonymousSessionUser(self.scope["session"])
-
-        self.accept()
 
     def receive(self, text_data: str) -> None:
         json_data = json.loads(text_data)
@@ -122,17 +114,17 @@ class GameConsumer(WebsocketConsumer):  # type: ignore
             return error(self, message="There is no active game with the provided Game ID")
         self.game = maybeGame
 
-        if not self.game.can_player_join(self.user):
-            return error(self, message="User is not playing in this game")
-        self.game.join_player(self.user, self.callback_game_state)
+        if not self.game.can_player_join(self.player):
+            return error(self, message="Player is not playing in this game")
+        self.game.join_player(self.player, self.callback_game_state)
 
         self.send(
             text_data=json.dumps(
                 {
                     "type": "join",
-                    "players": self.game.players.to_json_dict(self.user),
+                    "players": self.game.players.to_json_dict(self.player),
                     "moves": self.game.get_moves_list(),
-                    "offer_draw": self.game.players.get_opponent(self.user).offers_draw,
+                    "offer_draw": self.game.players.get_opponent(self.player).offers_draw,
                     "game_started": self.game.status == GameStatus.IN_PROGRESS,
                 }
             )
@@ -146,28 +138,28 @@ class GameConsumer(WebsocketConsumer):  # type: ignore
         if not isinstance(move, str):
             return error(self, message="Move must be a string")
 
-        if not self.game.is_players_turn(self.user):
+        if not self.game.is_players_turn(self.player):
             return error(self, message="It is not your turn")
 
-        moveResult = self.game.move(self.user, move)
+        moveResult = self.game.move(self.player, move)
         if moveResult == ChessBoard.ILLEGAL_MOVE:
             return error(self, message="Illegal move")
         if isinstance(moveResult, CustomOutcome):
             self.send(json.dumps({"type": "outcome", "outcome": moveResult.result()}))
 
     def resign(self) -> None:
-        user_color = self.game.players.by_user(self.user).color
-        winning_color = get_opposite_color(user_color)
+        playerColor = self.game.players.by_player(self.player).color
+        winning_color = get_opposite_color(playerColor)
         self.game.finish(CustomOutcome(winner=winning_color, termination=CustomTermination.RESIGNATION))
 
     def offer_draw(self) -> None:
-        self.game.offer_draw(self.user)
+        self.game.offer_draw(self.player)
 
     def callback_game_state(self, type: str, changed: Any = None) -> None:
         assert type in ["game_started", "move", "game_result", "out_of_time", "offer_draw"], "Invalid type"
 
         if type == "game_started":
-            self.send(json.dumps({"type": "game_started", "players": self.game.players.to_json_dict(self.user)}))
+            self.send(json.dumps({"type": "game_started", "players": self.game.players.to_json_dict(self.player)}))
         elif type == "move":
             self.send(json.dumps({"type": "move", "move": changed, "players": self.game.players.to_json_dict()}))
         elif type == "game_result":

@@ -1,44 +1,45 @@
 from typing import Callable, Dict, Tuple
 
+from api.play.models import Player
+
 from .game import ALL_ACTIVE_GAMES_MANAGER, Game
 from .game_modes import ACTIVE_GAME_MODES, GameMode, TimeControl
-from .players import GameUser
 
 
 class GameQueue:
     def __init__(self, game_mode: GameMode, time_control: TimeControl):
         self.game_mode = game_mode
         self.time_control = time_control
-        self.queue: list[GameUser] = []
+        self.queue: list[Player] = []
 
-    def add_user(self, user: GameUser) -> None:
-        """Add a user to the queue. If there is a match, start a game"""
-        assert not self.is_player_queuing(user), "User is already in queue"
+    def add_player(self, player: Player) -> None:
+        """Add a player to the queue. If there is a match, start a game"""
+        assert not self.is_player_queuing(player), "Player is already in queue"
 
-        self.queue.append(user)
+        self.queue.append(player)
 
-    def remove_user(self, user: GameUser) -> None:
-        """Remove a user from the queue"""
-        assert self.is_player_queuing(user), "User is not in queue"
+    def remove_player(self, player: Player) -> None:
+        """Remove a player from the queue"""
+        assert self.is_player_queuing(player), "Player is not in queue"
 
-        self.queue.remove(user)
+        self.queue.remove(player)
 
-    def is_player_queuing(self, user: GameUser) -> bool:
-        """Returns True if the user is in the queue, False otherwise"""
-        return user in self.queue
+    def is_player_queuing(self, player: Player) -> bool:
+        """Returns True if the player is in the queue, False otherwise"""
+        return player in self.queue
 
 
 class QueuingPlayer:
     def __init__(
-        self, user: GameUser, game_queue: GameQueue, game_found_callback: Callable[[Game], None] | None = None
+        self, player: Player, game_queue: GameQueue, game_found_callback: Callable[[Game], None] | None = None
     ):
-        self.user = user
+        self.player = player
         self.game_queue = game_queue
 
         self.game_found_callback = game_found_callback
         """Callback function to be called when a game is found. The game ID will be passed as an argument
         
-        Notifies the users that a game has been found using websockets"""
+        Notifies the players that a game has been found using websockets"""
 
 
 class GameQueueManager:
@@ -46,34 +47,34 @@ class GameQueueManager:
         self.game_queues = [
             GameQueue(game_mode, time_control) for game_mode in game_modes for time_control in game_mode.time_controls
         ]
-        self.queuing_players: Dict[GameUser, QueuingPlayer] = {}
+        self.queuing_players: Dict[Player, QueuingPlayer] = {}
 
-    def add_user(self, user: GameUser, game_queue: GameQueue, gameFoundCallback: Callable[[Game], None]) -> None:
-        """Adds a user to a game queue"""
+    def add_player(self, player: Player, game_queue: GameQueue, gameFoundCallback: Callable[[Game], None]) -> None:
+        """Adds a player to a game queue"""
 
-        if self.is_player_queuing(user):
-            raise ValueError("User is already in a queue")
+        if self.is_player_queuing(player):
+            raise ValueError("Player is already in a queue")
 
-        self.queuing_players[user] = QueuingPlayer(user, game_queue, gameFoundCallback)
-        game_queue.add_user(user)
+        self.queuing_players[player] = QueuingPlayer(player, game_queue, gameFoundCallback)
+        game_queue.add_player(player)
 
         # Start a game if there are at least two players in the queue
         if len(game_queue.queue) >= 2:
             self.start_game((game_queue.queue[0], game_queue.queue[1]), game_queue)
 
-    def remove_user(self, user: GameUser) -> None:
-        """Remove a user from a game queue"""
+    def remove_player(self, player: Player) -> None:
+        """Remove a player from a game queue"""
 
-        if not self.is_player_queuing(user):
-            raise ValueError("User is not in a queue")
+        if not self.is_player_queuing(player):
+            raise ValueError("Player is not in a queue")
 
-        self.queuing_players[user].game_queue.remove_user(user)
-        del self.queuing_players[user]
+        self.queuing_players[player].game_queue.remove_player(player)
+        del self.queuing_players[player]
 
-    def is_player_queuing(self, user: GameUser) -> bool:
-        """Returns True if the user is in any queue, False otherwise"""
+    def is_player_queuing(self, player: Player) -> bool:
+        """Returns True if the player is in any queue, False otherwise"""
 
-        return user in self.queuing_players
+        return player in self.queuing_players
 
     def get_game_queue(self, game_mode: str, time_control: int) -> GameQueue | None:
         """
@@ -88,7 +89,7 @@ class GameQueueManager:
         # Game queue does not exist
         return None
 
-    def start_game(self, players: Tuple[GameUser, GameUser], game_queue: GameQueue) -> None:
+    def start_game(self, players: Tuple[Player, Player], game_queue: GameQueue) -> None:
         """Start a game between two players, removing them from the queue"""
         if all(player not in game_queue.queue for player in players):
             raise ValueError("Players are not in the queue")
@@ -98,7 +99,7 @@ class GameQueueManager:
             callback = self.queuing_players[player].game_found_callback
             if callback is not None:
                 callback(game)
-            self.remove_user(player)
+            self.remove_player(player)
 
 
 Group = tuple[str, ...]
@@ -140,18 +141,18 @@ class GroupQueueManager:
 
         del self.groups[group]
 
-    def remove_player(self, user: GameUser) -> None:
+    def remove_player(self, player: Player) -> None:
         """Removes the player from all queues
         - the algorithm is O(n), which could be improved, but it's not worth it"""
 
         for group, queue in list(self.groups.items()):
-            if queue.is_player_queuing(user):
-                queue.remove_user(user)
+            if queue.is_player_queuing(player):
+                queue.remove_player(player)
                 if len(queue.queuing_players) == 0:
                     self.remove_group(group)
 
-        if self.default.is_player_queuing(user):
-            self.default.remove_user(user)
+        if self.default.is_player_queuing(player):
+            self.default.remove_player(player)
 
 
 GROUP_QUEUE_MANAGER = GroupQueueManager()

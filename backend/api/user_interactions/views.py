@@ -6,7 +6,7 @@ from users.models import User
 
 from ..friends.friends import getFriendStatus
 from ..friends.models import FriendRequest, Friendship
-from ..play.models import Game
+from ..play.models import Game, Player
 from ..play.utils import get_player_games_json
 
 
@@ -18,9 +18,9 @@ class Profile(APIView):
 
         joinedDate = user.date_joined
         friendsCount = Friendship.objects.filter(Q(user1=user) | Q(user2=user)).count()
-        gamesCount = Game.objects.filter(
-            Q(player_white__username=username) | Q(player_black__username=username),
-        ).count()
+
+        player = Player.objects.filter(user=user).first()
+        gamesCount = Game.getGamesByPlayer(player).count() if player else 0
 
         friendRequests = None
         friendStatus = None
@@ -30,7 +30,7 @@ class Profile(APIView):
             else:
                 friendStatus = getFriendStatus(request.user, user).value
 
-        games = get_player_games_json(username, 1, 10, include_moves=False)
+        games = get_player_games_json(player, page=1, limit=10, include_moves=False) if player else []
 
         return JsonResponse(
             {

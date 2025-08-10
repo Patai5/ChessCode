@@ -3,6 +3,7 @@ from api.play.chess_board import CustomOutcome
 from api.play.game import ALL_ACTIVE_GAMES_MANAGER, Game
 from api.play.game_modes import GameMode, TimeControl
 from api.play.game_queue import GameQueueManager
+from api.play.models import Player
 from chess import Termination
 from users.models import AnonymousSessionUser
 
@@ -10,7 +11,10 @@ from users.models import AnonymousSessionUser
 @pytest.mark.django_db
 def test_anonymous_user_game() -> None:
     user1 = AnonymousSessionUser.objects.create(session_key="session1")
+    player1 = Player.getOrCreatePlayerByUser(user1)
+
     user2 = AnonymousSessionUser.objects.create(session_key="session2")
+    player2 = Player.getOrCreatePlayerByUser(user2)
 
     gameMode = GameMode("Blitz", [TimeControl(120)])
     queueManager = GameQueueManager([gameMode])
@@ -18,19 +22,19 @@ def test_anonymous_user_game() -> None:
 
     assert queue is not None
 
-    addedUser1 = False
-    addedUser2 = False
+    addedPlayer1 = False
+    addedPlayer2 = False
 
-    def onAddUser1Callback(_: Game) -> None:
-        nonlocal addedUser1
-        addedUser1 = True
+    def onAddPlayer1Callback(_: Game) -> None:
+        nonlocal addedPlayer1
+        addedPlayer1 = True
 
-    def onAddUser2Callback(_: Game) -> None:
-        nonlocal addedUser2
-        addedUser2 = True
+    def onAddPlayer2Callback(_: Game) -> None:
+        nonlocal addedPlayer2
+        addedPlayer2 = True
 
-    queueManager.add_user(user1, queue, onAddUser1Callback)
-    queueManager.add_user(user2, queue, onAddUser2Callback)
+    queueManager.add_player(player1, queue, onAddPlayer1Callback)
+    queueManager.add_player(player2, queue, onAddPlayer2Callback)
 
     first_game = next(iter(ALL_ACTIVE_GAMES_MANAGER.games.values()))
 
