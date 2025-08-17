@@ -19,12 +19,6 @@ const HOVER_ENABLED = css`
         }
     }
 `;
-const USERNAME = css`
-    :hover {
-        text-decoration: underline;
-        background-color: #4d4d4d;
-    }
-`;
 const WINNER_COLORS = {
     [GAME_OUTCOME.WON]: css`
         color: #00ff00;
@@ -40,6 +34,5 @@ const WINNER_COLORS = {
 export const CSS = {
     GAME_ROW,
     HOVER_ENABLED,
-    USERNAME,
     WINNER_COLORS,
 } as const;
