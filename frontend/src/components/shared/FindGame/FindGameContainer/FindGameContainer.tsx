@@ -1,4 +1,5 @@
 /** @jsxImportSource @emotion/react */
+import { JSX } from "@emotion/react/jsx-runtime";
 import { ANIMATION_STATE, AnimationState } from "components/constants";
 import CloseButton from "components/shared/CloseButton/CloseButton";
 import Paper from "components/shared/Paper";
