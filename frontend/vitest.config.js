@@ -1,7 +1,12 @@
 import path from "path";
+import { defineConfig } from "vitest/config";
 
-export default {
-    test: { environment: "jsdom", globals: true },
+export default defineConfig({
+    test: {
+        environment: "jsdom",
+        globals: true,
+        setupFiles: "./test/setupTests.ts",
+    },
     resolve: {
         alias: {
             components: path.resolve(__dirname, "./src/components/"),
@@ -11,4 +16,4 @@ export default {
             css: path.resolve(__dirname, "./src/css/"),
         },
     },
-};
+});
