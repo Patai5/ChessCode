@@ -21,7 +21,7 @@ export default function ProfilePicture(props: Props) {
             radius: 50,
             backgroundType: ["solid", "gradientLinear"],
             backgroundColor: ["b6e3f4", "c0aede", "d1d4f9", "ffd5dc", "ffdfbf"],
-        }).toDataUriSync();
+        }).toDataUri();
     }, [props.username]);
 
     return <img css={[AvatarCss, props.customCss]} src={avatar} alt="avatar" />;

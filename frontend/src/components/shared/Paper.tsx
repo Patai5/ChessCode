@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css, SerializedStyles } from "@emotion/react";
+import { JSX } from "@emotion/react/jsx-runtime";
 import React from "react";
 
 const paperCss = css`
