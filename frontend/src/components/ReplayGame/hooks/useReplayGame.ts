@@ -6,8 +6,8 @@ import { useChessBoardState } from "components/shared/Chess/useChessBoardState/u
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import React from "react";
 import { useParams } from "react-router-dom";
+import { GameApiResponse } from "types/api/game";
 import { GameResultApiResponse } from "types/api/gameResult";
-import { ReplayGameAPIResponse } from "types/api/replayGame";
 import { validateId } from "utils/chess";
 import { parsePlayerApiResponse } from "utils/players";
 import { useReplayGameActions } from "./useReplayGameActions";
@@ -65,7 +65,7 @@ export const useReplayGame = () => {
     /**
      * Updates the state with the response from the API.
      */
-    const handleReplayFromApiResponse = (response: ReplayGameAPIResponse) => {
+    const handleReplayFromApiResponse = (response: GameApiResponse) => {
         const { moves, players, termination, winner_color } = response;
 
         const color = players.white.is_current_user ? Color.White : Color.Black;

@@ -2,7 +2,7 @@
 import { css } from "@emotion/react";
 import Paper from "components/shared/Paper";
 import useWindowSize from "hooks/useWindowSize";
-import { GameApiResponse } from "types/api/game";
+import { SimpleGameApiResponse } from "types/api/game";
 import GameRow from "./GameRow/GameRow";
 import HeaderRow from "./HeaderRow/HeaderRow";
 
@@ -42,22 +42,23 @@ const GamesTableCss = css`
     }
 `;
 
-type Props = { games: GameApiResponse[] | null; username: string };
+type Props = { games: SimpleGameApiResponse[] | null };
 export default function RecentGames(props: Props) {
     const size = useWindowSize();
     if (size.width === undefined) return null;
+
+    const GameRows =
+        props.games &&
+        props.games.map((game, index) => {
+            return <GameRow key={index} game={game} width={size.width!} />;
+        });
 
     return (
         <Paper elevation={1} white={true}>
             <h2 css={TitleCss}>Recent Games</h2>
             <table css={GamesTableCss}>
                 <HeaderRow />
-                <tbody>
-                    {props.games &&
-                        props.games.map((game, index) => (
-                            <GameRow key={index} game={game} username={props.username} width={size.width!} />
-                        ))}
-                </tbody>
+                <tbody>{GameRows}</tbody>
             </table>
         </Paper>
     );

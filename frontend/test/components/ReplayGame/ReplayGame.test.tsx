@@ -2,10 +2,13 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import * as axios from "axios";
 import { ReplayGame } from "components/ReplayGame/ReplayGame";
-import { ReplayGameAPIResponse } from "types/api/replayGame";
+import { GameApiResponse } from "types/api/game";
 import { describe, expect, test, vi } from "vitest";
 
-const MOCK_API_RESPONSE: ReplayGameAPIResponse = {
+const MOCK_API_RESPONSE: GameApiResponse = {
+    game_id: 1,
+    time_control: 1800,
+    date: "2023-01-01T00:00:00Z",
     moves: ["e2e4", "e7e5", "d2d4"],
     players: {
         white: { user_type: "registered", username: "Player1", time: 0, status: "not_friends" },
@@ -13,7 +16,6 @@ const MOCK_API_RESPONSE: ReplayGameAPIResponse = {
     },
     termination: "resignation",
     winner_color: "white",
-    date: new Date(),
 };
 
 vi.mock("axios");

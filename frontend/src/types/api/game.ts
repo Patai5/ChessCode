@@ -1,12 +1,19 @@
-export type GameApiResponse = {
+import { MoveName } from "components/shared/Chess/ChessBoard/ChessLogic/board";
+import { GamePlayersApi, PlayersApi } from "./player";
+
+export type GameApiResponse = SimpleGameApiResponse & {
+    moves: MoveName[];
+    players: GamePlayersApi;
+};
+
+export type SimpleGameApiResponse = {
     game_id: number;
-    players: { white: { username: string }; black: { username: string } };
+    players: PlayersApi;
     termination: GameTermination;
     winner_color: GameWinner;
     time_control: number;
     date: string;
 };
-
 export const GAME_WINNER = {
     WHITE: "white",
     BLACK: "black",

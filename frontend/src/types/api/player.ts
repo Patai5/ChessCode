@@ -16,7 +16,7 @@ export type GamePlayerApi = PlayerApi & {
     time: number;
 };
 
-type RegisteredPlayerApi = {
+export type RegisteredPlayerApi = {
     user_type: "registered";
     username: string;
 };

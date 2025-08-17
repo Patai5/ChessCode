@@ -63,14 +63,19 @@ def test_get_player_games_json() -> None:
     games = get_player_games_json(player1, page=1, limit=10)
     assert len(games) == 1
     assert games[0]["game_id"] == 1
-    assert games[0]["players"]["white"] == {"user_type": "registered", "username": "user1"}
-    assert games[0]["players"]["black"] == {"user_type": "registered", "username": "user2"}
+    assert games[0]["players"]["white"] == {"user_type": "registered", "username": "user1", "is_current_user": True}
+    assert games[0]["players"]["black"] == {
+        "user_type": "registered",
+        "username": "user2",
+        "is_current_user": False,
+        "status": FriendStatus.notFriends.value,
+    }
 
     games2 = get_player_games_json(player2, page=1, limit=10)
     assert len(games2) == 2
     assert games2[0]["game_id"] == 2
 
-    assert games2[0]["players"]["white"] == {"user_type": "registered", "username": "user2"}
-    assert games2[0]["players"]["black"] == {"user_type": "anonymous", "user_id": 1}
+    assert games2[0]["players"]["white"] == {"user_type": "registered", "username": "user2", "is_current_user": True}
+    assert games2[0]["players"]["black"] == {"user_type": "anonymous", "user_id": 1, "is_current_user": False}
 
     assert games2[1]["game_id"] == 1

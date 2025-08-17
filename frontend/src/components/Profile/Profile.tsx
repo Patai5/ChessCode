@@ -61,7 +61,7 @@ export default function Profile() {
                     friendStatus={(profileData && profileData.friend_status) || null}
                     username={username}
                 />
-                <RecentGames games={profileData && profileData.games} username={username} />
+                <RecentGames games={profileData && profileData.games} />
             </Paper>
         </>
     );

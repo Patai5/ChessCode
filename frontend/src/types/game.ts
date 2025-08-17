@@ -1,4 +1,5 @@
 import { GAME_WINNER } from "./api/game";
+import { PlayerApi } from "./api/player";
 
 export const GAME_OUTCOME = {
     WON: "WON",
@@ -7,8 +8,7 @@ export const GAME_OUTCOME = {
 } as const;
 export type GameOutcome = keyof typeof GAME_OUTCOME;
 
-export type PlayerInfo = {
-    username: string;
+export type PlayerInfo = PlayerApi & {
     color: PlayerColor;
 };
 

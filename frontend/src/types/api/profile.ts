@@ -1,9 +1,9 @@
 import { Statuses } from "types/friendStatuses";
-import { GameApiResponse } from "./game";
+import { SimpleGameApiResponse } from "./game";
 
 export type ProfileApiResponse = {
     date_joined: string;
-    games: GameApiResponse[];
+    games: SimpleGameApiResponse[];
     total_games: number;
     total_friends: number;
     friend_status?: Statuses;
