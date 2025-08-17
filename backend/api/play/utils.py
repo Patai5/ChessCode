@@ -126,4 +126,4 @@ def get_player_games_json(player: Player, page: int, limit: int, include_moves: 
     """Returns a list of games played by the player with the given username."""
 
     games = Game.getGamesByPlayer(player).order_by("-date")[limit * (page - 1) : min(limit * page, 2**63)]
-    return [game_to_dict(game, include_moves) for game in games]
+    return [game_to_dict(game, include_moves, relativeUserStatusToPlayer=player) for game in games]
