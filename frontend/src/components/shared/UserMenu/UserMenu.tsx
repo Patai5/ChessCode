@@ -6,8 +6,14 @@ import ProfilePicture from "components/shared/ProfilePicture";
 import { AppContext } from "hooks/appContext";
 import React from "react";
 import { FaSignInAlt, FaSignOutAlt, FaTrophy, FaUser, FaUserFriends } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { NavigateFunction, useNavigate } from "react-router-dom";
 import getCSRF from "utils/getCSRF";
+import { PATHS } from "../../../constants";
+
+type SignOutOptions = {
+    appContext: React.ContextType<typeof AppContext>;
+    navigate: NavigateFunction;
+};
 
 const UserMenuCss = css`
     border-radius: 0 0 0 1em;
@@ -24,43 +30,13 @@ const DropdownCss = css`
 
 export default function UserMenu() {
     const appContext = React.useContext(AppContext);
+    const { username } = appContext;
+
     const navigate = useNavigate();
 
-    const clientUsername = appContext.username;
-
-    const signOut = () => {
-        appContext.setUsername(null);
-
-        axios({
-            method: "post",
-            url: "/api/auth/logout",
-            headers: { "X-CSRFToken": getCSRF() },
-        });
-
-        navigate("/login");
-    };
-
-    const dropdownItems: DropdownItems = {
-        main: {
-            icon: !clientUsername ? FaSignInAlt : undefined,
-            image: clientUsername ? <ProfilePicture username={clientUsername} /> : undefined,
-            text: clientUsername || "Sign in",
-            onClick: () => {
-                if (!clientUsername) signOut();
-            },
-        },
-        items: [
-            { icon: FaUser, text: "Profile", onClick: () => navigate("/profile/" + clientUsername) },
-            { icon: FaUserFriends, text: "Friends", onClick: () => navigate("/friends") },
-            { icon: FaTrophy, text: "Play", onClick: () => navigate("/") },
-            { icon: FaSignOutAlt, text: "Sign out", onClick: signOut },
-        ],
-        dropdownCss: DropdownCss,
-    };
-
-    if (!clientUsername) {
-        dropdownItems.items.splice(0, dropdownItems.items.length);
-    }
+    const dropdownItems = username
+        ? getLoggedInUserMenuOptions({ username, appContext, navigate })
+        : getAnonymousUserSignInMenuOptions(navigate);
 
     return (
         <div css={MenuCss}>
@@ -68,3 +44,51 @@ export default function UserMenu() {
         </div>
     );
 }
+
+/**
+ * Gets the dropdown menu items options for logged-in users.
+ */
+const getLoggedInUserMenuOptions = (options: { username: string } & SignOutOptions): DropdownItems => {
+    const { username, navigate } = options;
+
+    const mainDisplayButton = {
+        image: <ProfilePicture username={username} />,
+        text: username,
+        onClick: () => signOut(options),
+    };
+    const items = [
+        { text: "Profile", icon: FaUser, onClick: () => navigate(PATHS.PROFILE(username)) },
+        { text: "Friends", icon: FaUserFriends, onClick: () => navigate(PATHS.FRIENDS) },
+        { text: "Play", icon: FaTrophy, onClick: () => navigate(PATHS.HOME) },
+        { text: "Sign out", icon: FaSignOutAlt, onClick: () => signOut(options) },
+    ];
+
+    return { main: mainDisplayButton, items, dropdownCss: DropdownCss };
+};
+
+/**
+ * Signs the user out by clearing the username from the app context and navigating to the login page.
+ */
+const signOut = (options: SignOutOptions) => {
+    const { appContext, navigate } = options;
+
+    appContext.setUsername(null);
+
+    axios({
+        method: "post",
+        url: "/api/auth/logout",
+        headers: { "X-CSRFToken": getCSRF() },
+    });
+
+    navigate(PATHS.LOGIN);
+};
+
+const getAnonymousUserSignInMenuOptions = (navigate: NavigateFunction): DropdownItems => {
+    const mainDisplayButton = {
+        icon: FaSignInAlt,
+        text: "Sign in",
+        onClick: () => navigate(PATHS.LOGIN),
+    };
+
+    return { main: mainDisplayButton, items: [], dropdownCss: DropdownCss };
+};
