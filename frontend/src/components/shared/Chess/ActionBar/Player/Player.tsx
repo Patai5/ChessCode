@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
+import { PATHS } from "components/constants";
 import Dropdown, { DropdownItems } from "components/shared/Dropdown/Dropdown";
 import ProfilePicture from "components/shared/ProfilePicture";
 import useFriendsButton from "hooks/useFriendsButton";
@@ -33,12 +34,10 @@ const DropdownCss = css`
 `;
 type Props = { username: string | null; isOpponent: boolean; friendStatus: Statuses | null };
 export default function Player(props: Props) {
-    const { friendStatus, handleFriendsOnClick, confirmPopup } = useFriendsButton(props.friendStatus, props.username);
-    const navigate = useNavigate();
+    const { username, isOpponent } = props;
 
-    const navigateToProfile = () => {
-        navigate("/profile/" + props.username);
-    };
+    const { friendStatus, handleFriendsOnClick, confirmPopup } = useFriendsButton(props.friendStatus, username);
+    const navigate = useNavigate();
 
     const dropdownItems: DropdownItems = {
         main: {
@@ -55,7 +54,9 @@ export default function Player(props: Props) {
         items: [],
         dropdownCss: DropdownCss,
     };
-    if (props.username) dropdownItems.items.push({ icon: FaUser, text: "Profile", onClick: navigateToProfile });
+    if (username) {
+        dropdownItems.items.push({ icon: FaUser, text: "Profile", onClick: () => navigate(PATHS.PROFILE(username)) });
+    }
     if (friendStatus) {
         dropdownItems.items.push({ icon: friendStatus.icon, text: friendStatus.text, onClick: handleFriendsOnClick });
     }
@@ -63,7 +64,7 @@ export default function Player(props: Props) {
     return (
         <>
             {confirmPopup}
-            <Dropdown dropdownItems={dropdownItems} customCss={PlayerCss} upwards={!props.isOpponent} />{" "}
+            <Dropdown dropdownItems={dropdownItems} customCss={PlayerCss} upwards={!isOpponent} />
         </>
     );
 }

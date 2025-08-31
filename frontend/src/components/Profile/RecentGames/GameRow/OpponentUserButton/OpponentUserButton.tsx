@@ -1,4 +1,5 @@
 /** @jsxImportSource @emotion/react */
+import { PATHS } from "components/constants";
 import ProfilePicture from "components/shared/ProfilePicture";
 import React from "react";
 import { IoIosGlobe } from "react-icons/io";
@@ -20,7 +21,7 @@ export default function OpponentUserButton(props: Props) {
         if (!isOpponentRegistered) return;
 
         event.stopPropagation();
-        navigate(`/profile/${opponent.username}`);
+        navigate(PATHS.PROFILE(opponent.username));
     };
 
     const isOpponentRegistered = opponent.user_type !== "anonymous";

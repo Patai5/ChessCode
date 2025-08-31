@@ -6,6 +6,7 @@ import ProfilePicture from "components/shared/ProfilePicture";
 import useFriendsButton from "hooks/useFriendsButton";
 import { useNavigate } from "react-router-dom";
 import { Statuses as FriendStatuses } from "types/friendStatuses";
+import { PATHS } from "../../../constants";
 
 const FriendCss = css`
     display: flex;
@@ -51,7 +52,7 @@ export default function Friend(props: Props) {
     const navigate = useNavigate();
 
     const handleFriendOnClick = () => {
-        navigate(`/profile/${props.username}`);
+        navigate(PATHS.PROFILE(props.username));
     };
 
     return (

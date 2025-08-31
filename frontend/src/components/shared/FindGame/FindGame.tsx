@@ -1,9 +1,11 @@
 /** @jsxImportSource @emotion/react */
 import axios from "axios";
+import { PATHS } from "components/constants";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import { GradientButtonPickerMethods } from "components/shared/GradientButtonPicker";
 import { AppContext } from "hooks/appContext";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
     FIND_GAME_API_RESPONSE_TYPE,
     FindGameApiMessageType,
@@ -40,6 +42,7 @@ export default function FindGame(props: FindGameProps) {
     const ws = React.useRef<WebSocket | null>(null);
 
     const appContext = React.useContext(AppContext);
+    const navigate = useNavigate();
 
     const setError = (error: string) => {
         ErrorQueueClass.handleError(error);
@@ -106,7 +109,7 @@ export default function FindGame(props: FindGameProps) {
     };
 
     const joinGame = (gameId: string) => {
-        window.location.href = `/play/${gameId}`;
+        navigate(PATHS.PLAY(gameId));
     };
 
     const handleErrorResponse = (data: ErrorApiResponse) => {

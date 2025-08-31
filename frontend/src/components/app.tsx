@@ -4,6 +4,7 @@ import axios, { AxiosError } from "axios";
 import { AppContext } from "hooks/appContext";
 import React from "react";
 import { Route, Routes } from "react-router-dom";
+import { PATHS } from "./constants";
 import Friends from "./Friends/Friends";
 import Home from "./Home/Home";
 import Login from "./Login/Login";
@@ -72,14 +73,14 @@ export default function app() {
             <ErrorQueue />
             <Global styles={globalCss} />
             <Routes>
-                <Route path="/login" element={<Login register={false} />} />
-                <Route path="/signup" element={<Login register={true} />} />
-                <Route path="/profile/:username" element={<Profile />} />
-                <Route path="/friends/:username" element={<Friends />} />
-                <Route path="/friends" element={<Friends />} />
-                <Route path="/play/:id" element={<Play />} />
-                <Route path="/replay_game/:id" element={<ReplayGame />} />
-                <Route path="/" element={<Home />} />
+                <Route path={PATHS.LOGIN} element={<Login register={false} />} />
+                <Route path={PATHS.REGISTER} element={<Login register={true} />} />
+                <Route path={PATHS.PROFILE(":username")} element={<Profile />} />
+                <Route path={PATHS.FRIENDS({ username: ":username" })} element={<Friends />} />
+                <Route path={PATHS.FRIENDS({ username: null })} element={<Friends />} />
+                <Route path={PATHS.PLAY(":id")} element={<Play />} />
+                <Route path={PATHS.REPLAY_GAME(":id")} element={<ReplayGame />} />
+                <Route path={PATHS.HOME} element={<Home />} />
             </Routes>
         </AppContext.Provider>
     );

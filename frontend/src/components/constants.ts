@@ -26,3 +26,23 @@ export const GAME_TERMINATION_EXPLANATION = {
     [GAME_TERMINATION.AGREEMENT]: "by mutual agreement",
     [GAME_TERMINATION.ABORTED]: "Game aborted",
 } as const;
+
+export const PATHS = {
+    HOME: "/",
+    LOGIN: "/login",
+    REGISTER: "/register",
+
+    PROFILE: (username: string) => `/profile/${username}`,
+    PLAY: (gameId: string) => `/play/${gameId}`,
+    REPLAY_GAME: (gameId: string) => `/replay_game/${gameId}`,
+
+    /**
+     * Returns the friends path.
+     * - If the username is provided, gets the friends of that user.
+     * - Otherwise gets the current user's friends.
+     */
+    FRIENDS: (options: { username: string | null }) => {
+        const { username } = options;
+        return username ? `/friends/${username}` : `/friends`;
+    },
+} as const;

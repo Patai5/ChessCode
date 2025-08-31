@@ -1,5 +1,5 @@
 /** @jsxImportSource @emotion/react */
-import { GAME_TERMINATION_EXPLANATION } from "components/constants";
+import { GAME_TERMINATION_EXPLANATION, PATHS } from "components/constants";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { GAME_WINNER, GameWinner, SimpleGameApiResponse } from "types/api/game";
@@ -24,7 +24,7 @@ export default function GameRow(props: Props) {
     const navigate = useNavigate();
 
     const handleGameOnClick = () => {
-        navigate(`/replay_game/${game.game_id}`);
+        navigate(PATHS.REPLAY_GAME(game.game_id.toString()));
     };
 
     const displayResultLong = width > 800;

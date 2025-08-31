@@ -1,6 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import axios, { AxiosError } from "axios";
+import { PATHS } from "components/constants";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import { AppContext } from "hooks/appContext";
 import React from "react";
@@ -123,7 +124,7 @@ export default function Login(props: Props) {
         switch (status) {
             case "success":
                 // Redirects the page
-                navigate("/");
+                navigate(PATHS.HOME);
                 break;
             case "failed":
                 // Stops the animation

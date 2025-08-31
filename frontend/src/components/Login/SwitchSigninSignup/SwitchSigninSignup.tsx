@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
+import { PATHS } from "components/constants";
 import { Link } from "react-router-dom";
 
 const switchContainerCss = css`
@@ -25,7 +26,7 @@ export default function SwitchSigninSignup(props: Props) {
 			<p css={bothCss}>{!props.register && "Not a member yet? "}</p>
 			<Link
 				css={[bothCss, linkCss]}
-				to={!props.register ? "/signup" : "/login"}
+				to={!props.register ? PATHS.REGISTER : PATHS.LOGIN}
 			>
 				{!props.register
 					? "Create new account"

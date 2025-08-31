@@ -1,8 +1,10 @@
+import { PATHS } from "components/constants";
 import { PlayersProps } from "components/shared/Chess/Chess";
 import { Move, MoveInfo, MoveName } from "components/shared/Chess/ChessBoard/ChessLogic/board";
 import { Color, PromotionPieceType } from "components/shared/Chess/ChessBoard/ChessLogic/pieces";
 import { ErrorQueueClass } from "components/shared/ErrorQueue/ErrorQueue";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { GameResultApiResponse } from "types/api/gameResult";
 import {
     ErrorApiResponse,
@@ -46,6 +48,7 @@ export const usePlayApi = (props: Props) => {
     const [highlightDrawButton, setHighlightDrawButton] = React.useState(false);
     const [players, setPlayers] = React.useState<PlayersProps | null>(null);
 
+    const navigate = useNavigate();
     const ws = React.useRef<WebSocket | null>(null);
 
     const setError = (error: string) => {
@@ -83,6 +86,7 @@ export const usePlayApi = (props: Props) => {
 
     const handleErrorResponse = (data: ErrorApiResponse) => {
         ErrorQueueClass.addError({ errorMessage: data.message });
+        navigate(PATHS.HOME);
         setConnectionState(CONNECTION_STATE.ERROR);
     };
 

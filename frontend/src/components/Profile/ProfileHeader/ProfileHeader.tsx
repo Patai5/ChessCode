@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
+import { PATHS } from "components/constants";
 import Paper from "components/shared/Paper";
 import ProfilePicture from "components/shared/ProfilePicture";
 import { FaCalendarAlt, FaGamepad, FaUserFriends } from "react-icons/fa";
@@ -47,27 +48,28 @@ const InfoPointsCss = css`
 
 export type ProfileDataProps = { username: string; joinedDate: string; friendsCount: number; gamesCount: number };
 
-type Props = { data: ProfileDataProps | null };
+type Props = { data: ProfileDataProps };
 export default function ProfileHeader(props: Props) {
+    const { username, joinedDate, friendsCount, gamesCount } = props.data;
+
     const navigate = useNavigate();
-    if (!props.data) return null;
 
     const handleFriendsOnClick = () => {
-        navigate(`/friends/${props.data!.username}`);
+        navigate(PATHS.FRIENDS({ username }));
     };
 
     return (
         <Paper customCss={ProfileHeaderCss} elevation={1} white={true}>
-            <ProfilePicture username={props.data.username} customCss={ProfilePictureCss} />
+            <ProfilePicture username={username} customCss={ProfilePictureCss} />
             <div css={ProfileInfoCss}>
                 <div>
-                    <p css={UsernameCss}>{props.data.username}</p>
+                    <p css={UsernameCss}>{username}</p>
                 </div>
                 <div css={InfoPointsCss}>
                     <InfoPoint
                         icon={FaCalendarAlt}
                         tooltip="Registered date"
-                        data={formatDateString(props.data.joinedDate)}
+                        data={formatDateString(joinedDate)}
                         iconCss={css`
                             font-size: 1.5em;
                             margin: 0.2em 0;
@@ -76,10 +78,10 @@ export default function ProfileHeader(props: Props) {
                     <InfoPoint
                         icon={FaUserFriends}
                         tooltip="Total friends"
-                        data={String(props.data.friendsCount)}
+                        data={friendsCount.toString()}
                         onClick={handleFriendsOnClick}
                     />
-                    <InfoPoint icon={FaGamepad} tooltip="Total played games" data={String(props.data.gamesCount)} />
+                    <InfoPoint icon={FaGamepad} tooltip="Total played games" data={gamesCount.toString()} />
                 </div>
             </div>
         </Paper>

@@ -56,7 +56,7 @@ export default function Profile() {
             <UserMenu />
 
             <Paper customCss={ProfileCss} white={true} elevation={1}>
-                <ProfileHeader data={profileHeaderData} />
+                {profileHeaderData && <ProfileHeader data={profileHeaderData} />}
                 <UserInteractions
                     friendStatus={(profileData && profileData.friend_status) || null}
                     username={username}

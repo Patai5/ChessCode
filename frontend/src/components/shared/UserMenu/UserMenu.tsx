@@ -8,7 +8,7 @@ import React from "react";
 import { FaSignInAlt, FaSignOutAlt, FaTrophy, FaUser, FaUserFriends } from "react-icons/fa";
 import { NavigateFunction, useNavigate } from "react-router-dom";
 import getCSRF from "utils/getCSRF";
-import { PATHS } from "../../../constants";
+import { PATHS } from "../../constants";
 
 type SignOutOptions = {
     appContext: React.ContextType<typeof AppContext>;
@@ -58,7 +58,7 @@ const getLoggedInUserMenuOptions = (options: { username: string } & SignOutOptio
     };
     const items = [
         { text: "Profile", icon: FaUser, onClick: () => navigate(PATHS.PROFILE(username)) },
-        { text: "Friends", icon: FaUserFriends, onClick: () => navigate(PATHS.FRIENDS) },
+        { text: "Friends", icon: FaUserFriends, onClick: () => navigate(PATHS.FRIENDS({ username: null })) },
         { text: "Play", icon: FaTrophy, onClick: () => navigate(PATHS.HOME) },
         { text: "Sign out", icon: FaSignOutAlt, onClick: () => signOut(options) },
     ];
