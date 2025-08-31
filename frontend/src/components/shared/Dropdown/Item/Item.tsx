@@ -1,9 +1,8 @@
 /** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
+import { POPUP_ANIMATION_TIME_MS } from "components/shared/TransparentPopup/TransparentPopup";
 import { IconType } from "react-icons/lib";
 import { Props as MainProps } from "../Main/Main";
-
-export const TransitionDuration = 0.25; // In seconds
 
 const ItemCss = css`
     display: flex;
@@ -16,7 +15,7 @@ const ItemCss = css`
     overflow: hidden;
 
     background-color: #3636367d;
-    transition: ${TransitionDuration}s ease-in-out;
+    transition: ${POPUP_ANIMATION_TIME_MS}ms ease-in-out;
     transition-property: box-shadow, background-color;
 
     font-family: "Lexend Deca", sans-serif;

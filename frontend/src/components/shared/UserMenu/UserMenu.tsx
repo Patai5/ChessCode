@@ -40,7 +40,7 @@ export default function UserMenu() {
 
     return (
         <div css={MenuCss}>
-            <Dropdown dropdownItems={dropdownItems} customCss={UserMenuCss} isActive={true} />
+            <Dropdown dropdownItems={dropdownItems} customCss={UserMenuCss} />
         </div>
     );
 }

@@ -1,14 +1,17 @@
 /** @jsxImportSource @emotion/react */
 import { SerializedStyles, css } from "@emotion/react";
-import React from "react";
-import Item, { Props as DropdownItem, TransitionDuration } from "./Item/Item";
+import { ANIMATION_STATE } from "components/constants";
+import { useAnimatedPopupCss } from "hooks/useAnimatedPopup";
+import React, { ReactElement } from "react";
+import { POPUP_ANIMATION_TIME_MS } from "../TransparentPopup/TransparentPopup";
+import Item, { Props as DropdownItem } from "./Item/Item";
 import Main, { Props as MainItem } from "./Main/Main";
-export { Props as DropdownItem, TransitionDuration } from "./Item/Item";
+export { Props as DropdownItem } from "./Item/Item";
 export { Props as MainItem } from "./Main/Main";
 
 const DropdownContainerCss = css`
     position: relative;
-    transition: max-height ${TransitionDuration}s ease-in-out;
+    transition: max-height ${POPUP_ANIMATION_TIME_MS}ms ease-in-out;
     border-radius: 1em;
     color: white;
     background-color: #232323;
@@ -19,7 +22,7 @@ const DropdownCss = css`
     border-bottom-left-radius: 1em;
     opacity: 1;
     overflow: hidden;
-    transition: ${TransitionDuration}s ease-in-out;
+    transition: ${POPUP_ANIMATION_TIME_MS}ms ease-in-out;
     transition-property: max-height, opacity;
     position: absolute;
     top: calc(100% + 0.2em);
@@ -37,37 +40,56 @@ const UpwardsCss = css`
 
 export type DropdownItems = { main: MainItem; items: DropdownItem[]; dropdownCss?: SerializedStyles };
 
-type Props = { dropdownItems: DropdownItems; upwards?: boolean; isActive?: boolean, customCss?: SerializedStyles };
+type Props = { dropdownItems: DropdownItems; upwards?: boolean; customCss?: SerializedStyles };
 export default function Dropdown(props: Props) {
-    const [openDropdown, setOpenDropdown] = React.useState(false);
-    const { upwards = false } = props;
+    const { upwards = false, dropdownItems } = props;
 
-    const maxHeightCss = {
-        maxHeight: `${props.dropdownItems.items.length * 2.75}em`,
+    const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+
+    const dropdownMaxHeightCss = css`
+        max-height: ${dropdownItems.items.length * 2.75}em;
+    `;
+    const dropdownCss = [DropdownCss, dropdownMaxHeightCss];
+    if (dropdownItems.dropdownCss) dropdownCss.push(dropdownItems.dropdownCss);
+    if (upwards) dropdownCss.push(UpwardsCss);
+
+    const useAnimatedPopupOptions = {
+        animationDurationMs: POPUP_ANIMATION_TIME_MS,
+        isOpen: isDropdownOpen,
+        cssOptions: { opened: dropdownCss, closed: [...dropdownCss, InactiveCss] },
     };
+    const { state, cssState: dropdownStateCss } = useAnimatedPopupCss(useAnimatedPopupOptions);
 
-    const isMainActive = props.dropdownItems.items.length > 0 || props.isActive;
-
+    const isMainActive = dropdownItems.items.length > 0;
     return (
         <div
             css={[DropdownContainerCss, props.customCss]}
-            onMouseEnter={() => setOpenDropdown(true)}
-            onMouseLeave={() => setOpenDropdown(false)}
+            onMouseEnter={() => setIsDropdownOpen(true)}
+            onMouseLeave={() => setIsDropdownOpen(false)}
         >
             <Main {...props.dropdownItems.main} isActive={isMainActive} />
-            <div
-                css={[
-                    DropdownCss,
-                    props.dropdownItems.dropdownCss,
-                    upwards && UpwardsCss,
-                    !openDropdown && InactiveCss,
-                ]}
-                style={maxHeightCss}
-            >
-                {props.dropdownItems.items.map((item, index) => (
-                    <Item key={index} {...item} />
-                ))}
-            </div>
+            {getDropdown({ state, dropdownItems: dropdownItems.items, dropdownStateCss })}
         </div>
     );
 }
+
+const getDropdown = (options: {
+    state: keyof typeof ANIMATION_STATE;
+    dropdownItems: DropdownItem[];
+    dropdownStateCss: SerializedStyles | SerializedStyles[];
+}): ReactElement | null => {
+    const { state, dropdownItems, dropdownStateCss } = options;
+
+    const isDropdownClosed = state === ANIMATION_STATE.CLOSED;
+    if (isDropdownClosed) return null;
+
+    return (
+        <div css={dropdownStateCss} data-testid="dropdown-popup">
+            {getDropdownItems(dropdownItems)}
+        </div>
+    );
+};
+
+const getDropdownItems = (dropdownItems: DropdownItem[]): ReactElement[] => {
+    return dropdownItems.map((item, index) => <Item key={index} {...item} />);
+};
