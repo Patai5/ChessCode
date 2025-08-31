@@ -1,9 +1,9 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { PATHS } from "components/constants";
 import UserMenu from "components/shared/UserMenu/UserMenu";
 import { AppContext } from "hooks/appContext";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { expect, test } from "vitest";
-import { PATHS } from "../../../../src/constants";
 
 test("Should display and navigate for sign in button for anonymous users", () => {
     render(
