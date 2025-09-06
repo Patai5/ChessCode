@@ -2,8 +2,8 @@ import React from "react";
 import { Move, MoveInfo, Position } from "../ChessBoard/ChessLogic/board";
 import Chess from "../ChessBoard/ChessLogic/chess";
 import { Color, Piece, PromotionPieceType } from "../ChessBoard/ChessLogic/pieces";
-import { handleMoveTo, makeMove } from "./handleMovePiece";
-import { maybeGetPromotionPiece, selectPromotion } from "./handlePromotions";
+import { makeMove } from "./handleMovePiece";
+import { maybeGetPromotionPiece, shouldShowPromotion } from "./handlePromotions";
 import { selectPiece } from "./handleSelectPiece";
 
 export type SetChessBoardState = React.Dispatch<React.SetStateAction<ChessBoardState>>;
@@ -57,20 +57,57 @@ export const useChessBoardState = (props: Props): ChessBoardStateHandlersProps =
         setChessBoardState((chessBoardState) => ({ ...chessBoardState, hoveringOverSquare: position }));
     };
 
+    /**
+     * Handles the piece being moved to a new position.
+     * - If the move results in a promotion, it sets the in-progress promotion move state.
+     * - Otherwise, it makes the move directly.
+     */
     const handleMovedTo = (moveTo: Position) => {
-        if (!broadcastMove.current) throw new Error("broadcastMove function is required for broadcasting moves");
+        const { selectedPiece } = chessBoardState;
+        if (!selectedPiece) throw new Error("No piece selected to move");
 
-        const options = { moveTo, chess, isEnabled, color, setColorToPlay, broadcastMove: broadcastMove.current };
-        setChessBoardState((chessBoardState) => handleMoveTo(chessBoardState, options));
+        const move = new Move(selectedPiece.position, moveTo);
+
+        const showPromotion = shouldShowPromotion(selectedPiece, move);
+        if (showPromotion) {
+            return setChessBoardState((chessBoardState) => ({ ...chessBoardState, inProgressPromotionMove: move }));
+        }
+
+        const moveInfo = moveAndEnsureBroadcastMove({ move, maybePromotionPiece: null });
+        const options = { moveInfo, chess, isEnabled, color, setColorToPlay };
+
+        setChessBoardState((chessBoardState) => makeMove(chessBoardState, options));
     };
 
+    /**
+     * Returns the promotion piece based on the selected position.
+     * - null if the position does not correspond to a promotion piece, or if there is no in-progress promotion move.
+     */
     const handleMaybeGetPromotionPiece = (selectedPosition: Position): PromotionPieceType | null => {
-        return maybeGetPromotionPiece(chessBoardState, { selectedPosition, color });
+        const { inProgressPromotionMove } = chessBoardState;
+        if (!inProgressPromotionMove) return null;
+
+        return maybeGetPromotionPiece({ inProgressPromotionMove, selectedPosition, color });
     };
 
+    /**
+     * Gets the promotion piece based on the selected position, and if valid, makes the move with the promotion.
+     * - Updates the chess board state, clearing the in-progress promotion move if the selection is invalid.
+     * - Otherwise makes the move with the selected promotion piece and updates the state accordingly.
+     */
     const handleSetPromotionPiece = (selectedPosition: Position) => {
-        const options = { isEnabled, color, chess, selectedPosition, setColorToPlay };
-        setChessBoardState((chessBoardState) => selectPromotion(chessBoardState, options));
+        const { inProgressPromotionMove } = chessBoardState;
+        if (!inProgressPromotionMove) return;
+
+        const maybePromotionPiece = maybeGetPromotionPiece({ inProgressPromotionMove, selectedPosition, color });
+        if (!maybePromotionPiece) {
+            return setChessBoardState((chessboardState) => ({ ...chessboardState, inProgressPromotionMove: null }));
+        }
+
+        const moveInfo = moveAndEnsureBroadcastMove({ move: inProgressPromotionMove, maybePromotionPiece });
+        const options = { isEnabled, chess, moveInfo, color, setColorToPlay };
+
+        setChessBoardState((chessBoardState) => makeMove(chessBoardState, options));
     };
 
     const handleSelectPiece = (piece: Piece | null) => {
@@ -87,9 +124,7 @@ export const useChessBoardState = (props: Props): ChessBoardStateHandlersProps =
         const moveInfo = chess.move(move, promotionPiece);
         const options = { isEnabled, color, moveInfo, chess, promotionPiece, setColorToPlay };
 
-        setChessBoardState((chessBoardState) => {
-            return makeMove(chessBoardState, options);
-        });
+        setChessBoardState((chessBoardState) => makeMove(chessBoardState, options));
     };
 
     const handleClientUndoMove = () => {
@@ -101,6 +136,26 @@ export const useChessBoardState = (props: Props): ChessBoardStateHandlersProps =
 
     const setBroadcastMove = (newBroadcastMove: (move: MoveInfo) => void) => {
         broadcastMove.current = newBroadcastMove;
+    };
+
+    /**
+     * Makes the move on the chess instance, and ensures that the move is broadcasted using the broadcastMove function.
+     */
+    const moveAndEnsureBroadcastMove = (options: {
+        move: Move;
+        maybePromotionPiece: PromotionPieceType | null;
+    }): MoveInfo => {
+        const { move, maybePromotionPiece } = options;
+        const { current: broadcastMoveFunction } = broadcastMove;
+
+        if (!broadcastMoveFunction) {
+            throw new Error("UNREACHABLE: broadcastMove function is required for broadcasting moves");
+        }
+
+        const moveInfo = chess.move(move, maybePromotionPiece);
+        broadcastMoveFunction(moveInfo);
+
+        return moveInfo;
     };
 
     return {
